@@ -422,8 +422,12 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 `clock/`、`lifecycle/`、`ports/`、`tick_split/`、`hook_slots/`はhost core 1.7.0の
 性質を確認する準備計測であり、Gate A以降の仕様決定ではない。
 
-台帳の「次に必要な実験」5項目はX7〜X11として計測済み。WP-A1の操作経路表は
+台帳の「次に必要な実験」はX7〜X11として計測済み。WP-A1の操作経路表は
 [EVENT_MATRIX.ja.md](EVENT_MATRIX.ja.md)（アクター図・最小I2Cシーケンス手書き例を含む）、
-WP-A2の3案比較はX12として数値が揃った。いずれも候補であり、Gate Aの承認は
-未実施。次に行うのはGate Aの承認判断（特にEVENT_MATRIXの未決4項目）で、
-承認後にWP-B1/WP-B2とWP-C1のI2C縦切りへ進む。
+WP-A2の3案比較はX12として数値が揃った。host core 1.7.1で監査依頼H1〜H3が
+解決され（X13〜X15）、EVENT_MATRIXに記録点の不足はなくなった。
+
+X16〜X18で割り込み・UART・I2Cの縦切りが候補として成立し、WP-C1の完了条件
+（アプリ無改造・イベント欠落0・3回再現）も先行実証済み。いずれも候補であり、
+Gate A/Bの承認は未実施。次に行うのはGate Aの承認判断（EVENT_MATRIXの未決3項目）
+で、承認後にX16〜X18の候補coreの統合、WP-B1/WP-B2、WP-C2へ進む。

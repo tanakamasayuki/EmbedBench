@@ -18,3 +18,5 @@
 - (JA) Gate Aの操作経路表（WP-A1）をアクター図と最小I2Cシーケンス手書き例付きで起草し、直接呼び出し3案（WP-A2）を同一のregister-map模型で計測。
 - (EN) Moved all experiments to host core 1.7.1 and verified its new extension ports resolve the H1-H3 audit requests: the interrupt port (with the raw-mode numbering trap documented), the synchronous UART activity hook (zero-wait in-hook replies), and the analog millivolt/read-width hooks.
 - (JA) 全実験をhost core 1.7.1へ移行し、新しい拡張口が監査依頼H1〜H3を解決することを検証: 割り込み口（生mode定数の罠も記録）、同期UART activity hook（hook内応答でwait 0回）、Analog mV/分解能hook。
+- (EN) Proved three vertical slices as candidates: interrupt injection through edge decision and ctx=isr tagging, a UART AT-conversation golden with immediate and tick-delayed replies, and the WP-C1 I2C slice driving an unmodified app with zero event loss and byte-identical traces across three runs.
+- (JA) 3本の縦切りを候補として実証: 線注入からedge判定と`ctx=isr`付与までの割り込み経路、即時応答とtick遅延応答を持つUART AT会話golden、無改造アプリをイベント欠落0・3回byte一致で駆動するWP-C1のI2C縦切り。

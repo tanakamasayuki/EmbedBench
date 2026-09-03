@@ -45,3 +45,6 @@ Additional experiments:
 - `interrupt_port/`: host core 1.7.1 interrupt port (registration observation, synchronous invocation, enter/exit, mode normalization).
 - `uart_activity/`: host core 1.7.1 UART activity hook (synchronous TX, in-hook immediate replies, discard reporting).
 - `analog_mv/`: host core 1.7.1 millivolt read hook and read-width configuration observation.
+- `interrupt_slice/`: vertical slice from line injection through edge decision, ISR invocation, and ctx=isr tagging.
+- `uart_golden/`: AT conversation golden with immediate and tick-delayed replies on the virtual clock.
+- `i2c_slice/`: the WP-C1 I2C vertical slice (unmodified app, zero event loss, 3x reproducible).

@@ -384,13 +384,98 @@ EmbedBench側はhook一本化とし`readTx`を使わない（二重観測の回�
 **事実:** H3の依頼どおり、mV読取りの観測・差し替えが可能になり、既存raw hookは
 無変更。X6の観測の穴は塞がれた。
 
+## X16. 割り込みの縦切り（host core 1.7.1）
+
+対象: `tests/interrupt_slice/`
+
+進行役の線注入 → edge判定 → イベント記録 → `triggerInterrupt` → ISR内バス通信の
+文脈付与を、1本のイベント列で通した。edge判定は正規化`InterruptTrigger`のみで行う
+（X13の規則）。観測した列（seq / ctx / origin / 内容）:
+
+```text
+01 main app gpio.write pin=4 val=1
+02 main dir inject pin=27 0->1 match=1
+03 isr core isr.enter pin=27
+04 isr app gpio.write pin=5 val=1
+05 isr core isr.exit pin=27
+06 main dir inject pin=27 1->0 match=0
+07 main app gpio.write pin=4 val=0
+```
+
+**事実:**
+
+- 注入 → 記録 → 反映 → 判定 → ISRの順序を候補coreの1か所で管理できる
+- ISRが行ったバス操作（seq 04）はenter/exitの深さから機械的に `ctx=isr` になる
+- 不一致edge（seq 06、FALLINGにRISING登録）は注入イベントだけ残りISRは走らない。
+  fires=1のままで、「登録があるのに発火しなかった」ことがログから判別できる
+- `setPinValue` はpin write hookを呼ばないため、注入がgpio.writeとして二重記録されない
+
+## X17. UART AT会話のgolden（host core 1.7.1）
+
+対象: `tests/uart_golden/`
+
+`kUartTx` 内の即時応答と、進行役がtick境界で配送する遅延応答を、仮想timestampつきの
+1本のイベント列にした。デバイス模型: "AT"は即時に"OK"、それ以外のATコマンドは
+1 tick（1,000us）後に"OK"。
+
+```text
+01 000000 uart.begin
+02 000000 uart.tx AT
+03 000000 uart.rx O
+04 000000 uart.rx K
+05 002000 uart.tx AT+S
+06 003000 dir.inject OK
+07 003000 uart.rx O
+08 003000 uart.rx K
+```
+
+| 交換 | 応答方式 | アプリの読取り経過 | wait回数 |
+| --- | --- | ---: | ---: |
+| "AT" → "OK" | `kUartTx` 内で即時 `pushRx` | 0 us | 0 |
+| "AT+S" → "OK" | tick境界で進行役が配送 | 1,000 us | 1 |
+
+**事実:** 応答遅延をデバイス模型の性質としてtick単位で表現でき、TX・注入・RX消費の
+全てが同じ仮想時間軸のイベント列に正しい順序で残る。`readBytes` のwait中に
+進行役が `pushRx` する経路（tick配送）は安全に動く。
+
+## X18. I2Cの縦切り（WP-C1の先行実証、host core 1.7.1）
+
+対象: `tests/i2c_slice/`
+
+無改造のArduinoアプリ（Wire APIのみ）を、候補coreがWire hookと時計hookで下から
+駆動した。仕込み（温度raw=250、直接・非記録）→ 走行（configをI2C書込み、温度を
+I2C読取り、`delay(3)`中のtick 2で進行役が温度300をchannel注入、再読取り）→
+検分dump。250=0x00FA、300=0x012C。
+
+```text
+01 000000 main app i2c.write addr=48 data=0105
+02 000000 main app i2c.write addr=48 data=00
+03 000000 main app i2c.read addr=48 data=00FA
+04 002000 tick dir chan.write chan=0 data=012C
+05 003000 main app i2c.write addr=48 data=00
+06 003000 main app i2c.read addr=48 data=012C
+07 003000 main dir dump temp=012C cfg=05
+```
+
+| WP-C1完了条件 | 結果 |
+| --- | --- |
+| アプリ無改造 | app部はArduino APIのみ（before=250 / after=300を正しく観測） |
+| イベント欠落0 | 注入mutation数 − 記録注入イベント数 = 0。走行中の外部作用は全7イベントに記録 |
+| 同一結果の再現 | 3回実行してtraceがbyte単位で一致（run2_same=1 run3_same=1） |
+
+**事実:** アプリ → Arduino API → host hook → 候補core → ログ → デバイス模型 →
+応答、テスト → 注入、の縦切り全体が決定的に成立する。timestampは仮想時計から、
+文脈はtick進行から機械的に決まる。
+
+**注記:** Gate A/Bは未承認のため、これは仕様決定ではなくWP-C1の候補実証である。
+イベント1行の綴りもX10の候補1を仮置きしたに過ぎない。
+
 ## 次に必要な実験
 
 1. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
 2. listener解除の位置依存（X9）をなくす遅延反映方式の比較
 3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-4. UART/SPIにもX11の観測者・応答者分離を適用して同じ核が使えるかの確認
-5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決）
-6. 割り込みの縦切り: 線注入 → edge判定 → イベント記録 → `triggerInterrupt` →
-   ISR内バス通信の`ctx=isr`付与までを1本で通す（X13の口を使う）
-7. UARTデバイス模型のAT会話golden: `kUartTx`応答とtick進行の組み合わせ（X14の口を使う）
+4. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
+5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
+6. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
+7. X16〜X18の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認

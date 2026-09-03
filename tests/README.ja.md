@@ -44,3 +44,6 @@ tests/<実験名>/
 - `interrupt_port/`: host core 1.7.1の割り込み口（登録観測・同期呼出し・enter/exit・mode正規化）の検証
 - `uart_activity/`: host core 1.7.1のUART activity hook（TX同期通知・hook内即時応答・破棄報告）の検証
 - `analog_mv/`: host core 1.7.1のmV読取りhookと分解能設定観測の検証
+- `interrupt_slice/`: 線注入→edge判定→ISR起動→`ctx=isr`付与の縦切り
+- `uart_golden/`: AT会話（即時応答とtick遅延応答）の仮想時刻つきgolden
+- `i2c_slice/`: WP-C1のI2C縦切り（アプリ無改造・欠落0・3回再現）の先行実証
