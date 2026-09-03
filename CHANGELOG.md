@@ -10,3 +10,5 @@
 - (JA) 公開仕様を定める前の開発段階、承認ゲート、ログ完全性の境界、独立して担当できる作業単位を文書化。
 - (EN) Imported the TinyGFX emulation draft as an immutable reference and documented host-core capability gaps with reproducible measurements and extension-request candidates.
 - (JA) TinyGFXのemu初期案を変更しない参考資料として取り込み、host coreの能力不足を再現可能な実測値と追加依頼候補に整理。
+- (EN) Limited the initial execution model to standard Arduino-style setup/loop and synchronous callbacks, excluding FreeRTOS and esp_timer virtualization.
+- (JA) 初期の実行モデルを標準的なArduinoのsetup/loopと同期callbackに限定し、FreeRTOSとesp_timerの仮想化を対象外にした。

@@ -11,6 +11,11 @@
 最終的に作るものは、Arduinoアプリケーションを無改造のままhost上で実行し、
 外部世界とのやり取りを決定的に再現・観測できる検証ライブラリである。
 
+今回の実行モデルは、`setup()` / `loop()`、Arduinoの時間API、バス、GPIO、
+それらから同期的に呼ばれるcallbackからなる標準的なArduino環境に限定する。
+FreeRTOS task/queue/semaphore/task notificationや`esp_timer`など、ボード固有の
+並行実行・タイマ機構は今回の対象外とする。
+
 最低限、次の問いに再現可能な答えを出せるようにする。
 
 1. アプリが、いつ、どのGPIO・バス・UART・時間APIを操作したか
@@ -401,7 +406,8 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 
 ## 8. 当面やらないこと
 
-- 実機テストと実機用`.env`
+- 実機テストと実機用設定
+- FreeRTOS task/queue/semaphore/task notificationと`esp_timer`の仮想化
 - ESP32など別環境への移植
 - 公開API名の確定
 - 標準デバイスカタログの大量追加
@@ -418,4 +424,3 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 
 次に行うのはGate AのためのWP-A1とWP-A2。操作経路と直接呼び出しの境界を承認してから、
 timestampや1行形式をGate Bで比較する。
-

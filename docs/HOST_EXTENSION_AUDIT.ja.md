@@ -12,14 +12,14 @@
 
 | 優先度 | 不足 | 影響 |
 | --- | --- | --- |
-| P0 | GPIO interruptの登録・発火口 | `attachInterrupt`がno-opのため、外部入力からISRを再現できない |
+| P0 | GPIO interruptの登録保持・callback呼出し口 | `attachInterrupt`がno-opのため、EmbedBenchがedgeを検出しても登録ISRを呼べない |
 | P0 | device UARTの同期activity hook | TXを後からqueue pollingするため、書込み時刻と他イベントとの順序を失う。waitしない即時応答もできない |
 | P1 | `analogReadMilliVolts`のread hook | mV読取りだけ観測・応答を差し替えできない |
 | P1 | UART begin/end/config/readの通知 | UART設定と受信消費を完全なイベント列へ載せられない |
-| P2 | FreeRTOS/esp_timerの仮想時間 | queue/semaphore/task notify/timerの待ちは実時間のまま |
 
 P0はGate Aと並行して早めに依頼する価値がある。P1は依頼へ含めてよいが、最初の
-I2C縦切りを止めない。P2はtaskを初期スコープへ入れるか承認してから依頼する。
+I2C縦切りを止めない。FreeRTOSと`esp_timer`は標準的なArduino実行モデルの
+外とし、今回の監査・実験・追加依頼から除外する。
 
 ## 2. 能力表
 
@@ -29,7 +29,7 @@ I2C縦切りを止めない。P2はtaskを初期スコープへ入れるか承�
 | clock | now/waitの差替え | 仮想時刻を提供可能 | 単一loop用途は十分 |
 | GPIO mode/write | 同期hookあり | — | 十分 |
 | GPIO read | read hookで結果を返せる | `setPinValue`あり | 十分 |
-| GPIO interrupt | attach/detachの通知なし | callback発火口なし | 不足 |
+| GPIO interrupt | attach/detachの通知・保持なし | callback呼出し口なし | 不足 |
 | Analog raw read | read hookあり | `setAnalogValue`あり | 十分 |
 | Analog mV read | hookなし | `setAnalogMilliVolts`はある | 観測が不足 |
 | PWM/DAC/tone | 状態付きwrite hookあり | — | 波形以外は十分 |
@@ -37,7 +37,6 @@ I2C縦切りを止めない。P2はtaskを初期スコープへ入れるか承�
 | Wire | lifecycle/transaction hook | write status/read bytesを返せる | 十分 |
 | UART | tx/rx queueと最終状態 | pollingと`pushRx` | 発生時刻・即時応答が不足 |
 | console Serial | socket/stdout | device用ではない | 対象外候補 |
-| FreeRTOS wait | — | 実時間 | 初期範囲外なら許容 |
 
 ## 3. 実測
 
@@ -66,17 +65,27 @@ uart_tx_delta=2 queued=2 drained=2 bytes=AT activity_hook=0
 
 ## 5. 追加依頼案
 
-### H1 — GPIO interruptの汎用登録・発火口（P0）
+### H1 — GPIO interruptの登録保持・callback呼出し口（P0）
+
+線の変化、edge判定、発火順序を決めるのはEmbedBench側とする。host coreには
+Arduino APIが受け取った登録情報を保持し、EmbedBenchから指定されたcallbackを
+呼び出す最小限の仕組みだけを求める。
 
 要求する性質:
 
 - `attachInterrupt` / `detachInterrupt`がpin、mode、callbackを保持する
-- 外部コードがpinを指定して、登録済みcallbackを発火できる
+- 外部コードがpinを指定して、登録済みcallbackを同期呼出しできる
 - attach/detachを観測できる単一の汎用hookまたは同等の口がある
 - 何も登録しない既存sketchの挙動を変えない
 - edge判定、保留FIFO、ネスト禁止などEmbedBench固有の方針はhost coreへ入れない
 
-EmbedBenchは線の変化からedgeを判定し、自分の順序規則に従ってhostの発火口を呼ぶ。
+EmbedBenchは自分のGPIO注入経路で線の変化を捕捉し、登録modeと照合し、
+イベントのsequence/timestampを確定した後にhostのcallback呼出し口を呼ぶ。
+host coreが`setPinValue`の変化から自動的にedge判定する仕様は求めない。
+
+この分担なら、runtime中の外部GPIO変化をEmbedBench経由に限定することで、
+値変更、ログ、edge判定、ISR呼出しの順序を1か所で管理できる。
+`HostArduino::setPinValue()`を直接呼び出す経路はこの保証対象外とする。
 
 ### H2 — device UARTの同期activity port（P0）
 
@@ -98,13 +107,7 @@ EmbedBenchは線の変化からedgeを判定し、自分の順序規則に従っ
 - 可能ならread resolution/width変更も順序付きで観測できる
 - attenuationやVrefをhost coreが推測しない
 
-### H4 — task系仮想待ち（P2、保留）
-
-FreeRTOS queue/semaphore/task notifyとesp_timerを対象へ含める場合だけ起票する。
-複数threadのうち誰が仮想時計を進めるかを先にEmbedBench側で決める必要がある。
-
 ## 6. 進行への影響
 
 H1/H2の回答を待たず、Gate Aの操作経路表とI2C縦切りは進められる。ただし、
 interrupt/UARTの公開仕様とgolden形式は、追加口が確定するまで凍結しない。
-
