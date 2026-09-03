@@ -1,0 +1,15 @@
+# Python / pytest
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Arduino and test artefacts
+build/
+output/
+*.elf
+*.hex
+*.map
+
+# Local editor settings
+.vscode/
+arduino_secrets.h
