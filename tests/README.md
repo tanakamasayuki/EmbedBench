@@ -56,3 +56,5 @@ Additional experiments:
 - `spi_device/`: a composite device (SPI plus a DC input line, a busy output line, and time) on the same interface; lineIn was the only addition.
 - `frame_port/`: the generic frame path (format id plus pre-encoding logical bits) for protocols without a dedicated port.
 - `format_registry/`: four format-identity schemes compared (fixed-number collision, environment-interned names, strings only, no-registry degradation) plus frame bus ids.
+- `capacity/`: negotiated size limits (`maxFrameBits`): one model auto-splitting per environment, oversize rejected visibly.
+- `bulk_spi/`: bulk-transfer recording granularity: in-transaction count+checksum summaries vs the per-byte buffer explosion.

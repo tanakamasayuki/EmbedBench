@@ -845,13 +845,63 @@ channelで**打ち止め**、以後の新プロトコルはすべてframe。絶�
 領域（物理層・波形デコード・サイクル精度・アナログ回路網・エラッタ・
 実時間race）を明文化した。
 
+## X27. 最大データ量 — 決め打ちではなく環境とネゴする
+
+対象: `tests/capacity/`
+
+所有者の問い「IFの最大データ量は環境とネゴするのか決め打ちか」への検証。
+**候補: ネゴ方式。** サイズ上限は環境の性質（記録バッファ、転送MTU）であって
+プロトコルの性質ではないため、ポータブルなIFヘッダへ定数を焼き込まない。
+
+**IFへの追加: `HostPort::maxFrameBits(bus)`（ヘッダ80→84行）。** 契約は
+「デバイスは1回問い合わせて出力を分割する。上限内の呼び出しは全量受理を保証。
+上限超過は契約違反として**黙って切り詰めず**、環境が診断イベントで可視化して
+全量拒否する」（X19の教訓: 黙った欠落を作らない）。既定値0は「frame経路なし」
+（`formatId`の0と同じ規約）で、デバイスは安全に不活性になる。
+
+| 検証 | 結果 |
+| --- | --- |
+| 同一模型の適応（ネイティブ） | 32byteのサンプルを、64bit環境では**8byte×4 frame**、4,096bit環境では**32byte×1 frame**に自動分割。checksum一致（F0） |
+| ネゴなし環境の縮退 | 既定`maxFrameBits`=0 → 出力0 frame（誤送信でなく不活性） |
+| 上限内の保証（host、上限64bit） | 4 frame全量受理、要約表示 `len=8 sum=9C/DC/1C/5C` |
+| 上限超過（host、128bitを送出） | `diag.frame_oversize bus=0 bits=128 max=64` で全量拒否。デバイス到達0回 |
+
+インバウンド（環境→デバイス）はネゴ不要: IF契約上データはcall中のみ有効な
+借用ポインタで、デバイスは必要分だけ読む（バッファ強制なし）。
+
+## X28. 大量転送の記録粒度 — transaction集約サマリ
+
+対象: `tests/bulk_spi/`
+
+X10/Gate Fの宿題「大量転送を1byteずつ書くか塊で書くか」の実測。
+draft coreへ「SPI transactionの内側では1byteごとの2行をやめ、endTransactionで
+件数＋checksumの**サマリ1行**に集約する」候補を実装した（SCOPE 3.2の
+「要約を残す」の具体化）。transaction外は従来のper-byte 2行のまま（X24互換）。
+
+| 方式 | 256byte転送の記録 |
+| --- | --- |
+| transaction集約 | **2行**（`spi.begin` + `spi.bulk n=256 mosi_sum=80 miso_sum=80`）、欠落0 |
+| per-byte 2行（transaction外100byteで実証） | 200記録の試行 → 64slotバッファで**146 dropped**（爆発の実証） |
+
+```text
+01 000000 main app spi.begin
+02 000000 main app spi.bulk n=256 mosi_sum=80 miso_sum=80
+03 000000 main app spi.req mosi=A0        ← transaction外は従来どおり
+04 000000 main dev spi.resp miso=5F re=3
+```
+
+**事実:** 集約でもデバイスは1byteごとに呼ばれ続ける（応答の忠実性は不変）。
+失うのはbyte単位のログ行だけで、件数と両方向checksumが完全性の代替になる。
+transaction境界という自然な区切りが集約の開始・終了を決める。
+
+**未決:** 集約をtransaction以外（`writeBytes`等の塊API、frame経路の連送）へ
+広げる基準。checksumの種類（単純和で衝突が問題になるならCRC8等）。
+
 ## 次に必要な実験
 
-1. 大量転送（フレームバッファ規模）のSPI記録粒度: 1byte 2行方式と塊記録の
-   容量・時間比較（Gate F/X10の宿題、SCOPE 3.2の「要約を残す」の具体化）
-2. 別環境の実装例をもう1つ書き、IFが本当に環境非依存かを確認する
+1. 別環境の実装例をもう1つ書き、IFが本当に環境非依存かを確認する
    （最小のネイティブイベント記録環境など。native FakePortが最小例1つ目）
-3. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
-4. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
-5. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-6. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+2. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
+3. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
+4. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）

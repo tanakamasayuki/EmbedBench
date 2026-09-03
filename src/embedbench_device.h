@@ -74,6 +74,19 @@ class HostPort {
     (void)name;
     return 0;
   }
+
+  // The largest frame this environment accepts per frameOut call on one
+  // logical bus, in bits. Size limits are negotiated, never fixed in this
+  // header: they are an environment property (record buffers, transport
+  // MTUs), not a protocol property. A device queries once and splits its
+  // output to fit. 0 means frames are not routed (matches formatId). A
+  // call within the limit is guaranteed to be accepted whole; an
+  // oversized call is a contract violation the environment must reject
+  // visibly (diagnostic), never truncate or drop in silence.
+  virtual uint32_t maxFrameBits(uint8_t bus) {
+    (void)bus;
+    return 0;
+  }
 };
 
 // A device model: a deterministic state machine fed by bus operations,

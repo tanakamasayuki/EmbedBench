@@ -94,6 +94,9 @@ void frameRx(Origin origin, uint8_t bus, uint16_t format,
 // within this environment; 0 when the registry is full. Names, not
 // numbers, are the cross-library identity of a format.
 uint16_t registerFormat(const char* name);
+// This environment's per-call frame capacity in bits (all buses). An
+// oversized frameTx/frameRx is rejected whole with a diagnostic event.
+uint32_t frameCapacityBits();
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
 void dumpf(const char* fmt, ...);

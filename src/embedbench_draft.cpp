@@ -20,6 +20,7 @@ namespace {
 constexpr size_t kCapacity = 64;
 constexpr size_t kMaxWireDevices = 2;
 constexpr size_t kMaxFormats = 8;
+constexpr uint32_t kMaxFrameBits = 64;
 
 struct FormatSlot {
   bool used = false;
@@ -70,6 +71,10 @@ struct State {
   FrameHandler frameReceiver = nullptr;
   void* frameReceiverUser = nullptr;
   FormatSlot formats[kMaxFormats];
+  bool inSpiTransaction = false;
+  uint32_t spiBulkCount = 0;
+  uint8_t spiMosiSum = 0;
+  uint8_t spiMisoSum = 0;
   TickHandler tickHandler = nullptr;
   void* tickUser = nullptr;
   ZeroWaitHandler zeroHandler = nullptr;
@@ -140,6 +145,20 @@ void hexOf(const uint8_t* data, size_t len, char* out, size_t cap) {
     pos += snprintf(out + pos, cap - pos, "%02X", data[i]);
   }
   if (pos == 0 && cap > 0) out[0] = '\0';
+}
+
+// Payloads up to four bytes print as hex; larger ones are summarized as
+// length plus checksum so bulk frames stay one readable line (SCOPE 3.2).
+void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
+  if (bytes <= 4) {
+    char hex[12];
+    hexOf(data, bytes, hex, sizeof(hex));
+    snprintf(out, cap, "data=%s", hex);
+  } else {
+    uint8_t sum = 0;
+    for (size_t i = 0; i < bytes; ++i) sum = static_cast<uint8_t>(sum + data[i]);
+    snprintf(out, cap, "len=%u sum=%02X", static_cast<unsigned>(bytes), sum);
+  }
 }
 
 WireDeviceSlot* findWireDevice(uint16_t address) {
@@ -280,9 +299,19 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool, void*) {
   return count;
 }
 
-// --- SPI hook: request/response pair per transferred byte ----------------
+// --- SPI hooks: request/response pair per byte outside a transaction; a
+// transaction coalesces its bytes into one summary event (count plus
+// checksums), which is the bulk-recording candidate from SCOPE 3.2.
 
 uint8_t onSpiTransfer(uint8_t mosi, void*) {
+  if (state.inSpiTransaction) {
+    uint8_t miso = 0xFF;
+    if (state.spiHandler != nullptr) miso = state.spiHandler(mosi, state.spiUser);
+    ++state.spiBulkCount;
+    state.spiMosiSum = static_cast<uint8_t>(state.spiMosiSum + mosi);
+    state.spiMisoSum = static_cast<uint8_t>(state.spiMisoSum + miso);
+    return miso;
+  }
   const uint32_t req = recordf(Origin::kApp, 0, "spi.req mosi=%02X", mosi);
   uint8_t miso = 0xFF;  // host default: idle bus
   if (state.spiHandler != nullptr) {
@@ -293,6 +322,20 @@ uint8_t onSpiTransfer(uint8_t mosi, void*) {
   }
   recordf(Origin::kDev, req, "spi.resp miso=%02X", miso);
   return miso;
+}
+
+void onSpiTransaction(bool begin, const SPISettings&, void*) {
+  if (begin) {
+    state.inSpiTransaction = true;
+    state.spiBulkCount = 0;
+    state.spiMosiSum = 0;
+    state.spiMisoSum = 0;
+    recordf(Origin::kApp, 0, "spi.begin");
+  } else {
+    state.inSpiTransaction = false;
+    recordf(Origin::kApp, 0, "spi.bulk n=%u mosi_sum=%02X miso_sum=%02X",
+            state.spiBulkCount, state.spiMosiSum, state.spiMisoSum);
+  }
 }
 
 // --- UART hook: device replies go through the RX sink (X21) --------------
@@ -403,6 +446,10 @@ void runBegin(uint32_t tickUs) {
   state.zeroInDirector = 0;
   state.dirDepth = 0;
   state.isrDepth = 0;
+  state.inSpiTransaction = false;
+  state.spiBulkCount = 0;
+  state.spiMosiSum = 0;
+  state.spiMisoSum = 0;
   state.running = true;
 
   HostArduino::setPinWriteHook(&onPinWrite);
@@ -412,6 +459,7 @@ void runBegin(uint32_t tickUs) {
   Wire.setWriteHook(&onWireWrite);
   Wire.setReadHook(&onWireRead);
   SPI.setTransferHook(&onSpiTransfer);
+  SPI.setTransactionHook(&onSpiTransaction);
   Serial1.setActivityHook(&onUartActivity);
   HostArduino::setClockHooks(&onNow, &onWait);
 }
@@ -469,14 +517,23 @@ void formatLabel(uint16_t id, char* out, size_t cap) {
   }
 }
 
+bool frameWithinLimit(uint8_t bus, size_t bits) {
+  if (bits <= kMaxFrameBits) return true;
+  ++state.diagCount;
+  recordf(Origin::kDiag, 0, "diag.frame_oversize bus=%u bits=%u max=%u", bus,
+          static_cast<unsigned>(bits), kMaxFrameBits);
+  return false;
+}
+
 void frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
              size_t bits) {
-  char hex[12];
+  if (!frameWithinLimit(bus, bits)) return;
+  char payload[20];
   char label[20];
-  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
+  payloadLabel(data, (bits + 7) / 8, payload, sizeof(payload));
   formatLabel(format, label, sizeof(label));
-  recordf(origin, 0, "frame.tx bus=%u fmt=%s bits=%u data=%s", bus, label,
-          static_cast<unsigned>(bits), hex);
+  recordf(origin, 0, "frame.tx bus=%u fmt=%s bits=%u %s", bus, label,
+          static_cast<unsigned>(bits), payload);
   if (state.frameDevice) {
     state.frameDevice(bus, format, data, bits, state.frameDeviceUser);
   }
@@ -484,16 +541,19 @@ void frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
 
 void frameRx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
              size_t bits) {
-  char hex[12];
+  if (!frameWithinLimit(bus, bits)) return;
+  char payload[20];
   char label[20];
-  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
+  payloadLabel(data, (bits + 7) / 8, payload, sizeof(payload));
   formatLabel(format, label, sizeof(label));
-  recordf(origin, 0, "dev.frame bus=%u fmt=%s bits=%u data=%s", bus, label,
-          static_cast<unsigned>(bits), hex);
+  recordf(origin, 0, "dev.frame bus=%u fmt=%s bits=%u %s", bus, label,
+          static_cast<unsigned>(bits), payload);
   if (state.frameReceiver) {
     state.frameReceiver(bus, format, data, bits, state.frameReceiverUser);
   }
 }
+
+uint32_t frameCapacityBits() { return kMaxFrameBits; }
 
 uint16_t registerFormat(const char* name) {
   if (name == nullptr || name[0] == '\0') return 0;
