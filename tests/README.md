@@ -49,3 +49,5 @@ Additional experiments:
 - `uart_golden/`: AT conversation golden with immediate and tick-delayed replies on the virtual clock.
 - `i2c_slice/`: the WP-C1 I2C vertical slice (unmodified app, zero event loss, 3x reproducible).
 - `reject_paths/`: how host-rejected or dropped operations appear to the current hooks (for the completeness-scope decision).
+- `event_timing/`: ordering comparison of four event-completion policies under a re-entrant sink call from a response callback.
+- `uart_sink/`: X17 redone with device replies recorded through the core RX sink so device send times enter the log.

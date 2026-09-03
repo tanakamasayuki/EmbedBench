@@ -441,8 +441,8 @@ EmbedBench側はhook一本化とし`readTx`を使わない（二重観測の回�
 **注記（レビュー指摘）:** この実験の即時応答は `kUartTx` callback内から直接
 `pushRx` しており、devの送信自体は注入イベントとして残らない（seq 02と03の間に
 devの応答行が無い）。実験上の簡略であり、候補coreではdev応答もcoreのUART RX
-sink経由で記録してから `pushRx` する（監査の利用規則5）。sink経由版の再実験は
-「次に必要な実験」へ入れた。
+sink経由で記録してから `pushRx` する（監査の利用規則5）。sink経由版は**X21で
+実施済み**で、dev送信が独立イベントとして正しい位置に残ることを確認した。
 
 ## X18. I2Cの縦切り（WP-C1の先行実証、host core 1.7.1）
 
@@ -503,17 +503,71 @@ Gate Aの「ログ完全性の範囲」を決めるための実測。hostが受�
   対象にする（監査H4案）か、(b) 完全性を「hostが受理した外部作用」に限定するか
   の二択になる。coreの引数検査で肩代わりする案は、hookに届かない以上成立しない
 
+## X20. イベント完成タイミング4方式の比較（EVENT_MATRIX未決1）
+
+対象: `tests/event_timing/`
+
+応答を伴う操作（I2C read）の最中に、デバイス模型が自分のIRQ線をcoreのGPIO sinkで
+上げる——という再入シナリオで、イベント完成の4方式を比較した。log列は保持順
+（=sequence順）、streamは完成（外部sinkへ流れる）順。
+
+| 方式 | 行数/操作 | stream順 | seq順=stream順 | 未完成slotの露出 | devのIRQ線 | 再入の因果 |
+| --- | ---: | --- | :-: | ---: | --- | --- |
+| (a) 要求/応答2行 | 2 | 123 | ○ | 0 | 即時反映 | **req(1)とresp(3)の間にIRQ(2)が挟まり可視** |
+| (b) 受付時予約・応答後完成 | 1 | **21** | × | 1 | 即時反映 | IRQ(2)がop(1)の後に見え、「操作中」か「操作後」か判別不能 |
+| (c) callback中のsink禁止 | 1+diag | 12 | ○ | 0 | **消失**（rejected=1、pin動かず） | 再入自体が起きない |
+| (c') callback中は延期 | 2 | 12 | ○ | 0 | 遅延反映（callback内の読み戻しはstale） | IRQ(2)がop(1)の後。実際より遅く適用 |
+
+各方式のlog:
+
+```text
+(a)  1 i2c.req addr=48 req=1 / 2 gpio.inject pin=7 val=1 / 3 i2c.resp addr=48 data=2C
+(b)  1 i2c.read addr=48 data=2C / 2 gpio.inject pin=7 val=1   ※完成順は2→1
+(c)  1 i2c.read addr=48 data=2C / 2 diag.reject sink_in_response
+(c') 1 i2c.read addr=48 data=2C / 2 gpio.inject pin=7 val=1 deferred=1
+```
+
+**事実:**
+
+- 再入の因果（IRQが読取り応答の**中で**起きたこと）をログから復元できるのは
+  (a)だけ。代償は応答つき操作1回あたり2行と、req/respの対応付け
+- (b)はslot予約でsequence順の保持はできるが、完成順が逆転するため
+  逐次外部sinkへ流す運用ができず、途中停止時に未完成イベントの穴が残る
+- (c)は順序が最も単純だが、反応的なデバイス模型（IRQ・DRDY）が成立しない
+- (c')は機能と順序を両立するが、デバイスがcallback内で自分の線を読み戻すと
+  古い値を見る（pin_cb=0）という意味論の歪みが残る
+
+## X21. UART応答のsink経由記録（X17改、レビュー指摘4の解消）
+
+対象: `tests/uart_sink/`
+
+X17と同じAT会話を、dev応答をcoreのUART RX sinkで**記録してから** `pushRx` する
+構成でやり直した。X17で欠けていた「devがいつ送信したか」の行が入る。
+
+```text
+01 000000 uart.begin
+02 000000 uart.tx AT
+03 000000 dev.tx OK        ← X17には無かった行。appのTXとRX消費の間に入る
+04 000000 uart.rx O
+05 000000 uart.rx K
+06 002000 uart.tx AT+S
+07 003000 dev.tx OK        ← tick配送でも同じsinkを通るため同形式で残る
+08 003000 uart.rx O
+09 003000 uart.rx K
+```
+
+**事実:** sink経由にしても即時性は保たれ（ex1はwait 0回・経過0us、ex2は
+1 tick遅延の1,000us）、即時応答とtick遅延応答が同じ `dev.tx` イベントとして
+正しい時刻・位置に残る。`kUartTx` callback内からsinkを呼ぶ経路（記録→`pushRx`）
+は安全に動く。
+
 ## 次に必要な実験
 
-1. **イベント完成タイミング3案の比較**（EVENT_MATRIX未決1）: 応答callback内で
-   devがsinkを呼び再入イベントが起きる場合の順序を、(a)要求/応答2行、
-   (b)受付時予約、(c)callback中生成禁止の3案で数値比較する
-2. **UART応答のsink経由版**（X17改）: dev応答をcoreのRX sinkで記録してから
-   `pushRx`し、「devがいつ送信したか」がイベント列から復元できることを確認する
-3. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
-4. listener解除の位置依存（X9）をなくす遅延反映方式の比較
-5. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-6. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
-7. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
-8. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
-9. X16〜X18の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認
+1. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
+2. listener解除の位置依存（X9）をなくす遅延反映方式の比較
+3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+4. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
+5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
+6. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
+7. X16〜X18・X21の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認
+8. 未決1の決定後、X18のI2C縦切りを決定方式（2行分割なら req/resp対応付けの形も含めて）で作り直す

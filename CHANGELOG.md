@@ -22,3 +22,5 @@
 - (JA) 3本の縦切りを候補として実証: 線注入からedge判定と`ctx=isr`付与までの割り込み経路、即時応答とtick遅延応答を持つUART AT会話golden、無改造アプリをイベント欠落0・3回byte一致で駆動するWP-C1のI2C縦切り。
 - (EN) Reworked the Gate A materials after review: event-completion timing and completeness scope became explicit open decisions (with rejected-operation visibility measured as evidence), device-originated GPIO/Analog/UART effects were unified through core sinks, wait events were redefined as host wait requests rather than API names, and bus-instance scope plus the run-window end condition were pinned down.
 - (JA) レビューを受けてGate A資料を改訂: イベント完成タイミングと完全性の範囲を明示的な未決へ変更（拒否操作の可視性を実測して根拠化）、dev発のGPIO/Analog/UART作用をcore sink経由へ統一、waitイベントの意味を「hostのwait要求」へ再定義、対象bus instanceの範囲と実行区間の終了条件を明文化。
+- (EN) Measured the four event-completion policies under a re-entrant sink call (only request/response splitting keeps causality visible and stream order intact) and redid the UART conversation with device replies recorded through the core RX sink.
+- (JA) 再入sink呼び出し下でイベント完成4方式を計測（因果の可視化とstream順序を両立するのは要求/応答2行分割のみ）し、dev応答をcore RX sink経由で記録するUART会話へ作り直し。

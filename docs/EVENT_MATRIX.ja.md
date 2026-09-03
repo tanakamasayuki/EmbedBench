@@ -112,7 +112,7 @@ hostが**受理せず捨てる**呼び出しがhookに一切届かないこと�
 
 | 操作 | 呼ぶ側 | 記録点 | 応答担当 | 注入経路 | 失敗・診断 |
 | --- | --- | --- | --- | --- | --- |
-| TX（`Serial1.write` など） | app | core所有の `setActivityHook` の `kUartTx`（`write()` が戻る前、受理byte列のみ、1.7.1） | portにbindされた単一devが応答する。**応答はcoreのUART RX sink経由**（sinkが注入イベントを記録してから `pushRx`）。`kUartTx` callback内からsinkを呼べば即時性は保たれる（X14/X17の直接 `pushRx` は実験上の簡略で、候補coreでは迂回禁止。直接だと「devがいつ送信したか」が復元できない） | — | TX overflowで受理されなかったbyteはhookに届かず、`txOverflowed()` はsticky flagのため発生時刻・件数をイベント順序へ戻せない（X19実測: 1,200byte中1,024byteのみ通知）。扱いは未決2。hookとpolling併用は同一byteを2回見るためcoreはhook一本化（X14） |
+| TX（`Serial1.write` など） | app | core所有の `setActivityHook` の `kUartTx`（`write()` が戻る前、受理byte列のみ、1.7.1） | portにbindされた単一devが応答する。**応答はcoreのUART RX sink経由**（sinkが `dev.tx` イベントを記録してから `pushRx`）。`kUartTx` callback内からsinkを呼んでも即時性は保たれ、dev送信が正しい時刻・位置に残ることをX21で確認済み。直接 `pushRx` は迂回であり禁止 | — | TX overflowで受理されなかったbyteはhookに届かず、`txOverflowed()` はsticky flagのため発生時刻・件数をイベント順序へ戻せない（X19実測: 1,200byte中1,024byteのみ通知）。扱いは未決2。hookとpolling併用は同一byteを2回見るためcoreはhook一本化（X14） |
 | RX注入 | dir / dev | coreのUART RX sink（記録してから `pushRx`）。`pushRx` 自体はhost hookに通知されない（線の向こう側）ため、記録はsinkの責務 | — | core経由のみ | queue満杯時の受理byte数をdiag（候補） |
 | RX消費（`read` / `readBytes`） | app | 同hookの `kUartRx`（消費1byteごと、1.7.1） | held queue | — | `flush()` の未読破棄は `kUartRxDiscard` で欠落なく残る（X14） |
 | `begin` / `end` / 設定変更 | app | 同hookの `kUartBegin` / `kUartEnd` / `kUartConfig`（1.7.1） | 応答不要 | — | `uartNum()` でport識別 |
@@ -140,12 +140,19 @@ hostが**受理せず捨てる**呼び出しがhookに一切届かないこと�
 ## 未決（Gate Aで承認が必要）
 
 1. **イベント完成のタイミング**（応答を伴う操作: GPIO/Analog read、SPI transfer、
-   I2C read/write）。候補は3つ:
-   - (a) 要求イベントと応答イベントを2行に分ける
-   - (b) 受付時にsequence/timestampだけ予約し、応答後にイベントを完成させる
-   - (c) 応答callback中のイベント生成を禁止し、応答完了後に完成イベントを記録する
-   応答callback（dev）がsinkを呼んで再入イベントを生む場合の順序が3案で変わるため、
-   比較実験で数値を取ってから決める
+   I2C read/write）。候補は3つ+変種1つで、比較はX20で実測済み:
+   - (a) 要求イベントと応答イベントを2行に分ける —
+     **再入の因果（devのIRQが応答中に起きたこと）を可視化できる唯一の案**。
+     stream順=seq順も保つ。代償は応答つき操作あたり2行とreq/respの対応付け
+   - (b) 受付時にsequence/timestampだけ予約し、応答後にイベントを完成させる —
+     1行/操作だが完成順が逆転（X20でstream「21」）し、逐次外部sink運用が
+     できず、未完成slotの露出が残る
+   - (c) 応答callback中のイベント生成を禁止する — 順序は単純だが、反応的な
+     デバイス模型（IRQ・DRDY）が成立しない（X20でIRQ消失）
+   - (c') callback中のsinkを延期する — 機能と順序は両立するが、devが自分の
+     線をcallback内で読み戻すと古い値を見る意味論の歪みが残る
+   実測上は(a)が唯一すべての性質を満たす。採否と、採る場合のreq/resp対応付け
+   （req側sequenceの参照など）をGate Aで決める
 2. **ログ完全性の範囲**。hostが受理せず捨てる呼び出しは現hookでは0イベント
    （X19実測: silicon拒否のanalog 3種、begin無しendTransmission、
    Wire送信バッファoverflow、UART TX overflowの超過分）。候補は2つ:
