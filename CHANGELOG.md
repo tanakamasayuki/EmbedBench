@@ -24,3 +24,5 @@
 - (JA) レビューを受けてGate A資料を改訂: イベント完成タイミングと完全性の範囲を明示的な未決へ変更（拒否操作の可視性を実測して根拠化）、dev発のGPIO/Analog/UART作用をcore sink経由へ統一、waitイベントの意味を「hostのwait要求」へ再定義、対象bus instanceの範囲と実行区間の終了条件を明文化。
 - (EN) Measured the four event-completion policies under a re-entrant sink call (only request/response splitting keeps causality visible and stream order intact) and redid the UART conversation with device replies recorded through the core RX sink.
 - (JA) 再入sink呼び出し下でイベント完成4方式を計測（因果の可視化とstream順序を両立するのは要求/応答2行分割のみ）し、dev応答をcore RX sink経由で記録するUART会話へ作り直し。
+- (EN) Entered the implementation-first phase by owner decision: integrated the measured winners into a draft core (src/embedbench_draft.*, explicitly unapproved and rework-expected) and measured a multi-bus scenario — GPIO, an interrupt, I2C, UART, and virtual time on one 21-event list, byte-identical across three runs.
+- (JA) 所有者判断で先行実装フェーズへ移行: 実測の最優秀候補を統合したdraft core（src/embedbench_draft.*、未承認・手戻り前提）を実装し、GPIO・割り込み・I2C・UART・仮想時間を21イベント1本の列に載せて3回byte一致を計測。

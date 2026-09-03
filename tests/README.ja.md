@@ -50,3 +50,4 @@ tests/<実験名>/
 - `reject_paths/`: hostが拒否・破棄した操作が現hookでどう見えるか（ログ完全性の範囲判断用）
 - `event_timing/`: 応答callback内の再入sinkに対する、イベント完成4方式の順序比較
 - `uart_sink/`: dev応答をRX sinkで記録してから`pushRx`するX17改（送信時刻の復元）
+- `core_draft/`: 統合draft core（`src/embedbench_draft.*`）でGPIO・割り込み・I2C・UART・時間を1本のイベント列に載せる計測

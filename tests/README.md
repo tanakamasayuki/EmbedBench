@@ -51,3 +51,4 @@ Additional experiments:
 - `reject_paths/`: how host-rejected or dropped operations appear to the current hooks (for the completeness-scope decision).
 - `event_timing/`: ordering comparison of four event-completion policies under a re-entrant sink call from a response callback.
 - `uart_sink/`: X17 redone with device replies recorded through the core RX sink so device send times enter the log.
+- `core_draft/`: the integrated draft core (`src/embedbench_draft.*`) putting GPIO, an interrupt, I2C, UART, and time on one event list.

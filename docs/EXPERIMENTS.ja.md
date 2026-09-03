@@ -561,13 +561,80 @@ X17と同じAT会話を、dev応答をcoreのUART RX sinkで**記録してから
 正しい時刻・位置に残る。`kUartTx` callback内からsinkを呼ぶ経路（記録→`pushRx`）
 は安全に動く。
 
+## X22. 統合draft coreの複数バス同時計測
+
+対象: `tests/core_draft/`、実装は `src/embedbench_draft.{h,cpp}`
+
+**工程上の位置づけ:** 所有者の判断で、Gate承認を後置して「実装しながら数値を
+取り、最後に決定する」フェーズに入った（2026-09-03）。各実験の最優秀候補
+（X4/X7/X8のtick処理、X11の観測者/応答者分離、X16のedge判定と`ctx=isr`、
+X20勝者の要求/応答2行分割、X21のsink記録）を1つのdraft coreに統合し、
+`src/embedbench_draft.{h,cpp}` に**未承認・手戻り前提のdraft**として隔離した。
+計画7項の「Gate未承認の型をsrc/へ追加しない」の例外であり、公開APIの確定ではない。
+
+シナリオ（アプリは無改造のArduinoコード）: I2Cでconfig書込み →
+`attachInterrupt`してDRDY待ちのビジーウェイト（`yield()`）→ 進行役が3回目の
+0 us waitでDRDY線を注入 → ISRがGPIO書込み → I2Cで温度読取り(250) →
+UARTで"AT"送信、devがsink経由で"OK"応答 → `delay(2)`中のtick 2で進行役が
+温度300をchannel注入 → 再読取り(300) → dump。
+
+観測されたイベント列（21行、3回実行してbyte一致）:
+
+```text
+01 000000 main app i2c.req addr=48 data=0105
+02 000000 main dev i2c.resp status=0 re=1
+03 000000 main app int.attach pin=27 trig=1
+04 000000 tick dir gpio.inject pin=27 0->1 match=1
+05 000000 isr core isr.enter pin=27
+06 000000 isr app gpio.write pin=5 val=1
+07 000000 isr core isr.exit pin=27
+08 000000 main app i2c.req addr=48 data=00
+09 000000 main dev i2c.resp status=0 re=8
+10 000000 main app i2c.rd.req addr=48 req=2
+11 000000 main dev i2c.rd.resp len=2 data=00FA re=10
+12 000000 main app uart.tx AT
+13 000000 main dev dev.tx OK
+14 000000 main app uart.rx O
+15 000000 main app uart.rx K
+16 002000 tick dir chan.write chan=0 data=012C
+17 002000 main app i2c.req addr=48 data=00
+18 002000 main dev i2c.resp status=0 re=17
+19 002000 main app i2c.rd.req addr=48 req=2
+20 002000 main dev i2c.rd.resp len=2 data=012C re=19
+21 002000 main dir dump temp=012C cfg=05
+```
+
+| 測定 | 値 |
+| --- | ---: |
+| イベント数（うち応答行） | 21（5） |
+| 3つの文脈（main / tick / isr）の共存 | 順序保存で成立 |
+| dropped / 診断 / late tick | 0 / 0 / 0 |
+| 1イベントのメモリ（text 44byte内包） | 72 byte |
+| 応答行の対応付け | `re=<要求seq>` 1フィールド |
+| draft core規模 | ヘッダ83行 + 実装457行 |
+| 実験側の記述 | 182行（模型・binding・シナリオ込み） |
+
+**事実:**
+
+- GPIO・割り込み・I2C・UART・仮想時間が**1本のsequence軸**に載り、ISR内の
+  バス書込み（seq 06）、要求と応答の間のイベント、tick注入がすべて正しい
+  位置に残る
+- 2行分割（X20勝者）の実コスト: この現実的なシナリオで21行中5行が応答行。
+  対応付けは `re=` 1フィールドで足りた
+- 応答callbackなしの読取り（held値のGPIO read）は1行の完成イベントにする
+  折衷が成立する（X20の問題は応答callbackがある操作だけに存在するため）
+- 0 us wait注入 → edge判定 → ISR → 通常フローへの復帰、という最難の経路が
+  他のバスと混在しても順序・再現性を壊さない
+
+**draft v1の未実装（次回りの手戻り候補）:** Analog、SPI、`Wire1`/`Serial2`、
+lifecycle連動のrun window、listener多重化、バッファ満杯時の診断イベント化。
+
 ## 次に必要な実験
 
-1. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
-2. listener解除の位置依存（X9）をなくす遅延反映方式の比較
-3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-4. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
-5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
-6. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
-7. X16〜X18・X21の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認
-8. 未決1の決定後、X18のI2C縦切りを決定方式（2行分割なら req/resp対応付けの形も含めて）で作り直す
+1. draft coreへAnalog・SPIを追加し、X22のシナリオを拡張して順序が保たれるかの確認
+2. WP-C2: command型（表示・UART系状態機械）の模型をdraft coreへ載せる
+3. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
+4. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
+5. listener解除の位置依存（X9）をなくす遅延反映方式の比較
+6. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+7. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
