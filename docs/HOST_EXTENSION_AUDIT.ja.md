@@ -137,3 +137,27 @@ EmbedBench側の利用規則（候補）:
 3. UARTはactivity hookとqueue pollingが共存し、両方使うと同一byteを2回見る。
    EmbedBenchはhook一本化とし、`readTx`は使わない
 4. `kUartRx`は消費1byteごとに1通知。イベント量の見積りに含める
+5. **devの外向き作用（GPIO・Analog・UART RX応答）はEmbedBenchのsink経由で
+   記録してから反映する。** `pushRx` / `setPinValue` の直接呼び出しは注入イベントを
+   残せない（`pushRx`はhost hookに通知されない）。X14/X17でhook内から直接
+   `pushRx`したのは実験上の簡略であり、候補coreでは迂回を禁止する
+
+## 8. H4 — 拒否・破棄されたAPI呼出しの通知（依頼案、Gate A判断待ち）
+
+`tests/reject_paths/`（X19）の実測で、hostが受理せず捨てる呼び出しは
+現hookでは一切イベントにならないことを確認した。
+
+| 拒否・破棄 | 現状の見え方 |
+| --- | --- |
+| silicon拒否のanalog呼出し（未attachへのduty、周波数0、20bit超の分解能） | hook 0イベント。戻り値falseのみ |
+| `beginTransmission`なしの`endTransmission` | status 4のみ。write hook 0回 |
+| Wire送信バッファoverflow（128byte超） | status 1のみ。write hook 0回（模型へ届かない） |
+| UART TX overflow | 受理された1,024byteだけ`kUartTx`通知。超過176byteは`txOverflowed()`のsticky flagのみで、発生時刻・件数をイベント順序へ戻せない |
+
+Gate Aの未決2で「拒否も完全性の対象」を選ぶ場合に依頼する。要求する性質（案）:
+
+- 受理経路と同じ同期タイミングで、拒否・破棄の理由と件数を1回で通知できる
+- 既存hookのシグネチャを壊さない（別hookまたは共通の診断口）
+- hostは拒否の判断自体を変えない（通知のみを追加する）
+
+「hostが受理した外部作用」に完全性を限定する場合（未決2の(b)）は依頼しない。

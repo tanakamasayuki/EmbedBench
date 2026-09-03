@@ -438,6 +438,12 @@ EmbedBench側はhook一本化とし`readTx`を使わない（二重観測の回�
 全てが同じ仮想時間軸のイベント列に正しい順序で残る。`readBytes` のwait中に
 進行役が `pushRx` する経路（tick配送）は安全に動く。
 
+**注記（レビュー指摘）:** この実験の即時応答は `kUartTx` callback内から直接
+`pushRx` しており、devの送信自体は注入イベントとして残らない（seq 02と03の間に
+devの応答行が無い）。実験上の簡略であり、候補coreではdev応答もcoreのUART RX
+sink経由で記録してから `pushRx` する（監査の利用規則5）。sink経由版の再実験は
+「次に必要な実験」へ入れた。
+
 ## X18. I2Cの縦切り（WP-C1の先行実証、host core 1.7.1）
 
 対象: `tests/i2c_slice/`
@@ -470,12 +476,44 @@ I2C読取り、`delay(3)`中のtick 2で進行役が温度300をchannel注入、
 **注記:** Gate A/Bは未承認のため、これは仕様決定ではなくWP-C1の候補実証である。
 イベント1行の綴りもX10の候補1を仮置きしたに過ぎない。
 
+## X19. 拒否・破棄された操作の現hookでの見え方
+
+対象: `tests/reject_paths/`
+
+Gate Aの「ログ完全性の範囲」を決めるための実測。hostが受理せず捨てる呼び出しが
+現在のhookでどう見えるかを数値化した。
+
+| 操作 | 戻り値・状態 | hookイベント |
+| --- | --- | ---: |
+| `beginTransmission`なしの`endTransmission` | status 4 | 0 |
+| Wire送信バッファoverflow（200byte書いて128byte受理） | status 1 | 0（模型へ届かない） |
+| UART TX overflow（1,200byte書いて1,024byte受理） | `txOverflowed()`=1（sticky） | `kUartTx` 11件 / 1,024byteのみ |
+| 未attach pinへの`ledcWrite` | false | 0 |
+| 周波数0の`ledcAttach` | false | 0 |
+| 20bit超分解能の`ledcAttach` | false | 0 |
+| （対照）正当な`ledcAttach` | true | 1 |
+
+**事実:**
+
+- hostが拒否・破棄した操作は、**どの経路でもhookに一切届かない**。EmbedBenchは
+  アプリがそのAPIを呼んだこと自体を知れない
+- 検出手段はアプリへの戻り値（status 4/1、false）とsticky flagだけで、
+  「いつ、何byte失ったか」をイベント順序へ戻す方法は存在しない
+- したがってGate Aは、(a) hostへreject/overflow通知を依頼して拒否も完全性の
+  対象にする（監査H4案）か、(b) 完全性を「hostが受理した外部作用」に限定するか
+  の二択になる。coreの引数検査で肩代わりする案は、hookに届かない以上成立しない
+
 ## 次に必要な実験
 
-1. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
-2. listener解除の位置依存（X9）をなくす遅延反映方式の比較
-3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-4. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
-5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
-6. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
-7. X16〜X18の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認
+1. **イベント完成タイミング3案の比較**（EVENT_MATRIX未決1）: 応答callback内で
+   devがsinkを呼び再入イベントが起きる場合の順序を、(a)要求/応答2行、
+   (b)受付時予約、(c)callback中生成禁止の3案で数値比較する
+2. **UART応答のsink経由版**（X17改）: dev応答をcoreのRX sinkで記録してから
+   `pushRx`し、「devがいつ送信したか」がイベント列から復元できることを確認する
+3. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
+4. listener解除の位置依存（X9）をなくす遅延反映方式の比較
+5. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+6. SPIにもX11/X18の観測者・応答者分離を適用して同じ核が使えるかの確認
+7. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。X18のdumpは1案目）
+8. WP-C2: command型（表示・UART系状態機械）の模型でX18と同じ核が使えるかの確認
+9. X16〜X18の候補coreを1つに統合し、複数バス同時のイベント列で順序が保たれるかの確認

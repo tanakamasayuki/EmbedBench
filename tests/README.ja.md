@@ -47,3 +47,4 @@ tests/<実験名>/
 - `interrupt_slice/`: 線注入→edge判定→ISR起動→`ctx=isr`付与の縦切り
 - `uart_golden/`: AT会話（即時応答とtick遅延応答）の仮想時刻つきgolden
 - `i2c_slice/`: WP-C1のI2C縦切り（アプリ無改造・欠落0・3回再現）の先行実証
+- `reject_paths/`: hostが拒否・破棄した操作が現hookでどう見えるか（ログ完全性の範囲判断用）

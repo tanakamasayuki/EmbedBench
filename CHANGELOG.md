@@ -20,3 +20,5 @@
 - (JA) 全実験をhost core 1.7.1へ移行し、新しい拡張口が監査依頼H1〜H3を解決することを検証: 割り込み口（生mode定数の罠も記録）、同期UART activity hook（hook内応答でwait 0回）、Analog mV/分解能hook。
 - (EN) Proved three vertical slices as candidates: interrupt injection through edge decision and ctx=isr tagging, a UART AT-conversation golden with immediate and tick-delayed replies, and the WP-C1 I2C slice driving an unmodified app with zero event loss and byte-identical traces across three runs.
 - (JA) 3本の縦切りを候補として実証: 線注入からedge判定と`ctx=isr`付与までの割り込み経路、即時応答とtick遅延応答を持つUART AT会話golden、無改造アプリをイベント欠落0・3回byte一致で駆動するWP-C1のI2C縦切り。
+- (EN) Reworked the Gate A materials after review: event-completion timing and completeness scope became explicit open decisions (with rejected-operation visibility measured as evidence), device-originated GPIO/Analog/UART effects were unified through core sinks, wait events were redefined as host wait requests rather than API names, and bus-instance scope plus the run-window end condition were pinned down.
+- (JA) レビューを受けてGate A資料を改訂: イベント完成タイミングと完全性の範囲を明示的な未決へ変更（拒否操作の可視性を実測して根拠化）、dev発のGPIO/Analog/UART作用をcore sink経由へ統一、waitイベントの意味を「hostのwait要求」へ再定義、対象bus instanceの範囲と実行区間の終了条件を明文化。

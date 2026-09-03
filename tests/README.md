@@ -48,3 +48,4 @@ Additional experiments:
 - `interrupt_slice/`: vertical slice from line injection through edge decision, ISR invocation, and ctx=isr tagging.
 - `uart_golden/`: AT conversation golden with immediate and tick-delayed replies on the virtual clock.
 - `i2c_slice/`: the WP-C1 I2C vertical slice (unmodified app, zero event loss, 3x reproducible).
+- `reject_paths/`: how host-rejected or dropped operations appear to the current hooks (for the completeness-scope decision).
