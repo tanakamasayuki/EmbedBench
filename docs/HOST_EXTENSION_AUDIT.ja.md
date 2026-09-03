@@ -3,6 +3,11 @@
 内部の記録。日本語のみ。host-arduino-core 1.7.0だけでEmbedBenchの候補範囲を
 実現できるかを、ソースと`tests/host_gaps/`の実測から整理する。
 
+> **2026-09-03 追記: H1〜H3はhost-arduino-core 1.7.1で全て解決した。**
+> 検証は `tests/interrupt_port/`、`tests/uart_activity/`、`tests/analog_mv/`
+> （実験台帳のX13〜X15）。以下の不足表と依頼案は1.7.0時点の記録として残す。
+> 1.7.1利用時の注意は末尾の「7. 1.7.1での解決内容と利用上の注意」を参照。
+
 ## 1. 結論
 
 最初のI2C縦切り、仮想時計、ライフサイクル、GPIO/SPI/Wire/Analog rawの観測、
@@ -10,12 +15,12 @@
 
 ただし、次を最終的な対象へ含めるならhost coreへの追加依頼が必要になる。
 
-| 優先度 | 不足 | 影響 |
-| --- | --- | --- |
-| P0 | GPIO interruptの登録保持・callback呼出し口 | `attachInterrupt`がno-opのため、EmbedBenchがedgeを検出しても登録ISRを呼べない |
-| P0 | device UARTの同期activity hook | TXを後からqueue pollingするため、書込み時刻と他イベントとの順序を失う。waitしない即時応答もできない |
-| P1 | `analogReadMilliVolts`のread hook | mV読取りだけ観測・応答を差し替えできない |
-| P1 | UART begin/end/config/readの通知 | UART設定と受信消費を完全なイベント列へ載せられない |
+| 優先度 | 不足 | 影響 | 状態 |
+| --- | --- | --- | --- |
+| P0 | GPIO interruptの登録保持・callback呼出し口 | `attachInterrupt`がno-opのため、EmbedBenchがedgeを検出しても登録ISRを呼べない | **1.7.1で解決（X13）** |
+| P0 | device UARTの同期activity hook | TXを後からqueue pollingするため、書込み時刻と他イベントとの順序を失う。waitしない即時応答もできない | **1.7.1で解決（X14）** |
+| P1 | `analogReadMilliVolts`のread hook | mV読取りだけ観測・応答を差し替えできない | **1.7.1で解決（X15）** |
+| P1 | UART begin/end/config/readの通知 | UART設定と受信消費を完全なイベント列へ載せられない | **1.7.1で解決（X14）** |
 
 P0はGate Aと並行して早めに依頼する価値がある。P1は依頼へ含めてよいが、最初の
 I2C縦切りを止めない。FreeRTOSと`esp_timer`は標準的なArduino実行モデルの
@@ -111,3 +116,24 @@ host coreが`setPinValue`の変化から自動的にedge判定する仕様は求
 
 H1/H2の回答を待たず、Gate Aの操作経路表とI2C縦切りは進められる。ただし、
 interrupt/UARTの公開仕様とgolden形式は、追加口が確定するまで凍結しない。
+
+## 7. 1.7.1での解決内容と利用上の注意
+
+依頼したH1〜H3は1.7.1で、要求した分担のまま提供された。実測はX13〜X15。
+
+| 依頼 | 提供された口 | 検証結果 |
+| --- | --- | --- |
+| H1 | `HostInterrupt.h`: 登録保持（`attachInterruptArg`含む）、`triggerInterrupt(pin)`同期呼出し、`setInterruptHook`（attach/detach + handler前後のenter/exit） | 線の変化では発火しない。enter/exitでISR内バス通信を識別可能。handlerの自己detach安全。`fires`は再attachを跨いで保持（X13） |
+| H2 | `HostUart::setActivityHook`: begin/end/config/TX/RX/RxDiscardの6イベント、TXは`write()`が戻る前、ロック解放後にcallback | TXがGPIOイベント間の正しい位置に残る。hook内`pushRx`で**wait 0回**の即時応答（1.7.0のpollingは1 wait/1,000us）。flush破棄も欠落せず報告（X14） |
+| H3 | `setAnalogMilliVoltsHook`（held値を受け結果を返す）、`setAnalogReadConfigHook`（分解能変更） | raw hookと完全に独立。`clearAnalogHooks`は4本すべて解除（X15） |
+
+EmbedBench側の利用規則（候補）:
+
+1. **割り込みmodeの生値を照合に使わない。** このcoreの生定数はarduino-esp32と
+   不一致（`RISING`=3/実機1、`CHANGE`=1/実機3）で、数値照合は静かに誤一致する。
+   正規化された`InterruptTrigger`だけで照合する（X13で両方の生値を実測）
+2. 再attachはdetachイベントなしのattachイベント1件（置換）。多重化層は
+   置換として扱う
+3. UARTはactivity hookとqueue pollingが共存し、両方使うと同一byteを2回見る。
+   EmbedBenchはhook一本化とし、`readTx`は使わない
+4. `kUartRx`は消費1byteごとに1通知。イベント量の見積りに含める

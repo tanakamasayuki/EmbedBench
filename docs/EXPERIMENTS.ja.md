@@ -9,11 +9,15 @@
 
 ## 記録の読み方
 
-- **事実**: host-arduino-core 1.7.0の実行結果。EmbedBenchの仕様ではない
+- **事実**: host-arduino-coreの実行結果。EmbedBenchの仕様ではない
 - **候補**: 実験内だけに書いた方式。採用前であり、公開ヘッダには入れない
 - **未決**: 実験結果を踏まえて別途承認する事項
 
 すべて `lang-ship:host:host`、`socket://localhost`、実機なしで実行する。
+
+**host coreのversion:** X0〜X12は1.7.0で計測した。2026-09-03に全実験のpinを
+1.7.1へ更新し、X0〜X12が同一結果のまま通ることを再確認した（1.7.1は追加のみで
+既存挙動を変えないという主張どおり）。X13以降は1.7.1が対象。
 
 ## X0. 最小経路
 
@@ -127,6 +131,8 @@ ASBCLDCL
 | UART TX | 2byteをqueueへ保存、2byteを後からdrain可能、同期activity hookなし |
 
 不足する能力と依頼候補は[HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md)へ分離した。
+
+**追記:** ここで確認した不足はhost core 1.7.1で全て解決した。検証はX13〜X15。
 
 ## X7. 0 us waitの再入と無限ループ条件
 
@@ -319,6 +325,65 @@ device側行数の内訳: 型付きAPI 6行、channel adapter 20行。案1は型
 device側行数は案3が最大（26行）になるため、adapter記述を減らす共通部品を
 Gate Cで検討する。
 
+## X13. 割り込み口の検証（H1、host core 1.7.1）
+
+対象: `tests/interrupt_port/`
+
+記号: A=attach、D=detach、E*n*=enter(depth n)、X*n*=exit(減算後depth)、w=pin write。
+
+| 操作 | 結果 |
+| --- | --- |
+| `attachInterrupt(27, h, RISING)` | attachイベント1件、**生mode=3**、正規化trigger=1(kTriggerRising) |
+| `setPinValue` / `digitalWrite` で線を動かす | fires=0（coreは自発的に発火しない） |
+| `triggerInterrupt(27)`、handler内で`digitalWrite` | `E1wX0`。ISR内のバス通信がenter/exitに挟まれ文脈識別できる |
+| handlerが自分を再trigger | `E1E2X1X0`、fires=2、最大depth=2 |
+| handlerが自分をdetach | `E1DX0`、以後のtriggerはfalse |
+| `attachInterruptArg` | arg経由でcallback到達 |
+| 再attach（mode変更CHANGE） | firesは2のまま保持、**生mode=1**、trigger=3(kTriggerChange)、detachイベントなしの置換 |
+| 未登録pinのtrigger / detach | false / イベントなし |
+
+**事実:**
+
+- H1で依頼した分担（保持と呼出し口のみ、edge判定なし）がそのまま提供された
+- **生mode定数はarduino-esp32と不一致**（RISING: host 3 / 実機 1、CHANGE: host 1 / 実機 3）。
+  数値照合は静かに誤一致するため、照合は正規化`InterruptTrigger`のみとする
+- enter/exitの括りにより、EmbedBenchはISR由来のイベントへ `ctx=isr` を機械的に付与できる
+
+## X14. UART activity hookの検証（H2、host core 1.7.1）
+
+対象: `tests/uart_activity/`
+
+記号: B=begin、N=end、C=config、T*n*=TX n byte、R=RX 1byte消費、F*n*=flush破棄 n byte、w=pin write。
+
+| 操作 | 結果 |
+| --- | --- |
+| `begin(9600)` / `updateBaudRate` / `end()` | B / C / N 各1件、`uartNum()`=1 |
+| `digitalWrite` → `print("AT")` → `digitalWrite` | trace `wT2w`。**TXがGPIOイベント間の正しい位置に残る**（X3/X6のpollingでは不可能だった） |
+| `kUartTx` callback内から `pushRx("OK")` | `readBytes`が**wait 0回**で"OK"を受信（X3の同一交換は1 wait / 1,000us） |
+| 2byteの消費 | `RR`（1byteごとに1イベント） |
+| hook使用中のtx queue | 2byte残存（hookとpollingは共存、両方使うと二重観測） |
+| テスト側の`readTx` | イベントなし（線のこちら側の行為は通知されない） |
+| `pushRx("junk")`後の`flush()` | `F4`（未読破棄も欠落なく報告） |
+
+**事実:** H2で依頼した全性質（TXは`write()`前、callbackからの`pushRx`安全、
+port番号と受理byte数、begin/end/config通知）が提供された。
+EmbedBench側はhook一本化とし`readTx`を使わない（二重観測の回避）。
+
+## X15. Analog mV読取り観測の検証（H3、host core 1.7.1）
+
+対象: `tests/analog_mv/`
+
+| 操作 | 結果 |
+| --- | --- |
+| hookなしで`analogReadMilliVolts` | 注入値3300がそのまま返る |
+| `setAnalogMilliVoltsHook`（held/2を返す） | 結果1650、held=3300を受領、mv hook 1回、raw hook 0回 |
+| `setAnalogReadHook`後の`analogRead` | raw hook 1回、mv hookは増えない（完全に独立） |
+| `analogReadResolution(9)` → `analogSetWidth(11)` | config hookへ bits=9, 11 の順で2回（両綴りは区別なし） |
+| `clearAnalogHooks()` | 4本すべて解除。mv読取りは3300へ戻り、config通知も止まる |
+
+**事実:** H3の依頼どおり、mV読取りの観測・差し替えが可能になり、既存raw hookは
+無変更。X6の観測の穴は塞がれた。
+
 ## 次に必要な実験
 
 1. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
@@ -326,3 +391,6 @@ Gate Cで検討する。
 3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
 4. UART/SPIにもX11の観測者・応答者分離を適用して同じ核が使えるかの確認
 5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決）
+6. 割り込みの縦切り: 線注入 → edge判定 → イベント記録 → `triggerInterrupt` →
+   ISR内バス通信の`ctx=isr`付与までを1本で通す（X13の口を使う）
+7. UARTデバイス模型のAT会話golden: `kUartTx`応答とtick進行の組み合わせ（X14の口を使う）

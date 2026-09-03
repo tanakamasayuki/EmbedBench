@@ -1,11 +1,11 @@
 # 操作経路表（WP-A1）
 
 内部の記録。日本語のみ。Gate Aの承認材料であり、承認前の**候補**である。
-host-arduino-core 1.7.0のhook一覧と、[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)の
-X0〜X11の実測に基づいて、外部から観測可能な操作のすべてに記録点と応答担当を
-割り当てる。「この操作はログに残らない」を暗黙に残さないための表であり、
-記録点が存在しない行は不足として明示し、[HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md)の
-依頼番号を付ける。
+host-arduino-core 1.7.1のhook一覧と、[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)の
+X0〜X15の実測に基づいて、外部から観測可能な操作のすべてに記録点と応答担当を
+割り当てる。「この操作はログに残らない」を暗黙に残さないための表である。
+1.7.0時点で不足していた割り込み・UART・mV読取りの記録点は、1.7.1の追加口
+（[HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md)のH1〜H3、検証X13〜X15）で埋まった。
 
 ## アクターの凡例
 
@@ -64,14 +64,16 @@ X0〜X11の実測に基づいて、外部から観測可能な操作のすべて
 | `digitalWrite` | app | core所有の `setPinWriteHook` | 応答不要 | — | listener上限到達はdiag（X9） |
 | `digitalRead` | app | core所有の `setPinReadHook`（読取りと結果を1イベント） | pinにbindされた単一dev、未bindはheld値 | — | 同一pinへの二重bindは拒否+diag（X11と同型） |
 | 線レベルの注入 | dir | coreの注入受付（記録してから `setPinValue`） | — | core経由のみ | 走行外の注入は仕込みとして扱い記録しない（計画4.2） |
-| `attachInterrupt` / `detachInterrupt` | app | **なし（不足、H1）**。現状no-op | **なし（不足、H1）**。拡張後はcoreがedge判定し登録ISRを同期呼出し | 線注入と同経路 | 未登録pinのedgeはイベントのみ。ISRのネスト禁止はcore側の規則（候補） |
+| `attachInterrupt` / `attachInterruptArg` / `detachInterrupt` | app | core所有の `setInterruptHook`（attach/detachイベント、1.7.1） | 応答不要（host coreが登録を保持） | — | 再attachはdetachなしの置換1イベント（X13） |
+| ISR起動 | core | 同hookの `kInterruptEnter` / `kInterruptExit`（ISR内バス通信の文脈識別に使う） | coreがedge判定し、注入記録後に `triggerInterrupt(pin)` で登録ISRを同期呼出し（X13） | 線注入と同経路 | 未登録pinのedgeはイベントのみ。ネスト規則はcore側の候補。**照合は正規化`InterruptTrigger`のみ**（生modeはesp32と不一致、X13） |
 
 ## Analog
 
 | 操作 | 呼ぶ側 | 記録点 | 応答担当 | 注入経路 | 失敗・診断 |
 | --- | --- | --- | --- | --- | --- |
 | `analogRead` | app | core所有の `setAnalogReadHook` | pinにbindされた単一dev、未bindはheld値 | dirがcore経由で `setAnalogValue`（記録） | 二重bind拒否+diag |
-| `analogReadMilliVolts` | app | **なし（不足、H3）** | held値（`setAnalogMilliVolts`）のみ。devを差し込めない | core経由held値注入 | 拡張までgolden対象から外す（候補） |
+| `analogReadMilliVolts` | app | core所有の `setAnalogMilliVoltsHook`（held値と結果を1イベント、1.7.1） | pinにbindされた単一dev、未bindはheld値（X15） | dirがcore経由で `setAnalogMilliVolts`（記録） | raw hookと独立。二重bind拒否+diag |
+| `analogReadResolution` / `analogSetWidth` | app | core所有の `setAnalogReadConfigHook`（1.7.1、両綴りは区別されない） | 応答不要 | — | — |
 | `analogWrite` / `ledc*` / `dacWrite` / `tone` | app | core所有の `setAnalogWriteHook`（`AnalogWriteEvent` + `AnalogOut`） | 応答不要 | — | siliconが拒否する呼び出しはhost coreが無イベントで捨てるため、拒否も記録するならcore側で引数検査（候補） |
 
 ## SPI
@@ -94,10 +96,10 @@ X0〜X11の実測に基づいて、外部から観測可能な操作のすべて
 
 | 操作 | 呼ぶ側 | 記録点 | 応答担当 | 注入経路 | 失敗・診断 |
 | --- | --- | --- | --- | --- | --- |
-| TX（`Serial1.write` など） | app | **なし（不足、H2）**。現状はclock wait中の `readTx` pollingで代替し、発生時刻と他イベントとの順序を失う（X3, X6） | portにbindされた単一devが `pushRx` で応答 | — | 拡張までTXの時刻はwait粒度でしか残らない |
-| RX注入 | dir / dev | coreの注入受付（記録してから `pushRx`） | — | core経由のみ | queue満杯時の受理byte数をdiag（候補） |
-| RX消費（`read` / `readBytes`） | app | **なし（不足、H2）** | held queue | — | — |
-| `begin` / `end` / 設定変更 | app | **なし（不足、H2）** | 応答不要 | — | — |
+| TX（`Serial1.write` など） | app | core所有の `setActivityHook` の `kUartTx`（`write()` が戻る前、受理byte列のみ、1.7.1） | portにbindされた単一devが `kUartTx` callback内から `pushRx` で応答（wait不要、X14） | — | 溢れて捨てたbyteは通知されない。`txOverflowed()` をcoreがdiag化（候補）。hookとpolling併用は同一byteを2回見るためcoreはhook一本化（X14） |
+| RX注入 | dir / dev | coreの注入受付（記録してから `pushRx`）。dev側の `pushRx` はhookに通知されない（線の向こう側） | — | core経由のみ | queue満杯時の受理byte数をdiag（候補） |
+| RX消費（`read` / `readBytes`） | app | 同hookの `kUartRx`（消費1byteごと、1.7.1） | held queue | — | `flush()` の未読破棄は `kUartRxDiscard` で欠落なく残る（X14） |
+| `begin` / `end` / 設定変更 | app | 同hookの `kUartBegin` / `kUartEnd` / `kUartConfig`（1.7.1） | 応答不要 | — | `uartNum()` でport識別 |
 
 ## 時間
 
@@ -126,5 +128,6 @@ X0〜X11の実測に基づいて、外部から観測可能な操作のすべて
    coreが引数検査して診断イベントにするか、対象外と明記するか
 2. `millis` / `micros` の読取りを記録対象に含めるか（含めると量が爆発する）
 3. 実行区間の定義（preSetup開始か、`setup`本体開始か）
-4. UART TXの暫定運用（H2回答まで、wait粒度の順序で妥協するか、UARTを
-   最初の縦切りから外すか）
+
+解決済み: UART TXの暫定運用（旧・未決4）は1.7.1の `setActivityHook` で
+不要になった（X14）。TXはGPIOイベントと同じ順序軸に同期して残る。

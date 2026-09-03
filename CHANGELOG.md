@@ -16,3 +16,5 @@
 - (JA) 実験台帳の未解決項目に答える5つのhost実験を追加: 0 us waitの再入、tick内からの待ちAPI呼び出し、listener配送の上限、イベントバッファ満杯方式と1行形式の容量、Wireの観測者・応答者分離。
 - (EN) Drafted the Gate A operation-path matrix (WP-A1) with an actor diagram and a hand-written I2C sequence, and measured the three direct-call routing policies (WP-A2) with one register-map device model.
 - (JA) Gate Aの操作経路表（WP-A1）をアクター図と最小I2Cシーケンス手書き例付きで起草し、直接呼び出し3案（WP-A2）を同一のregister-map模型で計測。
+- (EN) Moved all experiments to host core 1.7.1 and verified its new extension ports resolve the H1-H3 audit requests: the interrupt port (with the raw-mode numbering trap documented), the synchronous UART activity hook (zero-wait in-hook replies), and the analog millivolt/read-width hooks.
+- (JA) 全実験をhost core 1.7.1へ移行し、新しい拡張口が監査依頼H1〜H3を解決することを検証: 割り込み口（生mode定数の罠も記録）、同期UART activity hook（hook内応答でwait 0回）、Analog mV/分解能hook。

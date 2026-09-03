@@ -24,7 +24,7 @@ tests/<実験名>/
   test_<実験名>.py
 ```
 
-現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.0、
+現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.1、
 ライフサイクルフック、仮想時計、pytestとの接続をまとめて検査する最小テストである。
 
 追加の実験:
@@ -41,3 +41,6 @@ tests/<実験名>/
 - `event_buffer/`: イベント記録のサイズ、固定バッファ満杯方式、1行形式3候補の容量
 - `wire_split/`: Wireの観測者と応答デバイスを分離して戻り値を一意にする構造
 - `device_route/`: 全直接・全共通IF・仕込み/実行/検分分離の3案を同一模型で比較（WP-A2）
+- `interrupt_port/`: host core 1.7.1の割り込み口（登録観測・同期呼出し・enter/exit・mode正規化）の検証
+- `uart_activity/`: host core 1.7.1のUART activity hook（TX同期通知・hook内即時応答・破棄報告）の検証
+- `analog_mv/`: host core 1.7.1のmV読取りhookと分解能設定観測の検証
