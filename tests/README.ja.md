@@ -35,3 +35,8 @@ tests/<実験名>/
 - `tick_split/`: 任意長のwaitを固定tick境界へ分割する候補
 - `hook_slots/`: host coreの単一hook登録を置き換えたときの挙動
 - `host_gaps/`: 割り込み・Analog mV読取り・UART観測で不足する拡張点
+- `zero_wait/`: 0 us waitを外部処理の機会にした場合の再入と無限ループ条件
+- `tick_guard/`: tick callback内から別の待ちAPIを呼んだ場合の3方式比較
+- `listener_fanout/`: 単一hookから固定slotの複数listenerへの配送と上限・callback中解除
+- `event_buffer/`: イベント記録のサイズ、固定バッファ満杯方式、1行形式3候補の容量
+- `wire_split/`: Wireの観測者と応答デバイスを分離して戻り値を一意にする構造

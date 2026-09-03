@@ -12,3 +12,5 @@
 - (JA) TinyGFXのemu初期案を変更しない参考資料として取り込み、host coreの能力不足を再現可能な実測値と追加依頼候補に整理。
 - (EN) Limited the initial execution model to standard Arduino-style setup/loop and synchronous callbacks, excluding FreeRTOS and esp_timer virtualization.
 - (JA) 初期の実行モデルを標準的なArduinoのsetup/loopと同期callbackに限定し、FreeRTOSとesp_timerの仮想化を対象外にした。
+- (EN) Added five host experiments answering the ledger's open questions: 0 us wait re-entry, wait APIs called inside a tick, listener fan-out limits, event buffer overflow policies with line-format sizes, and Wire observer/responder separation.
+- (JA) 実験台帳の未解決項目に答える5つのhost実験を追加: 0 us waitの再入、tick内からの待ちAPI呼び出し、listener配送の上限、イベントバッファ満杯方式と1行形式の容量、Wireの観測者・応答者分離。

@@ -36,3 +36,8 @@ Additional experiments:
 - `tick_split/`: a candidate that divides arbitrary waits at fixed tick boundaries.
 - `hook_slots/`: replacement behavior of the host core's single hook slots.
 - `host_gaps/`: missing extension points for interrupts, analog millivolt reads, and UART observation.
+- `zero_wait/`: re-entry and infinite-loop conditions when 0 us waits drive external processing.
+- `tick_guard/`: three policies for a wait API called from inside a tick callback.
+- `listener_fanout/`: fanning one host hook out to fixed listener slots, the cap, and removal during callbacks.
+- `event_buffer/`: event record size, fixed-buffer overflow policies, and the byte cost of three line formats.
+- `wire_split/`: splitting Wire into observers plus a single responder per address for unique return values.
