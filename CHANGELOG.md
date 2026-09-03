@@ -14,3 +14,5 @@
 - (JA) 初期の実行モデルを標準的なArduinoのsetup/loopと同期callbackに限定し、FreeRTOSとesp_timerの仮想化を対象外にした。
 - (EN) Added five host experiments answering the ledger's open questions: 0 us wait re-entry, wait APIs called inside a tick, listener fan-out limits, event buffer overflow policies with line-format sizes, and Wire observer/responder separation.
 - (JA) 実験台帳の未解決項目に答える5つのhost実験を追加: 0 us waitの再入、tick内からの待ちAPI呼び出し、listener配送の上限、イベントバッファ満杯方式と1行形式の容量、Wireの観測者・応答者分離。
+- (EN) Drafted the Gate A operation-path matrix (WP-A1) with an actor diagram and a hand-written I2C sequence, and measured the three direct-call routing policies (WP-A2) with one register-map device model.
+- (JA) Gate Aの操作経路表（WP-A1）をアクター図と最小I2Cシーケンス手書き例付きで起草し、直接呼び出し3案（WP-A2）を同一のregister-map模型で計測。

@@ -422,5 +422,8 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 `clock/`、`lifecycle/`、`ports/`、`tick_split/`、`hook_slots/`はhost core 1.7.0の
 性質を確認する準備計測であり、Gate A以降の仕様決定ではない。
 
-次に行うのはGate AのためのWP-A1とWP-A2。操作経路と直接呼び出しの境界を承認してから、
-timestampや1行形式をGate Bで比較する。
+台帳の「次に必要な実験」5項目はX7〜X11として計測済み。WP-A1の操作経路表は
+[EVENT_MATRIX.ja.md](EVENT_MATRIX.ja.md)（アクター図・最小I2Cシーケンス手書き例を含む）、
+WP-A2の3案比較はX12として数値が揃った。いずれも候補であり、Gate Aの承認は
+未実施。次に行うのはGate Aの承認判断（特にEVENT_MATRIXの未決4項目）で、
+承認後にWP-B1/WP-B2とWP-C1のI2C縦切りへ進む。

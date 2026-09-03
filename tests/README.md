@@ -41,3 +41,4 @@ Additional experiments:
 - `listener_fanout/`: fanning one host hook out to fixed listener slots, the cap, and removal during callbacks.
 - `event_buffer/`: event record size, fixed-buffer overflow policies, and the byte cost of three line formats.
 - `wire_split/`: splitting Wire into observers plus a single responder per address for unique return values.
+- `device_route/`: comparing all-direct, all-common-interface, and setup/run/inspect-split routing with one device model (WP-A2).

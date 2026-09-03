@@ -40,3 +40,4 @@ tests/<実験名>/
 - `listener_fanout/`: 単一hookから固定slotの複数listenerへの配送と上限・callback中解除
 - `event_buffer/`: イベント記録のサイズ、固定バッファ満杯方式、1行形式3候補の容量
 - `wire_split/`: Wireの観測者と応答デバイスを分離して戻り値を一意にする構造
+- `device_route/`: 全直接・全共通IF・仕込み/実行/検分分離の3案を同一模型で比較（WP-A2）
