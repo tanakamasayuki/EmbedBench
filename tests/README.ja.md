@@ -34,3 +34,4 @@ tests/<実験名>/
 - `ports/`: GPIO・Analog・SPI・Wire・UARTの観測・注入・応答
 - `tick_split/`: 任意長のwaitを固定tick境界へ分割する候補
 - `hook_slots/`: host coreの単一hook登録を置き換えたときの挙動
+- `host_gaps/`: 割り込み・Analog mV読取り・UART観測で不足する拡張点

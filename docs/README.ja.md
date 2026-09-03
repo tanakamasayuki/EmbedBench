@@ -19,4 +19,7 @@
 
 ## 文書
 
+- [DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md): 工程、承認ゲート、作業分割、完了条件
 - [EXPERIMENTS.ja.md](EXPERIMENTS.ja.md): hostで確認した数値、候補、未決事項の台帳
+- [HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md): host coreだけで可能な範囲と追加依頼案
+- [reference/tinygfx-emu/SOURCE.ja.md](reference/tinygfx-emu/SOURCE.ja.md): TinyGFXから一度だけ取り込んだ初期案の出典

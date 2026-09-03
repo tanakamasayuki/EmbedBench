@@ -3,6 +3,10 @@
 内部の記録。日本語のみ。公開仕様を決める前に、host上で観測した事実と
 試した候補を数値で残す。
 
+ここにある現在の実験は、開発計画を作る前に行ったhost coreの準備計測である。
+実験が通ったことを仕様の承認とはみなさない。以後の順序と承認条件は
+[DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md)に従う。
+
 ## 記録の読み方
 
 - **事実**: host-arduino-core 1.7.0の実行結果。EmbedBenchの仕様ではない
@@ -119,3 +123,15 @@ ASBCLDCL
 4. イベント列の候補ごとの1件あたりのサイズ、固定バッファ容量、欠落の通知方法
 5. Wireの観測者と応答デバイスを分けても戻り値が一意に決まる構造
 
+## X6. host拡張点の不足
+
+対象: `tests/host_gaps/`
+
+| 操作 | 実測 |
+| --- | ---: |
+| GPIOをLOW/HIGHへ変更 | edge 2、ISR callback 0回 |
+| `analogRead`後のread hook回数 | 1回 |
+| 続けて`analogReadMilliVolts`後のread hook回数 | 1回のまま |
+| UART TX | 2byteをqueueへ保存、2byteを後からdrain可能、同期activity hookなし |
+
+不足する能力と依頼候補は[HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md)へ分離した。

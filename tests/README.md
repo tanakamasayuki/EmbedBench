@@ -35,3 +35,4 @@ Additional experiments:
 - `ports/`: GPIO, analog, SPI, Wire, and UART observation and response paths;
 - `tick_split/`: a candidate that divides arbitrary waits at fixed tick boundaries.
 - `hook_slots/`: replacement behavior of the host core's single hook slots.
+- `host_gaps/`: missing extension points for interrupts, analog millivolt reads, and UART observation.
