@@ -91,9 +91,10 @@ def test_native_portability():
     }
     print(f"LOC {sizes}")
     # Growth log: 58 at X23, +4 for lineIn (composite devices, X24), +10
-    # for frameOut/frameIn (generic frame path, X25). Grow deliberately.
+    # for frameOut/frameIn (generic frame path, X25), +8 for frame bus ids
+    # and formatId interning (X26). Grow deliberately.
     assert sizes == {
-        "device_if_header": 72,
+        "device_if_header": 80,
         "temp_model": 49,
         "modem_model": 50,
         "adapter": 32,

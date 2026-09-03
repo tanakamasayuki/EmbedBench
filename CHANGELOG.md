@@ -32,3 +32,5 @@
 - (JA) 複合SPIディスプレイ模型（DC入力線・busy出力線・時間解除）でIFを検証: 必要な追加は lineIn() のみ（+4行）。「本ライブラリは論理ビット列＋フォーマット情報までを受け渡し、物理層は再現しない」という抽象度方針も記録。
 - (EN) Added the generic frame path (HostPort::frameOut / Device::frameIn: a format id plus pre-encoding logical bits of any bit count) so protocols without a dedicated port never fall back to pin-level bit-banging, verified native and on-host with an addressed remote-node model.
 - (JA) 汎用frame経路（HostPort::frameOut / Device::frameIn: format id＋符号化前の任意bit数論理ビット列）を追加し、専用portのないプロトコルがビットバンへ落ちない道をアドレス付き無線ノード模型でネイティブ・host両検証。
+- (EN) Settled format identity by measurement: fixed numbers collide silently between independent libraries, so names are the identity and environments intern them (HostPort::formatId, one resolution then integer compares; strings-only costs one strcmp per frame); frames also gained a device-local bus id, and the device-interface scope document draws the dedicated-port/frame split and the never-touch boundaries.
+- (JA) format識別を実測で決着: 固定番号は独立ライブラリ間で静かに衝突するため、名前を識別子とし環境がinternする方式を採用候補に（HostPort::formatId、解決1回で以後整数比較。文字列のみは毎frame strcmp）。frameへデバイス論理bus idも追加し、専用portとframeの分担・絶対にやらない領域をDEVICE_IF_SCOPE.ja.mdへ明文化。

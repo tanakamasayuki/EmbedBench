@@ -786,10 +786,69 @@ frameをそのまま環境へ渡す（実装例では `ebd::frameTx` / `setFrame
 **未決:** format idの登録・衝突回避の規約（デバイスカタログ側の課題）、
 1 frameの最大bit数、frame経路にも要求/応答の対応付け（`re=`）を入れるか。
 
+## X26. format idの解決とframeのbus id
+
+対象: `tests/format_registry/`（frame経路の改版はX25の`tests/frame_port/`にも反映済み）
+
+X25未決の「format id登録規約」を検証した。所有者の指摘どおり、**未知の
+プロトコル同士で重ならない固定番号は不可能**なので、4方式を比較した。
+
+**1) 固定番号（X25の初版方式）— 衝突の実証（ネイティブ）:**
+独立した2ライブラリが共にformat番号1を選ぶと、vendorの校正frame
+{offset=4, gain=0} をnode模型が「アドレス4へpower off」と誤解釈し、
+**検出手段なしに状態が反転した**（power 1→0）。X13のmode定数の罠と同型。
+
+**2) 環境intern方式（採用候補）:** 名前文字列が識別子、番号は環境ローカル。
+`HostPort::formatId(name)` をIFへ追加し、環境が登録時に名前をinternして
+安定した非0 idを返す。デバイスは1回解決してキャッシュ。
+
+| 検証 | 結果 |
+| --- | --- |
+| 衝突回避 | vendorとnodeが別idを取得（登録順で1と2）。同じpayloadでも誤解釈なし |
+| 冪等性 | 同名の再登録は同じidを返す（host: cmd=1, again=1） |
+| 解決コスト | 解決後100 frameでstrcmp 0回（整数比較のみ） |
+| registry満杯 | 9個目で id 0 + `diag.fmt_full` イベント（hostで3回再現） |
+| registry無し環境の縮退 | 既定 `formatId`=0 → 「id 0は何にも一致しない」規約でデバイスは安全に不活性（frameOut 0回、power 0のまま） |
+| traceの可読性 | 環境が逆引きし `fmt=node.cmd` と名前で出力。未登録idは数値のまま（既存実験と互換） |
+
+**3) 文字列のみ方式:** registryも登録手順も不要だが、100 frameでstrcmp 100回、
+recordへ名前の複製が必要。**intern方式が解決1回・record 2byte・名前表示を
+すべて満たすため不採用**。
+
+**4) frameのbus id（同時に追加）:** 同一プロトコルの複数リンク（PIOの複数SM、
+複数IRチャネル）を区別するため、`frameIn`/`frameOut` へデバイス論理bus番号を
+追加した。正しいformatでもbus違いのframe（power offコマンド）は無視される
+ことをhostで確認（telemetryは0401のまま）。
+
+host側イベント列（7行、3回byte一致。format名がそのまま読める）:
+
+```text
+01 000000 main app frame.tx bus=0 fmt=node.cmd bits=16 data=0508
+02 000000 main app frame.tx bus=0 fmt=node.cmd bits=16 data=0408
+03 000000 main app frame.tx bus=0 fmt=vendor.cal bits=16 data=0408
+04 000000 main app frame.tx bus=1 fmt=node.cmd bits=16 data=0400
+05 001000 tick dev dev.frame bus=0 fmt=node.tel bits=16 data=0401
+06 002000 tick diag diag.fmt_full name=overflow.x
+07 002000 main dir dump node power=1 pending=0
+```
+
+**IFの変更:** `HostPort::formatId(name)` 追加、`frameIn`/`frameOut` にbus引数
+（ヘッダ72→80行）。draft core側はEventのtext 44→56byte（1イベント72→80byte、
+X22の値を更新）、`registerFormat` のregistry 8枠（名前20byte）。
+X25のframe_port実験もbus付きへ改版した（手戻り記録: 理由は本節、host core 1.7.1）。
+
+**専用portとframeの分担、ユースケースの線引き:** 所有者の問い
+「SPI/I2Cだけ特別扱いか」「どこまでカバーし、何をやらないか」への答えは
+[DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md)へまとめた。要点:
+専用portは「Arduino標準APIが型付けし、masterが戻り値を待つ」3バス＋GPIO線＋
+channelで**打ち止め**、以後の新プロトコルはすべてframe。絶対に手を出さない
+領域（物理層・波形デコード・サイクル精度・アナログ回路網・エラッタ・
+実時間race）を明文化した。
+
 ## 次に必要な実験
 
 1. 大量転送（フレームバッファ規模）のSPI記録粒度: 1byte 2行方式と塊記録の
-   容量・時間比較（Gate F/X10の宿題）
+   容量・時間比較（Gate F/X10の宿題、SCOPE 3.2の「要約を残す」の具体化）
 2. 別環境の実装例をもう1つ書き、IFが本当に環境非依存かを確認する
    （最小のネイティブイベント記録環境など。native FakePortが最小例1つ目）
 3. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認

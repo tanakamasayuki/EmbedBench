@@ -34,6 +34,8 @@ def test_core_draft(dut):
         "stats events=21 dropped=0 zero_waits=3 zero_in_dir=0 late_ticks=0 "
         "ticks=2 diag=0",
         timeout=10)
-    dut.expect("metrics event_bytes=72 resp_lines=5", timeout=10)
+    # 80 = 72 at X22 plus the text field widened 44 -> 56 for bus-qualified
+    # frame lines with format names (X26).
+    dut.expect("metrics event_bytes=80 resp_lines=5", timeout=10)
     dut.expect("run2_same=1 run3_same=1", timeout=10)
     dut.expect("TEST done", timeout=10)

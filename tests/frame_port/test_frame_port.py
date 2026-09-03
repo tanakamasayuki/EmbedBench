@@ -33,7 +33,7 @@ def test_native_portability():
     )
     result = subprocess.run([str(binary)], capture_output=True, text=True,
                             check=True)
-    assert ("node foreign=0 at999=0 frames=1 fmt=2 bits=16 data=0401 "
+    assert ("node foreign=0 at999=0 frames=1 bus=0 fmt=2 bits=16 data=0401 "
             "dump=<node power=1 pending=0>") in result.stdout
     assert "NATIVE done" in result.stdout
 
@@ -43,11 +43,11 @@ def test_frame_port(dut):
     dut.expect("values got=1 telemetry=0401", timeout=10)
     # The foreign-address frame is recorded but ignored by the device;
     # interpretation of the bits belongs to the device, not the log.
-    dut.expect("01 000000 main app frame.tx fmt=1 bits=16 data=0508",
+    dut.expect("01 000000 main app frame.tx bus=0 fmt=1 bits=16 data=0508",
                timeout=10)
-    dut.expect("02 000000 main app frame.tx fmt=1 bits=16 data=0408",
+    dut.expect("02 000000 main app frame.tx bus=0 fmt=1 bits=16 data=0408",
                timeout=10)
-    dut.expect("03 001000 tick dev dev.frame fmt=2 bits=16 data=0401",
+    dut.expect("03 001000 tick dev dev.frame bus=0 fmt=2 bits=16 data=0401",
                timeout=10)
     dut.expect("04 002000 main dir dump node power=1 pending=0", timeout=10)
     dut.expect("stats events=4 dropped=0 diag=0", timeout=10)

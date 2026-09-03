@@ -12,12 +12,19 @@
 #include <Wire.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 namespace ebd {
 namespace {
 
 constexpr size_t kCapacity = 64;
 constexpr size_t kMaxWireDevices = 2;
+constexpr size_t kMaxFormats = 8;
+
+struct FormatSlot {
+  bool used = false;
+  char name[20] = {0};
+};
 
 struct WireDeviceSlot {
   bool used = false;
@@ -62,6 +69,7 @@ struct State {
   void* frameDeviceUser = nullptr;
   FrameHandler frameReceiver = nullptr;
   void* frameReceiverUser = nullptr;
+  FormatSlot formats[kMaxFormats];
   TickHandler tickHandler = nullptr;
   void* tickUser = nullptr;
   ZeroWaitHandler zeroHandler = nullptr;
@@ -451,26 +459,60 @@ void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
   }
 }
 
-void frameTx(Origin origin, uint16_t format, const uint8_t* data,
-             size_t bits) {
-  char hex[12];
-  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
-  recordf(origin, 0, "frame.tx fmt=%u bits=%u data=%s", format,
-          static_cast<unsigned>(bits), hex);
-  if (state.frameDevice) {
-    state.frameDevice(format, data, bits, state.frameDeviceUser);
+// Format labels: a registered id prints its name, an unregistered id
+// prints its number, so raw-numbered experiments keep working.
+void formatLabel(uint16_t id, char* out, size_t cap) {
+  if (id >= 1 && id <= kMaxFormats && state.formats[id - 1].used) {
+    snprintf(out, cap, "%s", state.formats[id - 1].name);
+  } else {
+    snprintf(out, cap, "%u", id);
   }
 }
 
-void frameRx(Origin origin, uint16_t format, const uint8_t* data,
+void frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
              size_t bits) {
   char hex[12];
+  char label[20];
   hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
-  recordf(origin, 0, "dev.frame fmt=%u bits=%u data=%s", format,
+  formatLabel(format, label, sizeof(label));
+  recordf(origin, 0, "frame.tx bus=%u fmt=%s bits=%u data=%s", bus, label,
+          static_cast<unsigned>(bits), hex);
+  if (state.frameDevice) {
+    state.frameDevice(bus, format, data, bits, state.frameDeviceUser);
+  }
+}
+
+void frameRx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
+             size_t bits) {
+  char hex[12];
+  char label[20];
+  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
+  formatLabel(format, label, sizeof(label));
+  recordf(origin, 0, "dev.frame bus=%u fmt=%s bits=%u data=%s", bus, label,
           static_cast<unsigned>(bits), hex);
   if (state.frameReceiver) {
-    state.frameReceiver(format, data, bits, state.frameReceiverUser);
+    state.frameReceiver(bus, format, data, bits, state.frameReceiverUser);
   }
+}
+
+uint16_t registerFormat(const char* name) {
+  if (name == nullptr || name[0] == '\0') return 0;
+  for (size_t i = 0; i < kMaxFormats; ++i) {
+    if (state.formats[i].used && strcmp(state.formats[i].name, name) == 0) {
+      return static_cast<uint16_t>(i + 1);
+    }
+  }
+  for (size_t i = 0; i < kMaxFormats; ++i) {
+    if (!state.formats[i].used) {
+      state.formats[i].used = true;
+      snprintf(state.formats[i].name, sizeof(state.formats[i].name), "%s",
+               name);
+      return static_cast<uint16_t>(i + 1);
+    }
+  }
+  ++state.diagCount;
+  recordf(Origin::kDiag, 0, "diag.fmt_full name=%s", name);
+  return 0;
 }
 
 void dumpf(const char* fmt, ...) {

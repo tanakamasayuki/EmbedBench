@@ -18,16 +18,17 @@ class DraftPort : public ebdev::HostPort {
   uint64_t nowMicros() override { return ebd::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
-  void frameOut(uint16_t format, const uint8_t* data, size_t bits) override {
-    ebd::frameRx(ebd::Origin::kDev, format, data, bits);
+  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+                size_t bits) override {
+    ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
   }
 };
 
 static DraftPort draftPort;
 
-static void devFrame(uint16_t format, const uint8_t* data, size_t bits,
-                     void*) {
-  node.frameIn(format, data, bits);
+static void devFrame(uint8_t bus, uint16_t format, const uint8_t* data,
+                     size_t bits, void*) {
+  node.frameIn(bus, format, data, bits);
 }
 static void onTick(uint32_t, void*) { node.advanceTo(ebd::nowUs()); }
 
@@ -36,7 +37,7 @@ static void onTick(uint32_t, void*) { node.advanceTo(ebd::nowUs()); }
 static volatile bool gotTelemetry = false;
 static uint8_t telemetry[2] = {0, 0};
 
-static void appFrameReceiver(uint16_t format, const uint8_t* data,
+static void appFrameReceiver(uint8_t, uint16_t format, const uint8_t* data,
                              size_t bits, void*) {
   if (format == RemoteNodeModel::kFormatTelemetry && bits == 16) {
     telemetry[0] = data[0];
@@ -47,7 +48,8 @@ static void appFrameReceiver(uint16_t format, const uint8_t* data,
 
 static void appSendCommand(uint8_t address, uint8_t command) {
   const uint8_t frame[2] = {address, command};
-  ebd::frameTx(ebd::Origin::kApp, RemoteNodeModel::kFormatCommand, frame, 16);
+  ebd::frameTx(ebd::Origin::kApp, RemoteNodeModel::kBus,
+               RemoteNodeModel::kFormatCommand, frame, 16);
 }
 // [adapter end]
 

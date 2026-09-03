@@ -29,7 +29,7 @@ struct Event {
   uint8_t ctx = 0;  // 0 = main, 1 = tick (director), 2 = isr
   Origin origin = Origin::kApp;
   uint32_t link = 0;  // request seq for response events, 0 otherwise
-  char text[44] = {0};
+  char text[56] = {0};
 };
 
 struct Stats {
@@ -55,8 +55,8 @@ using ChannelHandler = void (*)(uint8_t channel, const uint8_t* data,
                                 size_t len, void* user);
 using SpiTransferFn = uint8_t (*)(uint8_t mosi, void* user);
 using PinWriteForward = void (*)(uint8_t pin, uint8_t value, void* user);
-using FrameHandler = void (*)(uint16_t format, const uint8_t* data,
-                              size_t bits, void* user);
+using FrameHandler = void (*)(uint8_t bus, uint16_t format,
+                              const uint8_t* data, size_t bits, void* user);
 
 // Bindings persist across runs; runBegin/runEnd own the host hooks and
 // the trace for one run window.
@@ -86,10 +86,14 @@ void uartInject(Origin origin, const char* bytes);
 // Logical frames (format id + pre-encoding bits): frameTx carries an
 // application frame to the bound device, frameRx carries a device frame
 // to the application-side receiver. Both record first.
-void frameTx(Origin origin, uint16_t format, const uint8_t* data,
-             size_t bits);
-void frameRx(Origin origin, uint16_t format, const uint8_t* data,
-             size_t bits);
+void frameTx(Origin origin, uint8_t bus, uint16_t format,
+             const uint8_t* data, size_t bits);
+void frameRx(Origin origin, uint8_t bus, uint16_t format,
+             const uint8_t* data, size_t bits);
+// Intern a format name: the same name always returns the same nonzero id
+// within this environment; 0 when the registry is full. Names, not
+// numbers, are the cross-library identity of a format.
+uint16_t registerFormat(const char* name);
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
 void dumpf(const char* fmt, ...);

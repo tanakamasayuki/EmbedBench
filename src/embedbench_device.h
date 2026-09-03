@@ -52,10 +52,27 @@ class HostPort {
   // not pin-level bit-banging — are how such devices talk. `bits` may be
   // any bit count; `data` holds ceil(bits / 8) bytes. Optional: an
   // environment without frame routing may leave the default no-op.
-  virtual void frameOut(uint16_t format, const uint8_t* data, size_t bits) {
+  // `bus` is the device-local logical link the frame travels on (a PIO
+  // state machine, an IR channel, a CAN bus, ...); the binding maps it to
+  // whatever the platform actually has, like line ids.
+  virtual void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+                        size_t bits) {
+    (void)bus;
     (void)format;
     (void)data;
     (void)bits;
+  }
+
+  // Resolve a protocol format NAME to this environment's id for it.
+  // Names are the collision-free identity — independent libraries cannot
+  // coordinate numbers — and the environment interns them: the same name
+  // always returns the same nonzero id within an environment, while the
+  // numeric value is environment-local. 0 means no frame routing or a
+  // full registry; a device holding id 0 must match no frame. Devices
+  // resolve once and cache; every frame call then compares integers.
+  virtual uint16_t formatId(const char* name) {
+    (void)name;
+    return 0;
   }
 };
 
@@ -100,8 +117,11 @@ class Device {
   }
   // A logical protocol frame arriving from the application side — the
   // counterpart of HostPort::frameOut. How the bits are interpreted is
-  // the device's business, keyed by the format id.
-  virtual void frameIn(uint16_t format, const uint8_t* data, size_t bits) {
+  // the device's business, keyed by the format id; `bus` says which
+  // logical link it arrived on.
+  virtual void frameIn(uint8_t bus, uint16_t format, const uint8_t* data,
+                       size_t bits) {
+    (void)bus;
     (void)format;
     (void)data;
     (void)bits;

@@ -55,3 +55,4 @@ Additional experiments:
 - `device_if/`: the device interface being fixed (`src/embedbench_device.h`): a pure-C++ g++-only build and the same unmodified sources running on the host core.
 - `spi_device/`: a composite device (SPI plus a DC input line, a busy output line, and time) on the same interface; lineIn was the only addition.
 - `frame_port/`: the generic frame path (format id plus pre-encoding logical bits) for protocols without a dedicated port.
+- `format_registry/`: four format-identity schemes compared (fixed-number collision, environment-interned names, strings only, no-registry degradation) plus frame bus ids.

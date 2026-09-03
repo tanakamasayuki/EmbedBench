@@ -54,3 +54,4 @@ tests/<実験名>/
 - `device_if/`: 固定対象のデバイスIF（`src/embedbench_device.h`）。純粋C++のg++単体ビルドと、同一ソース無改変のhost実行の両検証
 - `spi_device/`: 複合デバイス（SPI＋DC入力線＋busy出力線＋時間）でのIF検証。追加は`lineIn`1つ
 - `frame_port/`: 未対応プロトコル向けの汎用frame経路（format id＋符号化前の論理ビット列）の検証
+- `format_registry/`: format識別の4方式比較（固定番号の衝突・名前intern・文字列のみ・registry無し縮退）とframeのbus id
