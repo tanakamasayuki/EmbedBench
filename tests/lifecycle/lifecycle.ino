@@ -7,7 +7,7 @@
 using namespace HostArduino;
 
 static char sequence[32] = {0};
-static uint8_t sequenceLength = 0;
+static size_t sequenceLength = 0;
 static uint32_t appLoops = 0;
 static bool finished = false;
 
@@ -48,7 +48,7 @@ void loop() {
     Serial.print("sequence=");
     Serial.println(sequence);
     Serial.print("sequence_length=");
-    Serial.println(sequenceLength);
+    Serial.println(static_cast<unsigned long>(sequenceLength));
     Serial.print("completed_loops_before_return=");
     Serial.println(static_cast<unsigned long>(HostArduino::loopCount()));
     Serial.println("TEST done");
@@ -56,4 +56,3 @@ void loop() {
 
   if (finished) clockRealWaitMicros(10000);
 }
-

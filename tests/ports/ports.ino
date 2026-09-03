@@ -113,7 +113,8 @@ void setup() {
   Wire.write(0xAB);
   Wire.write(0xCD);
   const uint8_t wireStatus = Wire.endTransmission();
-  const size_t wireReceived = Wire.requestFrom(0x34, static_cast<size_t>(2), true);
+  const size_t wireReceived =
+      Wire.requestFrom(static_cast<uint16_t>(0x34), static_cast<size_t>(2), true);
   const int wireFirst = Wire.read();
   const int wireSecond = Wire.read();
   Serial.printf("wire_status=%u writes=%u reads=%u addr=%02X tx_len=%u tx=%02X%02X rx_len=%u rx=%02X%02X\n",
@@ -139,4 +140,3 @@ void setup() {
 }
 
 void loop() { delay(10); }
-

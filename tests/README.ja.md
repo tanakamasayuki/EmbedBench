@@ -26,3 +26,11 @@ tests/<実験名>/
 
 現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.0、
 ライフサイクルフック、仮想時計、pytestとの接続をまとめて検査する最小テストである。
+
+追加の実験:
+
+- `clock/`: Arduinoの各待ちAPIがclock portを呼ぶ回数と長さ
+- `lifecycle/`: setupとloopを囲むライフサイクルの実順序
+- `ports/`: GPIO・Analog・SPI・Wire・UARTの観測・注入・応答
+- `tick_split/`: 任意長のwaitを固定tick境界へ分割する候補
+- `hook_slots/`: host coreの単一hook登録を置き換えたときの挙動
