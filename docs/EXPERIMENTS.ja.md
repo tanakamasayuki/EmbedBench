@@ -629,12 +629,170 @@ UARTで"AT"送信、devがsink経由で"OK"応答 → `delay(2)`中のtick 2で�
 **draft v1の未実装（次回りの手戻り候補）:** Analog、SPI、`Wire1`/`Serial2`、
 lifecycle連動のrun window、listener多重化、バッファ満杯時の診断イベント化。
 
+## X23. ポータブルなデバイスIF（固定対象の中心）
+
+対象: `tests/device_if/`、IF本体は `src/embedbench_device.h`
+
+**工程上の位置づけ:** 所有者の判断（2026-09-03）で、**確実に固める対象を
+「デバイス模型とのIF」に絞った**。デバイスIFは純粋なC++11でプラットホーム差が
+なく他環境へポータブル。その上の環境側（host hookの所有、時計、記録の実装）は
+環境ごとに差が出るため、**プラットホーム別の実装例**という扱いにする。
+`src/embedbench_draft.*` はhost-arduino-core向け実装例の位置づけになった。
+
+IFの形（`embedbench_device.h`、58行）: デバイス = 決定的状態機械。
+入力はbus ops（`i2cWrite`/`i2cRead`/`spiTransfer`/`serialIn`）、注入
+（`channelWrite`/`channelRead`）、時間（`advanceTo(nowUs)`）。出力は戻り値と
+`HostPort`（`nowMicros`/`lineOut`/`serialOut`）のみ。論理line番号・アドレス
+非依存（配線とアドレスはbinding側の責務）。遅延・周期動作はplatform timerでなく
+`advanceTo` で実装する。
+
+**検証1 — ネイティブ単体（Arduino・host core一切なし）:**
+
+- `g++ -std=c++11 -Wall -Wextra -Werror` で模型2種＋FakePortをビルド・実行
+- `#include` はIFヘッダと標準ライブラリのみ（禁止includeはテストが機械検査）
+- register-map型（温度センサ、49行）: config書込みstatus 0、channel注入で
+  DRDY線がFakePortへ上がる、block read 00FA、dump一致
+- command型（ATモデム、50行）: "AT"は即時"OK"（t=0）、"AT+S"は
+  `advanceTo(999)` では出ず `advanceTo(1000)` で"OK"（純粋な時間駆動латency）
+
+**検証2 — 同じソース無改変でhost環境（draft core経由）:**
+
+adapter（`HostPort`→draft coreのsink変換 + binding、**32行**）だけで同じ模型が
+X22型のシナリオを駆動した。18イベント、3回byte一致。
+
+```text
+04 000000 tick dir gpio.inject... の代わりに、今回はデバイス自身が反応する:
+04 000000 tick dir chan.write chan=0 data=012C   ← 進行役の注入
+05 000000 tick dev gpio.inject pin=27 0->1 match=1 ← 模型がlineOut(DRDY)で反応(origin=dev)
+06-08     isr ...                                  ← ISR起動、ctx=isr
+14 001000 tick dev dev.tx OK                       ← モデムのadvanceTo駆動の遅延応答
+```
+
+| 測定 | 値 |
+| --- | ---: |
+| IFヘッダ | 58行（仮想関数11個、型はstdint/stddefのみ） |
+| 模型: register-map型 / command型 | 49行 / 50行 |
+| **プラットホームglue（adapter）** | **32行** |
+| ネイティブ検証と host検証で共有する模型ソース | 同一ファイル無改変 |
+| host側イベント列 | 18行、応答行3、diag 0、3回byte一致 |
+
+**事実:**
+
+- デバイスIFは純粋C++11で成立し、模型はArduinoもhost coreも知らずに書ける
+  （Gate Cの完了条件を満たす）。同じソースがネイティブとhostの両方で
+  決定的に同じ挙動を示す
+- 環境側の責務はadapter 32行に集約された。「環境側はプラットホーム別の
+  実装例」という整理は定量的にも成立する
+- デバイス起点の外部作用（DRDY線、遅延UART応答）が `HostPort` 経由で
+  origin=devとして記録され、X20/X21の経路規則と両立する
+
+**未決（IF固定前の残項目）:** `serialOut`のbyte列にNULを含む場合の扱い、
+channel idの割り当て規約、`dump`の文字列規約（機械可読性）、SPI/複数line/
+複数serialを持つ複合デバイスでの`HostPort`拡張の要否。
+
+## X24. 複合デバイス（SPI＋入出力line＋時間）でのIF検証
+
+対象: `tests/spi_device/`
+
+X23未決の第一項「複合デバイスでIFが伸びずに済むか」の検証。SPIディスプレイ型
+模型（DC入力線でcommand/dataを判別、refreshでbusy出力線を上げ、時間で下ろす）
+を書いた結果、IFに欠けていたのは**デバイスの入力line**だけだった。
+
+**IFへの追加: `Device::lineIn(line, level)` 1つ（ヘッダ58→62行、+4行）。**
+`HostPort` は無変更。入力line idと出力line idは別空間とした。
+
+| 検証 | 結果 |
+| --- | --- |
+| ネイティブ（g++ -std=c++11 -Werror、Arduinoなし） | command応答0x00、dataはchecksum応答（10, 30）、refreshでbusy上昇、`advanceTo(999)`では下りず`advanceTo(1000)`で下降 |
+| host環境（同一ソース無改変、adapter 32行のまま） | 16イベント、3回byte一致 |
+| draft core（実装例側）への追加 | SPI transfer binding＋pin書込みのdevice転送（`setPinWriteForward`） |
+
+host側イベント列の要点:
+
+```text
+10 000000 main app spi.req mosi=FF
+11 000000 main dev gpio.inject pin=26 0->1 match=0   ← busy線がreqとrespの間に挟まる
+12 000000 main dev spi.resp miso=00 re=10             （X20の再入ケースが実デバイスで発生）
+13 000000 main app gpio.read pin=26 val=1
+14 001000 tick dev gpio.inject pin=26 1->0 match=0    ← 時間駆動のbusy解除
+15 001000 main app gpio.read pin=26 val=0
+```
+
+**事実:**
+
+- register-map型・command型・SPI複合型の3類型が同一IFに載り、必要だった
+  IF拡張は入力line 1メソッドのみ。「確実に固める」対象としてIFは小さく安定
+- SPI応答中のデバイスline変化（busy）が、X20勝者の2行分割によりreq/respの
+  間の正しい位置に記録される——比較実験の想定ケースが実デバイスでそのまま発生
+- SPIは1byteごとにreq/respの2行になる。塊転送（フレームバッファ等）では
+  行数が爆発するため、大量転送の記録粒度はGate F（X10でも指摘）の宿題
+
+**設計方針メモ（所有者、2026-09-03、後日検証）— 未対応プロトコルの扱い:**
+ビットバンで送受信された波形・edge列を後から解析するのは基本的に無理。
+本ライブラリが受け渡すのは**送受信前の論理ビット列＋フォーマット情報のペア**
+までとする。Raspberry Pi PicoのPIOで送るビット列、赤外線リモコンの符号化前
+ビット列などはこのペアで転送し、ビット列の解釈は別定義とする。物理層と
+エンコード/デコードは単体でユニットテスト可能であり実機で試す領域。
+本ライブラリの役割はWeb開発のモックに近く、「実際の物理通信」ではなく
+**「何をしたいのか」の通知**を扱う。SPI等が論理byte列受け渡しなのも同じ理由。
+（現IFの `spiTransfer`/`serialIn`/`serialOut`/`channelWrite` はこの方針と
+整合。汎用frame経路——format id付きビット列——のIF化は後日の検証項目）
+
+## X25. 汎用frame経路 — 未対応プロトコルの拡張機構
+
+対象: `tests/frame_port/`
+
+X24の方針メモを実証した。拡張口がなければ、専用portのないプロトコル
+（PIO・赤外線・WS2812・sub-GHz RF等）はすべてPIN経由のビットバンに落ち、
+波形は後から解析できない。そこで**format id付きの論理ビット列（符号化前）**を
+運ぶframe経路をIFへ追加した。
+
+**IFへの追加（ヘッダ62→72行、+10行）:**
+
+- `HostPort::frameOut(format, data, bits)` — デバイス→アプリ側のframe放出
+  （既定no-opの任意機能。frame無関係な環境・模型は何も書かない）
+- `Device::frameIn(format, data, bits)` — アプリ側→デバイスのframe到着
+- bitsは任意bit数（PIOの非byte境界に対応）、解釈はformat idを鍵に
+  デバイス側の責務。エンコード/デコードと物理層は本ライブラリの外
+
+アプリ側は、実機ではエンコード・送信するprotocolドライバのhost版shimが
+frameをそのまま環境へ渡す（実装例では `ebd::frameTx` / `setFrameReceiver`）。
+
+模型: 無線ノード（アドレス0x04、command frame受信 → 自分宛のみ反応 →
+1,000us後にtelemetry frameで応答。他人宛は無視）。
+
+| 検証 | 結果 |
+| --- | --- |
+| ネイティブ（g++単体） | 他人宛frame無反応、自分宛は`advanceTo(999)`で出ず1000で応答、fmt=2/16bit/0401 |
+| host環境（同一ソース無改変） | 4イベント、3回byte一致 |
+
+```text
+01 000000 main app frame.tx fmt=1 bits=16 data=0508   ← 他人宛（記録は残り、devは無視）
+02 000000 main app frame.tx fmt=1 bits=16 data=0408
+03 001000 tick dev dev.frame fmt=2 bits=16 data=0401  ← 遅延応答、devの送信時刻が残る
+04 002000 main dir dump node power=1 pending=0
+```
+
+**事実:**
+
+- 専用portのないプロトコルでも、ビットバンに落ちずに「アプリが何を送ろうと
+  したか（符号化前の論理bits）」と「devが何を返したか」がformat id付きで
+  イベント列に残る
+- frameの解釈（アドレス照合・command判定）はデバイス側に閉じ、ログは
+  中立なbits+formatのまま——「解釈は別定義」の分担が成立
+- IF成長の履歴: X23=58行 → lineIn(+4) → frame(+10) = 72行。3類型+frame型の
+  4種の模型でこの規模に収まっている
+
+**未決:** format idの登録・衝突回避の規約（デバイスカタログ側の課題）、
+1 frameの最大bit数、frame経路にも要求/応答の対応付け（`re=`）を入れるか。
+
 ## 次に必要な実験
 
-1. draft coreへAnalog・SPIを追加し、X22のシナリオを拡張して順序が保たれるかの確認
-2. WP-C2: command型（表示・UART系状態機械）の模型をdraft coreへ載せる
-3. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
-4. X8の「延期」方式で、遅延発火したtickへ付けるtimestampの表現（境界時刻か発火時刻か）
-5. listener解除の位置依存（X9）をなくす遅延反映方式の比較
-6. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-7. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+1. 大量転送（フレームバッファ規模）のSPI記録粒度: 1byte 2行方式と塊記録の
+   容量・時間比較（Gate F/X10の宿題）
+2. 別環境の実装例をもう1つ書き、IFが本当に環境非依存かを確認する
+   （最小のネイティブイベント記録環境など。native FakePortが最小例1つ目）
+3. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
+4. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
+5. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+6. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）

@@ -53,14 +53,28 @@ using ZeroWaitHandler = void (*)(uint32_t count, void* user);
 using UartTxHandler = void (*)(const uint8_t* data, size_t len, void* user);
 using ChannelHandler = void (*)(uint8_t channel, const uint8_t* data,
                                 size_t len, void* user);
+using SpiTransferFn = uint8_t (*)(uint8_t mosi, void* user);
+using PinWriteForward = void (*)(uint8_t pin, uint8_t value, void* user);
+using FrameHandler = void (*)(uint16_t format, const uint8_t* data,
+                              size_t bits, void* user);
 
 // Bindings persist across runs; runBegin/runEnd own the host hooks and
 // the trace for one run window.
 bool bindWireDevice(uint16_t address, const WireDeviceOps& ops);
 void bindUartDevice(UartTxHandler handler, void* user = nullptr);
+void bindSpiDevice(SpiTransferFn handler, void* user = nullptr);
 void setChannelHandler(ChannelHandler handler, void* user = nullptr);
 void setTickHandler(TickHandler handler, void* user = nullptr);
 void setZeroWaitHandler(ZeroWaitHandler handler, void* user = nullptr);
+// Forwards recorded application pin writes (chip-select, data/command
+// lines) to whoever routes them into a device model's lineIn.
+void setPinWriteForward(PinWriteForward handler, void* user = nullptr);
+// Frame routing: the extension path for protocols without a dedicated
+// port. bindFrameDevice receives application frames (device's frameIn);
+// setFrameReceiver is the application-side shim that receives device
+// frames (HostPort::frameOut arrivals).
+void bindFrameDevice(FrameHandler handler, void* user = nullptr);
+void setFrameReceiver(FrameHandler handler, void* user = nullptr);
 
 void runBegin(uint32_t tickUs);
 void runEnd();
@@ -69,6 +83,13 @@ void runEnd();
 // then applied (matrix principle 3).
 void pinInject(Origin origin, uint8_t pin, uint8_t level);
 void uartInject(Origin origin, const char* bytes);
+// Logical frames (format id + pre-encoding bits): frameTx carries an
+// application frame to the bound device, frameRx carries a device frame
+// to the application-side receiver. Both record first.
+void frameTx(Origin origin, uint16_t format, const uint8_t* data,
+             size_t bits);
+void frameRx(Origin origin, uint16_t format, const uint8_t* data,
+             size_t bits);
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
 void dumpf(const char* fmt, ...);

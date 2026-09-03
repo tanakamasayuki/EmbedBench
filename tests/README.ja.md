@@ -51,3 +51,6 @@ tests/<実験名>/
 - `event_timing/`: 応答callback内の再入sinkに対する、イベント完成4方式の順序比較
 - `uart_sink/`: dev応答をRX sinkで記録してから`pushRx`するX17改（送信時刻の復元）
 - `core_draft/`: 統合draft core（`src/embedbench_draft.*`）でGPIO・割り込み・I2C・UART・時間を1本のイベント列に載せる計測
+- `device_if/`: 固定対象のデバイスIF（`src/embedbench_device.h`）。純粋C++のg++単体ビルドと、同一ソース無改変のhost実行の両検証
+- `spi_device/`: 複合デバイス（SPI＋DC入力線＋busy出力線＋時間）でのIF検証。追加は`lineIn`1つ
+- `frame_port/`: 未対応プロトコル向けの汎用frame経路（format id＋符号化前の論理ビット列）の検証

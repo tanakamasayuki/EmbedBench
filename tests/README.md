@@ -52,3 +52,6 @@ Additional experiments:
 - `event_timing/`: ordering comparison of four event-completion policies under a re-entrant sink call from a response callback.
 - `uart_sink/`: X17 redone with device replies recorded through the core RX sink so device send times enter the log.
 - `core_draft/`: the integrated draft core (`src/embedbench_draft.*`) putting GPIO, an interrupt, I2C, UART, and time on one event list.
+- `device_if/`: the device interface being fixed (`src/embedbench_device.h`): a pure-C++ g++-only build and the same unmodified sources running on the host core.
+- `spi_device/`: a composite device (SPI plus a DC input line, a busy output line, and time) on the same interface; lineIn was the only addition.
+- `frame_port/`: the generic frame path (format id plus pre-encoding logical bits) for protocols without a dedicated port.

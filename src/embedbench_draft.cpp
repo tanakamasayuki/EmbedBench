@@ -8,6 +8,7 @@
 #include <HostClock.h>
 #include <HostInterrupt.h>
 #include <HostUart.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -53,6 +54,14 @@ struct State {
   void* uartUser = nullptr;
   ChannelHandler channelHandler = nullptr;
   void* channelUser = nullptr;
+  SpiTransferFn spiHandler = nullptr;
+  void* spiUser = nullptr;
+  PinWriteForward pinForward = nullptr;
+  void* pinForwardUser = nullptr;
+  FrameHandler frameDevice = nullptr;
+  void* frameDeviceUser = nullptr;
+  FrameHandler frameReceiver = nullptr;
+  void* frameReceiverUser = nullptr;
   TickHandler tickHandler = nullptr;
   void* tickUser = nullptr;
   ZeroWaitHandler zeroHandler = nullptr;
@@ -190,6 +199,7 @@ void onWait(uint32_t us, void*) {
 
 void onPinWrite(uint8_t pin, uint8_t value, void*) {
   recordf(Origin::kApp, 0, "gpio.write pin=%u val=%u", pin, value);
+  if (state.pinForward) state.pinForward(pin, value, state.pinForwardUser);
 }
 
 int onPinRead(uint8_t pin, uint8_t held, void*) {
@@ -262,6 +272,21 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool, void*) {
   return count;
 }
 
+// --- SPI hook: request/response pair per transferred byte ----------------
+
+uint8_t onSpiTransfer(uint8_t mosi, void*) {
+  const uint32_t req = recordf(Origin::kApp, 0, "spi.req mosi=%02X", mosi);
+  uint8_t miso = 0xFF;  // host default: idle bus
+  if (state.spiHandler != nullptr) {
+    miso = state.spiHandler(mosi, state.spiUser);
+  } else {
+    ++state.diagCount;
+    recordf(Origin::kDiag, req, "diag.unbound spi");
+  }
+  recordf(Origin::kDev, req, "spi.resp miso=%02X", miso);
+  return miso;
+}
+
 // --- UART hook: device replies go through the RX sink (X21) --------------
 
 void onUartActivity(HostUart::ActivityEvent event, HostUart&,
@@ -325,6 +350,26 @@ void setChannelHandler(ChannelHandler handler, void* user) {
   state.channelUser = user;
 }
 
+void bindSpiDevice(SpiTransferFn handler, void* user) {
+  state.spiHandler = handler;
+  state.spiUser = user;
+}
+
+void setPinWriteForward(PinWriteForward handler, void* user) {
+  state.pinForward = handler;
+  state.pinForwardUser = user;
+}
+
+void bindFrameDevice(FrameHandler handler, void* user) {
+  state.frameDevice = handler;
+  state.frameDeviceUser = user;
+}
+
+void setFrameReceiver(FrameHandler handler, void* user) {
+  state.frameReceiver = handler;
+  state.frameReceiverUser = user;
+}
+
 void setTickHandler(TickHandler handler, void* user) {
   state.tickHandler = handler;
   state.tickUser = user;
@@ -358,6 +403,7 @@ void runBegin(uint32_t tickUs) {
   HostArduino::setInterruptHook(&onInterruptEvent);
   Wire.setWriteHook(&onWireWrite);
   Wire.setReadHook(&onWireRead);
+  SPI.setTransferHook(&onSpiTransfer);
   Serial1.setActivityHook(&onUartActivity);
   HostArduino::setClockHooks(&onNow, &onWait);
 }
@@ -367,6 +413,7 @@ void runEnd() {
   HostArduino::clearClockHooks();
   Serial1.clearActivityHook();
   Wire.clearHooks();
+  SPI.clearHooks();
   HostArduino::clearInterruptHook();
   HostArduino::clearPinHooks();
 }
@@ -401,6 +448,28 @@ void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
   recordf(origin, 0, "chan.write chan=%u data=%s", channel, hex);
   if (state.channelHandler) {
     state.channelHandler(channel, data, len, state.channelUser);
+  }
+}
+
+void frameTx(Origin origin, uint16_t format, const uint8_t* data,
+             size_t bits) {
+  char hex[12];
+  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
+  recordf(origin, 0, "frame.tx fmt=%u bits=%u data=%s", format,
+          static_cast<unsigned>(bits), hex);
+  if (state.frameDevice) {
+    state.frameDevice(format, data, bits, state.frameDeviceUser);
+  }
+}
+
+void frameRx(Origin origin, uint16_t format, const uint8_t* data,
+             size_t bits) {
+  char hex[12];
+  hexOf(data, (bits + 7) / 8, hex, sizeof(hex));
+  recordf(origin, 0, "dev.frame fmt=%u bits=%u data=%s", format,
+          static_cast<unsigned>(bits), hex);
+  if (state.frameReceiver) {
+    state.frameReceiver(format, data, bits, state.frameReceiverUser);
   }
 }
 

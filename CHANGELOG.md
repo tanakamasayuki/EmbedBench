@@ -26,3 +26,9 @@
 - (JA) 再入sink呼び出し下でイベント完成4方式を計測（因果の可視化とstream順序を両立するのは要求/応答2行分割のみ）し、dev応答をcore RX sink経由で記録するUART会話へ作り直し。
 - (EN) Entered the implementation-first phase by owner decision: integrated the measured winners into a draft core (src/embedbench_draft.*, explicitly unapproved and rework-expected) and measured a multi-bus scenario — GPIO, an interrupt, I2C, UART, and virtual time on one 21-event list, byte-identical across three runs.
 - (JA) 所有者判断で先行実装フェーズへ移行: 実測の最優秀候補を統合したdraft core（src/embedbench_draft.*、未承認・手戻り前提）を実装し、GPIO・割り込み・I2C・UART・仮想時間を21イベント1本の列に載せて3回byte一致を計測。
+- (EN) Narrowed the surface to be fixed to the portable device interface (src/embedbench_device.h, pure C++11): the same unmodified register-map and command models pass a g++-only native build with -Werror and drive the host environment through a 32-line adapter, with everything above the interface reclassified as per-platform implementation examples.
+- (JA) 固定対象をポータブルなデバイスIF（src/embedbench_device.h、純粋C++11）へ絞り込み: 同一無改変のregister-map型・command型模型が-Werror付きg++単体ビルドを通り、32行のadapterでhost環境も駆動。IFより上は プラットホーム別実装例へ再分類。
+- (EN) Validated the interface against a composite SPI display model (data/command input line, busy output line, time-released busy): lineIn() was the only addition needed (+4 lines), and recorded the owner's abstraction policy — the library carries logical bitstreams plus format information, never physical-layer reproduction.
+- (JA) 複合SPIディスプレイ模型（DC入力線・busy出力線・時間解除）でIFを検証: 必要な追加は lineIn() のみ（+4行）。「本ライブラリは論理ビット列＋フォーマット情報までを受け渡し、物理層は再現しない」という抽象度方針も記録。
+- (EN) Added the generic frame path (HostPort::frameOut / Device::frameIn: a format id plus pre-encoding logical bits of any bit count) so protocols without a dedicated port never fall back to pin-level bit-banging, verified native and on-host with an addressed remote-node model.
+- (JA) 汎用frame経路（HostPort::frameOut / Device::frameIn: format id＋符号化前の任意bit数論理ビット列）を追加し、専用portのないプロトコルがビットバンへ落ちない道をアドレス付き無線ノード模型でネイティブ・host両検証。
