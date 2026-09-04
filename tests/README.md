@@ -64,4 +64,9 @@ Additional experiments:
 - `capacity/`: negotiated size limits (`maxFrameBits`): one model auto-splitting per environment, oversize rejected visibly.
 - `bulk_spi/`: bulk-transfer recording granularity: in-transaction count+checksum summaries vs the per-byte buffer explosion.
 - `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the X23 scenario with the same `common_models/` sources and matching device-side event lines.
+- `i2c_transaction/`: I2C transaction context (STOP, repeated start) with a register-map model that requires repeated start.
+- `frame_bits/`: frame bit packing (MSB-first, padding check, empty frames) and atomicity (a 128-bit frame is refused, never split).
+- `reentry/`: the re-entrancy rule: a model raising IRQ mid-response, immediate delivery (depth 2) vs deferred delivery (depth 1).
+- `contracts/`: channel / dump / time contracts (native only): return values, NUL termination, repeated time, jumps, reset.
+- `format_schema/`: format names with schema fingerprints: same name+schema idempotent, same name different schema diagnosed.
 - `common_models/`: reference models (temperature sensor, AT modem) shared across experiments and environments.

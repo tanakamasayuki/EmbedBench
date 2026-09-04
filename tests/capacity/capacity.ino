@@ -18,21 +18,21 @@ class DraftPort : public ebdev::HostPort {
   uint64_t nowMicros() override { return ebd::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
-  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
   }
-  uint16_t formatId(const char* name) override {
-    return ebd::registerFormat(name);
+  uint16_t formatId(const char* name, uint32_t schema) override {
+    return ebd::registerFormat(name, schema);
   }
   uint32_t maxFrameBits(uint8_t) override { return ebd::frameCapacityBits(); }
 };
 
 static DraftPort draftPort;
 
-static void devChannel(uint8_t channel, const uint8_t* data, size_t len,
+static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
                        void*) {
-  model.channelWrite(channel, data, len);
+  return model.channelWrite(channel, data, len);
 }
 static void devFrame(uint8_t bus, uint16_t format, const uint8_t* data,
                      size_t bits, void*) {
@@ -52,10 +52,15 @@ static void runOnce(char* out, size_t cap) {
   const uint8_t go[1] = {0x01};
   ebd::chanWrite(ebd::Origin::kDir, BulkSensorModel::kChannelShip, go, 1);
 
+  // Device-side atomic frame that does not fit: not split, not sent,
+  // counted by the model as unsent (channel 2 asks for a snapshot).
+  const uint8_t snap[1] = {0x01};
+  ebd::chanWrite(ebd::Origin::kDir, BulkSensorModel::kChannelSnapshot, snap, 1);
+
   // Application shim violating the negotiated limit: rejected whole, the
   // device never sees it, and a diagnostic marks the spot.
   uint8_t oversize[16] = {0};
-  ebd::frameTx(ebd::Origin::kApp, 0, ebd::registerFormat("bulk.data"),
+  ebd::frameTx(ebd::Origin::kApp, 0, ebd::registerFormat("acme.bulk.1", 0x0101),
                oversize, 128);
 
   char text[32];

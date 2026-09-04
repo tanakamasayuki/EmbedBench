@@ -50,18 +50,18 @@ def test_format_registry(dut):
     dut.expect(
         "values cmd=1 tel=2 again=1 vendor=3 overflow=0 got=1 telemetry=0401",
         timeout=10)
-    dut.expect("01 000000 main app frame.tx bus=0 fmt=node.cmd bits=16 data=0508",
+    dut.expect("01 000000 main app frame.tx bus=0 fmt=acme.node.1 bits=16 data=0508",
                timeout=10)
-    dut.expect("02 000000 main app frame.tx bus=0 fmt=node.cmd bits=16 data=0408",
+    dut.expect("02 000000 main app frame.tx bus=0 fmt=acme.node.1 bits=16 data=0408",
                timeout=10)
     dut.expect(
-        "03 000000 main app frame.tx bus=0 fmt=vendor.cal bits=16 data=0408",
+        "03 000000 main app frame.tx bus=0 fmt=vend.cal.1 bits=16 data=0408",
         timeout=10)
-    dut.expect("04 000000 main app frame.tx bus=1 fmt=node.cmd bits=16 data=0400",
+    dut.expect("04 000000 main app frame.tx bus=1 fmt=acme.node.1 bits=16 data=0400",
                timeout=10)
-    dut.expect("05 001000 tick dev dev.frame bus=0 fmt=node.tel bits=16 data=0401",
+    dut.expect("05 001000 tick dev dev.frame bus=0 fmt=acme.tele.1 bits=16 data=0401",
                timeout=10)
-    dut.expect("06 002000 tick diag diag.fmt_full name=overflow.x", timeout=10)
+    dut.expect("06 002000 tick diag diag.fmt_full name=acme.over.1", timeout=10)
     dut.expect("07 002000 main dir dump node power=1 pending=0", timeout=10)
     dut.expect("stats events=7 dropped=0 diag=1", timeout=10)
     dut.expect("run2_same=1 run3_same=1", timeout=10)

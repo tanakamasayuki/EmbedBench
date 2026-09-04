@@ -28,7 +28,7 @@ struct RegistryPort : public ebdev::HostPort {
   uint64_t nowMicros() override { return now; }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
-  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
     lastBus = bus;
     lastFormat = format;
@@ -36,8 +36,9 @@ struct RegistryPort : public ebdev::HostPort {
     memcpy(lastFrame, data,
            bytes < sizeof(lastFrame) ? bytes : sizeof(lastFrame));
     ++frames;
+    return true;
   }
-  uint16_t formatId(const char* name) override {
+  uint16_t formatId(const char* name, uint32_t) override {
     for (size_t i = 0; i < 4; ++i) {
       if (used[i] && countingStrcmp(names[i], name) == 0) {
         return static_cast<uint16_t>(i + 1);
@@ -69,7 +70,7 @@ struct NumericNode {
 struct StringNode {
   uint8_t power = 0;
   void frameIn(const char* format, const uint8_t* data, size_t) {
-    if (countingStrcmp(format, "node.cmd") == 0 && data[0] == 0x04) {
+    if (countingStrcmp(format, "acme.node.1") == 0 && data[0] == 0x04) {
       power = data[1] == 0x08 ? 1 : 0;
     }
   }
@@ -81,8 +82,9 @@ struct PlainPort : public ebdev::HostPort {
   uint64_t nowMicros() override { return 0; }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
-  void frameOut(uint8_t, uint16_t, const uint8_t*, size_t) override {
+  bool frameOut(uint8_t, uint16_t, const uint8_t*, size_t) override {
     ++frames;
+    return true;
   }
 };
 
@@ -104,11 +106,11 @@ int main() {
   NamedNodeModel node;
   node.attach(&port);
   node.reset();
-  const uint16_t vendorId = port.formatId("vendor.cal");
+  const uint16_t vendorId = port.formatId("vend.cal.1", 0x0002);
   node.frameIn(0, vendorId, vendorCal, 16);
   node.advanceTo(1000);
   const uint32_t framesAfterVendor = port.frames;
-  const uint16_t cmdId = port.formatId("node.cmd");
+  const uint16_t cmdId = port.formatId("acme.node.1", 0x0001);
   const uint8_t own[2] = {0x04, 0x08};
   port.now = 0;
   node.frameIn(0, cmdId, own, 16);
@@ -117,7 +119,7 @@ int main() {
   node.dump(nodeDump, sizeof(nodeDump));
   printf("interned vendor_id=%u cmd_id=%u again=%u after_vendor=%u frames=%u "
          "fmt=%u dump=<%s>\n",
-         vendorId, cmdId, port.formatId("node.cmd"), framesAfterVendor,
+         vendorId, cmdId, port.formatId("acme.node.1", 0x0001), framesAfterVendor,
          port.frames, port.lastFormat, nodeDump);
 
   // Cost: resolved ids compare integers; strings pay one strcmp per frame.
@@ -126,7 +128,7 @@ int main() {
   const uint32_t internedCost = strcmpCalls - beforeInterned;
   StringNode stringNode;
   const uint32_t beforeStrings = strcmpCalls;
-  for (int i = 0; i < 100; ++i) stringNode.frameIn("node.cmd", own, 16);
+  for (int i = 0; i < 100; ++i) stringNode.frameIn("acme.node.1", own, 16);
   printf("cost interned_100=%u strings_100=%u\n", internedCost,
          strcmpCalls - beforeStrings);
 

@@ -31,8 +31,10 @@ class Env : public ebdev::HostPort {
   void addTicking(ebdev::Device* device);
 
   // --- Application-side API (what Wire / Serial1 / delay are on Arduino) --
-  uint8_t i2cWrite(uint8_t address, const uint8_t* data, size_t len);
-  size_t i2cRead(uint8_t address, uint8_t* out, size_t len);
+  uint8_t i2cWrite(uint8_t address, const uint8_t* data, size_t len,
+                   bool stop = true);
+  size_t i2cRead(uint8_t address, uint8_t* out, size_t len,
+                 bool stop = true);
   void serialWrite(const uint8_t* data, size_t len);
   size_t serialRead(uint8_t* out, size_t len, uint32_t timeoutUs);
   void delayMicros(uint32_t us);
@@ -45,9 +47,9 @@ class Env : public ebdev::HostPort {
   uint64_t nowMicros() override;
   void lineOut(uint8_t line, uint8_t level) override;
   void serialOut(const uint8_t* data, size_t len) override;
-  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override;
-  uint16_t formatId(const char* name) override;
+  uint16_t formatId(const char* name, uint32_t schema) override;
   uint32_t maxFrameBits(uint8_t bus) override;
 
   // --- Trace -------------------------------------------------------------------
@@ -68,15 +70,17 @@ class Env : public ebdev::HostPort {
     bool used;
     uint8_t address;
     ebdev::Device* device;
+    bool open;  // last transfer ended without STOP
   };
   struct FormatSlot {
     bool used;
     char name[20];
+    uint32_t schema;
   };
 
   uint32_t record(const char* origin, uint32_t link, const char* fmt, ...);
   void advance(uint32_t us);
-  ebdev::Device* findI2c(uint8_t address) const;
+  I2cSlot* findI2c(uint8_t address);
   const char* formatLabel(uint16_t id, char* out, size_t cap) const;
 
   Event events_[kCapacity];
@@ -87,7 +91,7 @@ class Env : public ebdev::HostPort {
   uint64_t nextTickUs_ = kTickUs;
   bool inTick_ = false;
 
-  I2cSlot i2c_[2] = {{false, 0, nullptr}, {false, 0, nullptr}};
+  I2cSlot i2c_[2] = {{false, 0, nullptr, false}, {false, 0, nullptr, false}};
   ebdev::Device* serialDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;
   ebdev::Device* ticking_[4] = {nullptr, nullptr, nullptr, nullptr};

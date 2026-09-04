@@ -8,13 +8,13 @@ SRC = HERE.parent.parent / "src"
 MODELS = HERE.parent / "common_models" / "src"
 
 EXPECTED_TRACE = [
-    "01 000000 main app i2c.req addr=48 data=0105",
+    "01 000000 main app i2c.req addr=48 data=0105 stop=1",
     "02 000000 main dev i2c.resp status=0 re=1",
     "03 000000 main dir chan.write chan=0 data=012C",
     "04 000000 main dev gpio.inject line=0 val=1",
-    "05 000000 main app i2c.req addr=48 data=00",
+    "05 000000 main app i2c.req addr=48 data=00 stop=1",
     "06 000000 main dev i2c.resp status=0 re=5",
-    "07 000000 main app i2c.rd.req addr=48 req=2",
+    "07 000000 main app i2c.rd.req addr=48 req=2 stop=1",
     "08 000000 main dev i2c.rd.resp len=2 data=012C re=7",
     "09 000000 main app uart.tx AT+S",
     "10 001000 tick dev dev.tx OK",
@@ -72,5 +72,7 @@ def test_native_env():
     sizes = {"env": loc(HERE / "nenv.h") + loc(HERE / "nenv.cpp")}
     print(f"LOC {sizes}")
     # Environment example #2 in full: HostPort, app-side bus API, director
-    # path, tick clock, and trace recorder (X29).
-    assert sizes == {"env": 290}
+    # path, tick clock, and trace recorder (X29: 290). +38 for the contract
+    # revision: I2C transaction context, schema-checked formats, frame
+    # padding/atomicity checks, channel rejection diagnostics (X30-X34).
+    assert sizes == {"env": 328}

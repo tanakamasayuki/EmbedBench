@@ -38,15 +38,19 @@ class DraftPort : public ebdev::HostPort {
 
 static DraftPort draftPort;
 
-static uint8_t devWrite(const uint8_t* data, size_t len, void*) {
-  return tempModel.i2cWrite(data, len);
+static uint8_t devWrite(const uint8_t* data, size_t len, bool stop,
+                        bool continued, void*) {
+  const ebdev::I2cTransfer xfer = {stop, continued};
+  return tempModel.i2cWrite(data, len, xfer);
 }
-static size_t devRead(uint8_t* data, size_t len, void*) {
-  return tempModel.i2cRead(data, len);
+static size_t devRead(uint8_t* data, size_t len, bool stop, bool continued,
+                      void*) {
+  const ebdev::I2cTransfer xfer = {stop, continued};
+  return tempModel.i2cRead(data, len, xfer);
 }
-static void devChannel(uint8_t channel, const uint8_t* data, size_t len,
+static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
                        void*) {
-  tempModel.channelWrite(channel, data, len);
+  return tempModel.channelWrite(channel, data, len);
 }
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   modemModel.serialIn(data, len);

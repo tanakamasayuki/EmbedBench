@@ -94,13 +94,16 @@ def test_native_portability():
     print(f"LOC {sizes}")
     # Growth log: 58 at X23, +4 for lineIn (composite devices, X24), +10
     # for frameOut/frameIn (generic frame path, X25), +8 for frame bus ids
-    # and formatId interning (X26), +4 for negotiated maxFrameBits (X27).
-    # Grow deliberately.
+    # and formatId interning (X26), +4 for negotiated maxFrameBits (X27),
+    # +22 for the contract review (I2cStatus/I2cTransfer, frame packing
+    # helpers, bool frameOut/channelWrite, schema in formatId; X30-X34).
+    # Models grew by their contract-conformant channelRead / signatures.
+    print(f"LOC {sizes}")
     assert sizes == {
-        "device_if_header": 84,
-        "temp_model": 49,
+        "device_if_header": 106,
+        "temp_model": 64,
         "modem_model": 50,
-        "adapter": 32,
+        "adapter": 36,
     }
 
 
@@ -108,7 +111,7 @@ def test_device_if(dut):
     dut.expect("TEST start device_if", timeout=10)
     dut.expect("values t1=300 spins=3 reply=OK elapsed=1000", timeout=10)
 
-    dut.expect("01 000000 main app i2c.req addr=48 data=0105", timeout=10)
+    dut.expect("01 000000 main app i2c.req addr=48 data=0105 stop=1", timeout=10)
     dut.expect("02 000000 main dev i2c.resp status=0 re=1", timeout=10)
     dut.expect("03 000000 main app int.attach pin=27 trig=1", timeout=10)
     dut.expect("04 000000 tick dir chan.write chan=0 data=012C", timeout=10)
@@ -119,9 +122,9 @@ def test_device_if(dut):
     dut.expect("06 000000 isr core isr.enter pin=27", timeout=10)
     dut.expect("07 000000 isr app gpio.write pin=5 val=1", timeout=10)
     dut.expect("08 000000 isr core isr.exit pin=27", timeout=10)
-    dut.expect("09 000000 main app i2c.req addr=48 data=00", timeout=10)
+    dut.expect("09 000000 main app i2c.req addr=48 data=00 stop=1", timeout=10)
     dut.expect("10 000000 main dev i2c.resp status=0 re=9", timeout=10)
-    dut.expect("11 000000 main app i2c.rd.req addr=48 req=2", timeout=10)
+    dut.expect("11 000000 main app i2c.rd.req addr=48 req=2 stop=1", timeout=10)
     dut.expect("12 000000 main dev i2c.rd.resp len=2 data=012C re=11",
                timeout=10)
     dut.expect(r"13 000000 main app uart.tx AT\+S", timeout=10)

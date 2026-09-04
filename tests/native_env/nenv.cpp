@@ -17,6 +17,10 @@ void hexOf(const uint8_t* data, size_t len, char* out, size_t cap) {
 }
 
 void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
+  if (bytes == 0) {
+    snprintf(out, cap, "empty");
+    return;
+  }
   if (bytes <= 4) {
     char hex[12];
     hexOf(data, bytes, hex, sizeof(hex));
@@ -39,6 +43,7 @@ void Env::reset() {
   inTick_ = false;
   rxHead_ = 0;
   rxCount_ = 0;
+  for (size_t i = 0; i < 2; ++i) i2c_[i].open = false;
 }
 
 // --- Bindings ----------------------------------------------------------------
@@ -50,6 +55,7 @@ bool Env::bindI2c(uint8_t address, ebdev::Device* device) {
       i2c_[i].used = true;
       i2c_[i].address = address;
       i2c_[i].device = device;
+      i2c_[i].open = false;
       return true;
     }
   }
@@ -64,9 +70,9 @@ void Env::addTicking(ebdev::Device* device) {
   if (tickingCount_ < 4) ticking_[tickingCount_++] = device;
 }
 
-ebdev::Device* Env::findI2c(uint8_t address) const {
+Env::I2cSlot* Env::findI2c(uint8_t address) {
   for (size_t i = 0; i < 2; ++i) {
-    if (i2c_[i].used && i2c_[i].address == address) return i2c_[i].device;
+    if (i2c_[i].used && i2c_[i].address == address) return &i2c_[i];
   }
   return nullptr;
 }
@@ -125,14 +131,19 @@ void Env::delayMicros(uint32_t us) { advance(us); }
 
 // --- Application-side API -----------------------------------------------------
 
-uint8_t Env::i2cWrite(uint8_t address, const uint8_t* data, size_t len) {
+uint8_t Env::i2cWrite(uint8_t address, const uint8_t* data, size_t len,
+                      bool stop) {
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
-  const uint32_t req = record("app", 0, "i2c.req addr=%02X data=%s", address, hex);
-  ebdev::Device* device = findI2c(address);
-  uint8_t status = 2;
-  if (device != nullptr) {
-    status = device->i2cWrite(data, len);
+  I2cSlot* slot = findI2c(address);
+  const bool continued = slot != nullptr && slot->open;
+  const uint32_t req = record("app", 0, "i2c.req addr=%02X data=%s stop=%u%s",
+                              address, hex, stop ? 1 : 0, continued ? " rs" : "");
+  uint8_t status = ebdev::kI2cAddressNack;
+  if (slot != nullptr) {
+    const ebdev::I2cTransfer xfer = {stop, continued};
+    status = slot->device->i2cWrite(data, len, xfer);
+    slot->open = !stop;
   } else {
     record("diag", req, "diag.unbound addr=%02X", address);
   }
@@ -140,13 +151,17 @@ uint8_t Env::i2cWrite(uint8_t address, const uint8_t* data, size_t len) {
   return status;
 }
 
-size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len) {
-  const uint32_t req = record("app", 0, "i2c.rd.req addr=%02X req=%u", address,
-                              static_cast<unsigned>(len));
-  ebdev::Device* device = findI2c(address);
+size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
+  I2cSlot* slot = findI2c(address);
+  const bool continued = slot != nullptr && slot->open;
+  const uint32_t req = record("app", 0, "i2c.rd.req addr=%02X req=%u stop=%u%s",
+                              address, static_cast<unsigned>(len), stop ? 1 : 0,
+                              continued ? " rs" : "");
   size_t count = 0;
-  if (device != nullptr) {
-    count = device->i2cRead(out, len);
+  if (slot != nullptr) {
+    const ebdev::I2cTransfer xfer = {stop, continued};
+    count = slot->device->i2cRead(out, len, xfer);
+    slot->open = !stop;
   } else {
     record("diag", req, "diag.unbound addr=%02X", address);
   }
@@ -190,7 +205,11 @@ void Env::chanWrite(uint8_t channel, const uint8_t* data, size_t len) {
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
   record("dir", 0, "chan.write chan=%u data=%s", channel, hex);
-  if (channelDevice_ != nullptr) channelDevice_->channelWrite(channel, data, len);
+  if (channelDevice_ != nullptr &&
+      !channelDevice_->channelWrite(channel, data, len)) {
+    record("diag", 0, "diag.chan_reject chan=%u len=%u", channel,
+           static_cast<unsigned>(len));
+  }
 }
 
 void Env::dump(ebdev::Device* device) {
@@ -226,31 +245,46 @@ const char* Env::formatLabel(uint16_t id, char* out, size_t cap) const {
   return out;
 }
 
-void Env::frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+bool Env::frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                    size_t bits) {
+  if (format == 0) {
+    record("diag", 0, "diag.frame_noformat bus=%u", bus);
+    return false;
+  }
   if (bits > kMaxFrameBits) {
     record("diag", 0, "diag.frame_oversize bus=%u bits=%u max=%u", bus,
            static_cast<unsigned>(bits), kMaxFrameBits);
-    return;
+    return false;
+  }
+  if (bits > 0 && (data == nullptr || !ebdev::framePaddingClean(data, bits))) {
+    record("diag", 0, "diag.frame_padding bus=%u bits=%u", bus,
+           static_cast<unsigned>(bits));
+    return false;
   }
   char payload[20];
   char label[20];
-  payloadLabel(data, (bits + 7) / 8, payload, sizeof(payload));
+  payloadLabel(data, ebdev::frameBytes(bits), payload, sizeof(payload));
   formatLabel(format, label, sizeof(label));
   record("dev", 0, "dev.frame bus=%u fmt=%s bits=%u %s", bus, label,
          static_cast<unsigned>(bits), payload);
+  return true;
 }
 
-uint16_t Env::formatId(const char* name) {
+uint16_t Env::formatId(const char* name, uint32_t schema) {
   if (name == nullptr || name[0] == '\0') return 0;
   for (size_t i = 0; i < 8; ++i) {
     if (formats_[i].used && strcmp(formats_[i].name, name) == 0) {
+      if (formats_[i].schema != schema) {
+        record("diag", 0, "diag.fmt_conflict name=%s", name);
+        return 0;
+      }
       return static_cast<uint16_t>(i + 1);
     }
   }
   for (size_t i = 0; i < 8; ++i) {
     if (!formats_[i].used) {
       formats_[i].used = true;
+      formats_[i].schema = schema;
       snprintf(formats_[i].name, sizeof(formats_[i].name), "%s", name);
       return static_cast<uint16_t>(i + 1);
     }

@@ -47,14 +47,15 @@ int main() {
   TempSensorModel temp;
   temp.attach(&port);
   temp.reset();
+  const ebdev::I2cTransfer plain = {true, false};
   const uint8_t config[2] = {0x01, 0x05};
-  const uint8_t status = temp.i2cWrite(config, sizeof(config));
+  const uint8_t status = temp.i2cWrite(config, sizeof(config), plain);
   const uint8_t raw250[2] = {0x00, 0xFA};
   temp.channelWrite(0, raw250, sizeof(raw250));
   const uint8_t pointer[1] = {0x00};
-  temp.i2cWrite(pointer, sizeof(pointer));
+  temp.i2cWrite(pointer, sizeof(pointer), plain);
   uint8_t reading[2] = {0};
-  const size_t readLen = temp.i2cRead(reading, sizeof(reading));
+  const size_t readLen = temp.i2cRead(reading, sizeof(reading), plain);
   char tempDump[40];
   temp.dump(tempDump, sizeof(tempDump));
   printf("temp status=%u line=%u:%u line_calls=%u read_len=%zu read=%02X%02X dump=<%s>\n",

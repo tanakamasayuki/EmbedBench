@@ -19,12 +19,12 @@ class DraftPort : public ebdev::HostPort {
   uint64_t nowMicros() override { return ebd::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
-  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
   }
-  uint16_t formatId(const char* name) override {
-    return ebd::registerFormat(name);
+  uint16_t formatId(const char* name, uint32_t schema) override {
+    return ebd::registerFormat(name, schema);
   }
 };
 
@@ -39,12 +39,12 @@ static void onTick(uint32_t tick, void*) {
   node.advanceTo(ebd::nowUs());
   if (tick == 2) {
     // Director probe: fill the registry, then overflow it once.
-    ebd::registerFormat("extra.a");
-    ebd::registerFormat("extra.b");
-    ebd::registerFormat("extra.c");
-    ebd::registerFormat("extra.d");
-    ebd::registerFormat("extra.e");
-    overflowId = ebd::registerFormat("overflow.x");
+    ebd::registerFormat("acme.xa.1", 0);
+    ebd::registerFormat("acme.xb.1", 0);
+    ebd::registerFormat("acme.xc.1", 0);
+    ebd::registerFormat("acme.xd.1", 0);
+    ebd::registerFormat("acme.xe.1", 0);
+    overflowId = ebd::registerFormat("acme.over.1", 0);
   }
 }
 
@@ -103,10 +103,10 @@ void setup() {
 
   // The shim registers by name; re-registering the same name is
   // idempotent; an independent vendor name gets its own id.
-  const uint16_t idCmd = ebd::registerFormat("node.cmd");
-  const uint16_t idTel = ebd::registerFormat("node.tel");
-  const uint16_t idAgain = ebd::registerFormat("node.cmd");
-  const uint16_t idVendor = ebd::registerFormat("vendor.cal");
+  const uint16_t idCmd = ebd::registerFormat("acme.node.1", 0x0001);
+  const uint16_t idTel = ebd::registerFormat("acme.tele.1", 0x0001);
+  const uint16_t idAgain = ebd::registerFormat("acme.node.1", 0x0001);
+  const uint16_t idVendor = ebd::registerFormat("vend.cal.1", 0x0002);
 
   runOnce(run1, sizeof(run1), idCmd, idVendor);
   Serial.printf(

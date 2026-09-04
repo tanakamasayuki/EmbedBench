@@ -3,67 +3,78 @@
 内部の記録。日本語のみ。固定対象である `src/embedbench_device.h` について、
 何を専用portにし、何をframeに載せ、どこまでをカバーし、どこから先は他の
 テスト手段に任せ、そして**何には絶対に手を出さないか**を定める。
-根拠は[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)のX12・X19〜X26。
+根拠は[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)のX12・X19〜X34。
+IFの契約（再入・時間・借用バッファ・リンク所有・bit packing・原子性・
+channel/dumpの戻り値）はヘッダ本文に明記してあり、本書はその範囲と理由を扱う。
 
-## 1. 専用portとframeの分担 — SPI/I2Cは特別扱いか
+## 1. 経路の分類 — 専用portとframeの分担
 
-答え: **特別扱いだが、理由と打ち止め条件を明示する。**
+| 分類 | 経路 | 性質 | 例 |
+| --- | --- | --- | --- |
+| 同期要求・応答bus | `i2cWrite`/`i2cRead`（`I2cTransfer`付き）、`spiTransfer` | masterがブロックして戻り値（status / bytes / MISO）を待つ。Arduino標準APIが型付けし、host hookから同期callbackで届く | register-mapセンサ（X30）、SPIディスプレイ（X24） |
+| byte stream | `serialIn` / `serialOut` | 非同期の一般的なbyte列。戻り値ではなく後続の出力で応答する | ATモデム（X21/X23） |
+| デバイスの外部作用・環境入力 | `lineOut` / `lineIn`、`channelWrite` / `channelRead`、`advanceTo` | 通信busではない。線の電位、世界の物理量、時間 | DRDY/IRQ線（X16/X32）、温度注入（X18） |
+| それ以外の論理プロトコル | `frameIn` / `frameOut`（bus id + format id + 論理bits） | 専用portのない全プロトコルの拡張経路 | IRリモコン（X31）、無線ノード（X25/X26） |
 
-専用port（`i2cWrite`/`i2cRead`/`spiTransfer`/`serialIn`+`serialOut`）に置くのは
-次の2条件を両方満たすものだけ:
+**SPI/I2Cが専用portである理由:** frameへ統一すると、host hookが型付きで渡す
+データを直列化して模型側で戻すだけの往復変換になる（X12で型変換1往復=2回を
+実測）うえ、同期の戻り値を一方向のframeで表すには応答frameとの対応付けを
+別途発明する必要がある。UARTは戻り値を待たないが、Arduino標準の型付きbyte
+streamとして専用portに置く（条件は「同期応答」ではなく「標準APIが型付けする
+交換」）。
 
-1. **Arduino標準APIが型付けする交換である** — 環境はhost hookから型付きの
-   データ（アドレス・payload・status）を同期callbackで受け取る。frameへ
-   統一すると、型付きデータを一度直列化して模型側で戻すだけの往復変換になる
-   （X12で型変換1往復=2回のコストを実測済み）
-2. **masterがブロックして戻り値を待つ** — status（I2C write）、bytes（I2C read）、
-   MISO byte（SPI）は同期の戻り値であり、一方向で戻り値を持たないframeでは
-   応答frameとの対応付けを別途発明する必要が生じる
+**打ち止め条件（原則frame）:** 新しいプロトコルは原則frame経路に載せる。
+専用portの追加を再検討するのは次の3条件がそろった場合だけとする。
 
-この2条件を満たさない通信はすべてframe経路
-（`frameIn`/`frameOut` + bus id + 環境internのformat id）に載せる。
-**専用portは現在の3バス＋GPIO線＋channelで打ち止め**とし、今後の新プロトコル
-（CAN、PIO、赤外線、WS2812、独自無線など）に専用portは増やさない。
-frame経路が成立することはX25/X26で実証済み。
+1. 同期の戻り値が本質的に必要である
+2. frameによる要求/応答の対応付けが模型を不自然にする
+3. 複数の実デバイス類型で必要性が確認できた
 
-## 2. frameの構成要素とその理由
+X25/X26/X31で確認したframeの利用は一方向要求＋遅延応答までであり、同期応答・
+双方向同時通信・stream型プロトコルは未検証。この範囲でframe経路を「原則」とする。
 
-| 要素 | 型 | 理由 |
+**PIO・赤外線などをframeへ載せる前提:** アプリ側またはそのprotocolライブラリの
+host版shimが符号化前の論理frameを環境へ渡す必要がある。GPIO波形しか出さない
+無改造ライブラリを環境が自動的にframe化することはできない（波形デコードは
+3.3節の「絶対にやらない」）。
+
+## 2. frameの構成要素と契約
+
+| 要素 | 決定 | 根拠 |
 | --- | --- | --- |
-| bus | `uint8_t`（デバイス論理番号） | 同一プロトコルの複数リンク（PIOの複数SM、複数IRチャネル、複数CAN bus）を区別する。実リンクへの対応付けはbinding側（X26） |
-| format | `uint16_t`（環境がinternしたid） | 数値の直接指定は未知プロトコル同士で衝突し、静かに誤解釈する（X26で実証: vendor frameがnodeを誤ってpower offに）。**名前文字列が識別子、番号は環境ローカル**。デバイスは`HostPort::formatId(name)`で1回解決してキャッシュし、以後は整数比較（100 frameでstrcmp 0回 vs 文字列毎回方式の100回、X26） |
-| bits + data | 任意bit数の論理ビット列 | 符号化前の論理bitsが本ライブラリの受け渡し単位。byte境界に揃わないPIO等に対応 |
-
-文字列のみ方式を採らなかった理由: 毎frameのstrcmpコストに加え、イベント
-recordへの名前の複製が必要になる。intern方式ならtraceは名前で読め（環境が
-逆引き）、recordは2byteで足りる。registry満杯は診断イベント+id 0で、id 0は
-「何にも一致しない」と定義済み（registry無し環境でデバイスが安全に不活性に
-なる縮退もX26で実証）。
+| bus | `uint8_t`、デバイス論理番号。実リンク対応はbinding側 | 同一プロトコルの複数リンク（PIOの複数SM、複数IRチャネル、複数CAN）を区別（X26） |
+| format | `uint16_t`、環境がinternしたid。名前は `<vendor>.<protocol>.<version>`、登録時に**schema指紋**を照合し、同名・異schemaは衝突として拒否 | 固定番号は独立ライブラリ間で静かに衝突（X26）。名前だけでも同名を選べば衝突するため、schema照合で「同名・異仕様」を検出（X34）。解決は1回でキャッシュ、以後は整数比較 |
+| bits + data | MSB-first packing（frame bit 0 = data[0]のbit 7）、末尾の未使用bitは0、bits=0は空frame（trigger）でdata=nullptr可 | packingを定めないと同じ模型が環境ごとに別の動作になる。汚れたpaddingは環境が拒否（X31） |
+| 原子性 | `maxFrameBits(bus)`は「原子的に送れる最大frame」。上限内は全量受理を保証、超過は`frameOut`がfalseを返し環境が診断。**模型は自動分割しない**。分割はformat自身が定義する場合だけ（各frameがそのformatの完全なframe） | 1つの128bit commandを64bit×2に割ると別のframeになる。X27では分割規則を持つ`acme.bulk.1`と分割不能な`acme.snap.1`を対比 |
+| サイズ上限の所在 | 環境の性質（記録バッファ、MTU）なのでヘッダに定数を焼き込まず環境とネゴする。既定0=frame経路なし | X27 |
+| インバウンド | ネゴ不要。データはcall中のみ有効な借用で、デバイスは必要分だけ読む | ヘッダの借用バッファ契約 |
 
 ## 3. ユースケースと対応
 
 ### 3.1 このライブラリがカバーする
 
-| ユースケース | 経路 |
-| --- | --- |
-| I2C register-map / commandデバイス | 専用port（X18/X23） |
-| SPIデバイス（DC/CS線つき複合を含む） | 専用port + `lineIn`（X24） |
-| UART会話デバイス（ATモデム等、遅延応答含む） | 専用port + `advanceTo`（X21/X23） |
-| デバイスのIRQ・DRDY・busy線 | `HostPort::lineOut`（X16/X24） |
-| センサー値・環境量の注入と検分 | channel（X12/X18） |
-| IR・sub-GHz・PIO・WS2812など未対応プロトコルの論理frame | frame経路（X25/X26） |
-| 応答遅延・周期送信などの時間駆動挙動 | `advanceTo`（決定的、X17/X21） |
-| 証拠dump | `dump`（X18） |
+| ユースケース | 経路 | 根拠 |
+| --- | --- | --- |
+| I2C register-map / commandデバイス（repeated start要求を含む） | 専用port + `I2cTransfer` | X18/X23/X30 |
+| SPIデバイス（DC/CS線つき複合を含む） | 専用port + `lineIn` | X24 |
+| UART会話デバイス（遅延応答含む） | 専用port + `advanceTo` | X21/X23 |
+| デバイスのIRQ・DRDY・busy線（応答中の発生を含む） | `lineOut`（環境が再入を延期） | X16/X24/X32 |
+| センサー値・環境量の注入と検分 | channel（戻り値契約つき） | X12/X18/X33 |
+| IR・sub-GHz・PIO・WS2812など未対応プロトコルの論理frame | frame経路 | X25/X26/X31 |
+| 応答遅延・周期送信などの時間駆動挙動 | `advanceTo`（時間契約つき） | X17/X21/X33 |
+| 証拠dump | `dump`（snprintf規約） | X18/X33 |
 
 ### 3.2 ここまではカバーし、その先は他のテストが好ましい
 
 | ユースケース | ここまでカバー | その先は |
 | --- | --- | --- |
-| 大量ストリーミング（フレームバッファ、音声ブロック） | frameや専用portで内容は運べる。goldenには長さ・checksum等の要約を残す（X24のchecksum応答が例） | ピクセル単位の描画検証は描画ライブラリ側のテスト（TinyGFX等）で |
+| 大量ストリーミング（フレームバッファ、音声ブロック） | 内容は運ぶ。goldenにはtransaction単位の件数・checksum要約を残す（X28） | ピクセル単位の描画検証は描画ライブラリ側のテスト（TinyGFX等）で |
 | プロトコルのbit列⇔波形の符号化/復号（NEC IR、Manchester、CRC） | 符号化**前**のbitsをframeで受け渡すところまで | 純関数として切り出して単体テスト |
-| デバイス模型の内部アルゴリズム | IF越しの入出力の因果まで | 模型自体のネイティブ単体テスト（X23の形） |
+| デバイス模型の内部アルゴリズム | IF越しの入出力の因果まで | 模型自体のネイティブ単体テスト（X23/X33の形） |
 | バス設定の妥当性（clock速度、mode） | 「何が設定されたか」の記録まで | タイミング適合の判定は実機・専用ツール |
 | 複数masterやbus arbitration | 単一masterの決定的順序まで | 実機または専用シミュレータ |
+| 複数のI2C/SPI/UARTを持つ複合デバイス | 1 Deviceは各専用busを最大1つ。複合はadapterが子Deviceへ分割 | — （制限として明記、ヘッダ契約） |
+| ISR内での同一bus使用 | デバイスは再入されない。アプリ側の受信バッファ破壊は実機と同種のバグとして**そのまま観測**される（X32: app値がFFFF） | アプリ設計の問題として修正する |
 
 ### 3.3 絶対に手を出さない
 
@@ -82,26 +93,25 @@ recordへの名前の複製が必要になる。intern方式ならtraceは名前
 この節が「線を越えた要望」への既定の答えになる: 越える要望は、実機テスト、
 専用シミュレータ、または純関数の単体テストへ振り分ける。
 
-## 4. サイズ上限の方針（X27で検証済み）
+## 4. 契約の要点（ヘッダ本文が正、ここは索引）
 
-上限は**環境とネゴする**。ポータブルなIFヘッダへ定数を焼き込まない——上限は
-記録バッファやMTUという環境の性質であって、プロトコルの性質ではないため。
-
-- `HostPort::maxFrameBits(bus)`: デバイスは1回問い合わせて出力を分割する
-  （X27: 同一模型が64bit環境で4分割、4,096bit環境で1 frame）
-- 上限内の呼び出しは全量受理を保証。超過は黙って切り詰めず、診断イベントで
-  可視化して**全量拒否**（X19の「黙った欠落を作らない」を上限にも適用）
-- 既定値0=「frame経路なし」で、`formatId`の0と同じくデバイスは安全に不活性
-- インバウンドはネゴ不要: データはcall中のみ有効な借用で、デバイスは
-  必要分だけ読む（IFはバッファ保持を強制しない）
-- 大量転送のログはtransaction等の自然な境界で件数+checksumへ集約する（X28）
+| 契約 | 決定 | 検証 |
+| --- | --- | --- |
+| 再入 | 環境はDeviceを再入しない。Device内からの`HostPort`呼び出しが引き起こす効果（ISR等）は即時記録・**Device呼び出し完了後に配送** | X32（即時配送ならdepth 2、延期でdepth 1） |
+| 時間 | `advanceTo`のnowUsは`reset()`間で単調非減少、同値の再呼び出し可（二重発火禁止）、飛びは全ての期限到来分をその呼び出しで期限順に処理、`reset()`は保留期限を破棄、callback中の`nowMicros()`は最後の`advanceTo`以上 | X33 |
+| I2C | `I2cTransfer{stop, continued}`とArduino準拠の`I2cStatus`（0〜4） | X30 |
+| channel | `channelWrite`は全量適用時のみtrue（falseは環境が診断）。`channelRead`はsnprintf型（必要長を返し、cap分だけ書く） | X33 |
+| dump | snprintf型（必要長を返し、cap>0なら常にNUL終端） | X33 |
+| serialOut | 任意byte（NUL含む）を運ぶ。表示側の課題でIFの課題ではない | — |
+| 借用バッファ | 引数のポインタはcall中のみ有効 | ヘッダ |
 
 ## 5. 未決（IF最終決定時に締める）
 
 1. frame経路にも要求/応答の対応付け（`re=`）が要るユースケースが出るか
    （現状の実例は全て一方向+遅延応答で足りている）
-2. format名の命名規約（`vendor.protocol` 形式の推奨など）とregistry容量の既定値
-3. `serialOut`のNULを含むbyte列（現実装例はテキスト前提）
-4. `dump`文字列の機械可読規約
-5. 集約記録をtransaction以外の塊（`writeBytes`、frame連送）へ広げる基準と
+2. registry容量の既定値と、schema指紋の生成規約（手書き定数か、レイアウト
+   からの派生か）
+3. 集約記録をtransaction以外の塊（`writeBytes`、frame連送）へ広げる基準と
    checksumの種類（X28の未決）
+4. `maxFrameBits`のbusごとの差を実際に持つ環境が現れた場合の、format側の
+   分割規則の書き方（X27の`acme.bulk.1`が1例目）

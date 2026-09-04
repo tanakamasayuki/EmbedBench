@@ -47,15 +47,16 @@ static TempSensor sensor;
 static volatile bool dataReady = false;
 
 // --- Bindings into the draft core -----------------------------------------
-static uint8_t devWrite(const uint8_t* data, size_t len, void*) {
+static uint8_t devWrite(const uint8_t* data, size_t len, bool, bool, void*) {
   return sensor.busWrite(data, len);
 }
-static size_t devRead(uint8_t* data, size_t len, void*) {
+static size_t devRead(uint8_t* data, size_t len, bool, bool, void*) {
   return sensor.busRead(data, len);
 }
-static void devChannel(uint8_t channel, const uint8_t* data, size_t len,
+static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
                        void*) {
   sensor.onChannelWrite(channel, data, len);
+  return channel == 0 && len == 2;
 }
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   if (len == 2 && data[0] == 'A' && data[1] == 'T') {

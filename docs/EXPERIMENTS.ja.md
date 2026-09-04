@@ -901,6 +901,8 @@ transaction境界という自然な区切りが集約の開始・終了を決め
 ## X29. 環境実装例#2 — 純粋C++の最小記録環境で同一模型を駆動
 
 対象: `tests/native_env/`（環境実装例、`.ino`なし）、模型は `tests/common_models/`
+（手戻り記録: 2026-09-04の契約改訂で`I2cTransfer`・schema照合・padding検査・
+channel診断を追加し、環境#2は290行→328行。host側adapterは32行→36行）
 
 「IFより上はプラットホーム別実装例」という整理を締めるため、host環境とは
 独立に**2つ目の環境**を純粋C++11で書いた（`nenv::Env`、**290行**）。
@@ -961,11 +963,127 @@ X23（host環境、18行）との対応:
 - 同一模型ソースを2環境が共有できることを、ファイル配置（`common_models/`）
   として固定した
 
+## 固定前レビューへの対応（2026-09-04、X30〜X34）
+
+所有者レビューで「embedbench_device.hを固定IFにするには契約不足」と指摘された
+9点を、ヘッダ本文への契約明記と5つの実験で解消した。IFヘッダは84行→**106行**
+（`I2cStatus`/`I2cTransfer`、frame packing helper、`frameOut`/`channelWrite`の
+bool戻り値、`formatId`のschema引数、契約コメント）。影響を受けた既存実験は
+新契約へ追随更新した（手戻り記録: X22/X23/X25〜X29。I2C行に`stop=`が付き、
+format名が`<vendor>.<protocol>.<version>`形式に、`frameOut`/`channelWrite`が
+bool、環境実装例#2は290→更新後の行数を各節に記載）。
+
+| 指摘 | 対応 | 検証 |
+| --- | --- | --- |
+| 専用port条件とUARTの矛盾 | 分類を「同期要求応答bus / byte stream / 外部作用・環境入力 / frame」の4種へ再定義（SCOPE 1節） | 文書 |
+| I2Cのtransaction情報不足 | `I2cTransfer{stop, continued}`とArduino準拠`I2cStatus` | X30 |
+| frameのbit表現未定義 | MSB-first、末尾padding=0を環境が検査、bits=0は空frame（nullptr可） | X31 |
+| 任意frameの自動分割は不可 | `maxFrameBits`=原子的に送れる最大。模型は分割せず、formatが分割を定義する場合のみ複数frame。超過はfalse+診断 | X27改・X31 |
+| format名も衝突し得る | 命名規約`<vendor>.<protocol>.<version>`＋登録時schema照合（同名異schemaは衝突診断） | X34 |
+| 再入規則の欠落 | 環境はDeviceを再入しない。Device内の`HostPort`呼び出しが引き起こす効果はDevice呼び出し完了後に配送 | X32 |
+| 時間契約の不足 | 単調非減少・同値再呼び出し・飛び・reset・callback中の`nowMicros`をヘッダに明記 | X33 |
+| channel/dumpの戻り値契約 | `channelWrite`は全量適用時のみtrue（falseは診断）、`channelRead`/`dump`はsnprintf規約 | X33 |
+| 複数リンクの表現 | 「1 Deviceにつき各専用bus最大1つ、複合はadapterが子Deviceへ分割」を契約として明記 | 文書 |
+
+## X30. I2Cのtransaction文脈（STOP・repeated start）
+
+対象: `tests/i2c_transaction/`
+
+repeated startを**要求する**register-map模型（pointer書込み→STOPなし→read で
+データ、STOP後の単独readは応答しない）で、`I2cTransfer`の有効性を検証した。
+
+| 操作 | native | host（Wire） |
+| --- | --- | --- |
+| pointer write（stop=0）→ read（continued=1） | 1 byte、0x5A | `endTransmission(false)`→`requestFrom`で1 byte、0x5A |
+| pointer write（stop=1）→ read（continued=0） | 0 byte | `endTransmission(true)`→`requestFrom`で0 byte |
+| register write後のrepeated start read | 0x77 | — |
+
+```text
+01 000000 main app i2c.req addr=50 data=01 stop=0
+02 000000 main dev i2c.resp status=0 re=1
+03 000000 main app i2c.rd.req addr=50 req=1 stop=1 rs   ← rs = repeated start
+04 000000 main dev i2c.rd.resp len=1 data=5A re=3
+05 000000 main app i2c.req addr=50 data=01 stop=1
+06 000000 main dev i2c.resp status=0 re=5
+07 000000 main app i2c.rd.req addr=50 req=1 stop=1
+08 000000 main dev i2c.rd.resp len=0 data= re=7
+```
+
+**事実:** host coreのWire hookは`sendStop`を渡しており、環境が「直前の転送が
+STOPなしで終わったか」を追跡すれば`continued`を機械的に導ける。X23の温度センサは
+文脈を無視して動くので既存traceは`stop=`の付加以外変わらない。
+
+## X31. frameのbit packingと原子性
+
+対象: `tests/frame_bits/`
+
+12bit commandをMSB-first（frame bit 0 = data[0]のbit 7）で受けるIR受信模型。
+
+| 入力 | 結果 |
+| --- | --- |
+| {AB,C0} 12bit | 値0xABC（正しく復号） |
+| {12,30} 12bit | 値0x123 |
+| {AB,CF} 12bit（末尾4bitが非0） | 環境が`diag.frame_padding`で拒否、デバイス未到達 |
+| bits=0, data=nullptr | 空frameとして受理、triggerとして数える |
+| 模型の128bit status frame（環境上限64bit） | `frameOut`がfalse、模型はunsent=1を数え**分割しない** |
+
+native（FakePortが同じ規則を実装）とhostで同一の結果、hostは7イベント・2診断。
+
+## X32. 再入規則 — 応答中にIRQを上げるデバイス
+
+対象: `tests/reentry/`
+
+`i2cRead`の最中にIRQ線を上げる模型と、そのIRQで同じデバイスを再度読むISR。
+
+| 配送方式 | デバイスの最大depth | 備考 |
+| --- | ---: | --- |
+| 即時（ISRをlineOut内で実行） | **2** | デバイスが自分のreadの中で再入される。契約違反の環境では模型に再入guardが必要になる |
+| 延期（Device呼び出し完了後に配送、採用） | **1** | draft core: `deviceDepth`>0中のISRをキューし、応答記録後に配送 |
+
+host trace（13行、2回一致）: `i2c.rd.req(04)` → `gpio.inject(05, dev)` →
+`i2c.rd.resp(06)` → `isr.enter(07)` → ISR内のI2C 4行（isr文脈） → `isr.exit(12)`。
+デバイスは常にdepth 1、`deferred=1`。
+
+**事実（重要）:** デバイスの再入は防げるが、**アプリの観測値はFFFF**になった。
+ISRは「バス転送完了時＝`Wire.requestFrom()`が戻る前」に走り、ISR内の別transaction
+がWireの共有受信バッファを破壊したため。これはISR内でblockingバスI/Oを行う
+アプリの実機と同種のバグであり、環境はそれを決定的に**そのまま観測**させる
+（隠さない）。IF契約は「デバイスは再入されない」までを保証し、アプリ側の
+バッファ破壊は対象外（SCOPE 3.2）。
+
+## X33. channel / dump / 時間の契約
+
+対象: `tests/contracts/`（ネイティブのみ、`common_models`の模型を使用）
+
+| 契約 | 結果 |
+| --- | --- |
+| `channelWrite` 未対応channel / 長さ不正 / 正常 | false / false / true |
+| `channelRead` cap=1 / cap=2 / 未対応 | 必要長2を返しcap分（1 byte）だけ書く / 2 / 0 |
+| `dump` cap=8 | 必要長16を返し、出力は`temp=01`（7文字）でNUL終端 |
+| `advanceTo(1000)`を2回 | 応答1回（二重発火なし） |
+| 期限2000で`advanceTo(5000)`へ飛ぶ | 応答1回、時刻5000 |
+| 保留中に`reset()`→`advanceTo(99999)` | 応答なし（保留期限は破棄） |
+
+## X34. format名のschema照合
+
+対象: `tests/format_schema/`
+
+| 登録 | 戻り値 |
+| --- | ---: |
+| `acme.cmd.1` schema A1 | 1 |
+| `acme.cmd.1` schema A1（再登録） | 1（冪等） |
+| `acme.cmd.1` schema B2（同名・異仕様） | **0** + `diag.fmt_conflict` |
+| `acme.cmd.2` schema B2（新版） | 2 |
+| format 0 でのframe送出 | 拒否 + `diag.frame_noformat` |
+
+**事実:** 名前だけでは独立ライブラリが同名を選べば衝突するため、schema指紋の
+照合で「同名・異仕様」を登録時に検出できる。命名規約は`<vendor>.<protocol>.<version>`。
+
 ## 次に必要な実験
 
 1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
 2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
 3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
 4. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
-5. SCOPE 5節の未決5項目を決めた上で、IFヘッダを「決定版」として凍結する
+5. SCOPE 5節の未決4項目を決めた上で、IFヘッダを「決定版」として凍結する
    （実験ではなく決定。凍結後の変更は台帳へ理由を残す）

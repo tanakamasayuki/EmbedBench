@@ -8,12 +8,17 @@ class TempSensorModel : public ebdev::Device {
  public:
   // Logical output line 0 is the data-ready (DRDY) line.
   static const uint8_t kLineDataReady = 0;
+  // Channel 0 carries the 2-byte raw temperature (write and read).
+  static const uint8_t kChannelTemp = 0;
 
   void reset() override;
 
-  uint8_t i2cWrite(const uint8_t* data, size_t len) override;
-  size_t i2cRead(uint8_t* data, size_t len) override;
-  void channelWrite(uint8_t channel, const uint8_t* data, size_t len) override;
+  uint8_t i2cWrite(const uint8_t* data, size_t len,
+                   const ebdev::I2cTransfer& xfer) override;
+  size_t i2cRead(uint8_t* data, size_t len,
+                 const ebdev::I2cTransfer& xfer) override;
+  bool channelWrite(uint8_t channel, const uint8_t* data, size_t len) override;
+  size_t channelRead(uint8_t channel, uint8_t* out, size_t cap) override;
   size_t dump(char* out, size_t cap) override;
 
  private:

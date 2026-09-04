@@ -63,4 +63,9 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `capacity/`: 最大データ量の環境ネゴ（`maxFrameBits`）。同一模型の自動分割と上限超過の可視な拒否
 - `bulk_spi/`: 大量転送の記録粒度。transaction内の件数+checksum集約と、per-byte方式のバッファ爆発の実証
 - `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`common_models/` の同一模型でX23のシナリオを再現し、デバイス側イベント列の一致を確認
+- `i2c_transaction/`: I2Cのtransaction文脈（STOP有無・repeated start）。repeated startを要求するregister-map模型
+- `frame_bits/`: frameのbit packing（MSB-first・padding検査・空frame）と原子性（128bit frameは分割せず拒否）
+- `reentry/`: 再入規則。応答中にIRQを上げる模型で、即時配送（depth 2）と延期配送（depth 1）を比較
+- `contracts/`: channel/dump/時間の契約（ネイティブのみ）。戻り値の意味、NUL終端、同時刻再呼び出し・飛び・reset
+- `format_schema/`: format名＋schema指紋の照合。同名同schemaは冪等、同名異schemaは衝突診断
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム）

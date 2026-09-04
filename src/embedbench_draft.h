@@ -40,18 +40,26 @@ struct Stats {
   uint32_t lateTicks = 0;
   uint32_t ticks = 0;
   uint32_t diagCount = 0;
+  uint32_t deferredIsrs = 0;    // ISRs held back while a device ran
+  uint32_t maxDeviceDepth = 0;  // 1 means no device was ever re-entered
 };
 
+// I2C device callbacks receive the transaction context the master issued:
+// `stop` = a STOP follows, `continued` = issued under a repeated start.
 struct WireDeviceOps {
-  uint8_t (*onWrite)(const uint8_t* data, size_t len, void* user);
-  size_t (*onRead)(uint8_t* data, size_t len, void* user);
+  uint8_t (*onWrite)(const uint8_t* data, size_t len, bool stop,
+                     bool continued, void* user);
+  size_t (*onRead)(uint8_t* data, size_t len, bool stop, bool continued,
+                   void* user);
   void* user;
 };
 
 using TickHandler = void (*)(uint32_t tick, void* user);
 using ZeroWaitHandler = void (*)(uint32_t count, void* user);
 using UartTxHandler = void (*)(const uint8_t* data, size_t len, void* user);
-using ChannelHandler = void (*)(uint8_t channel, const uint8_t* data,
+// Returns whether the device applied the whole payload; a false return is
+// recorded as a diagnostic (device contract for channelWrite).
+using ChannelHandler = bool (*)(uint8_t channel, const uint8_t* data,
                                 size_t len, void* user);
 using SpiTransferFn = uint8_t (*)(uint8_t mosi, void* user);
 using PinWriteForward = void (*)(uint8_t pin, uint8_t value, void* user);
@@ -86,14 +94,18 @@ void uartInject(Origin origin, const char* bytes);
 // Logical frames (format id + pre-encoding bits): frameTx carries an
 // application frame to the bound device, frameRx carries a device frame
 // to the application-side receiver. Both record first.
-void frameTx(Origin origin, uint8_t bus, uint16_t format,
+// Both return whether the frame was accepted; a refusal (no format,
+// oversize, dirty padding, missing data) is recorded as a diagnostic and
+// the frame is not delivered — atomic delivery or nothing.
+bool frameTx(Origin origin, uint8_t bus, uint16_t format,
              const uint8_t* data, size_t bits);
-void frameRx(Origin origin, uint8_t bus, uint16_t format,
+bool frameRx(Origin origin, uint8_t bus, uint16_t format,
              const uint8_t* data, size_t bits);
-// Intern a format name: the same name always returns the same nonzero id
-// within this environment; 0 when the registry is full. Names, not
-// numbers, are the cross-library identity of a format.
-uint16_t registerFormat(const char* name);
+// Intern a format name with its layout fingerprint: the same name always
+// returns the same nonzero id within this environment; a known name with
+// a different schema is a conflict (0 plus a diagnostic); 0 also when the
+// registry is full. Names, not numbers, are the cross-library identity.
+uint16_t registerFormat(const char* name, uint32_t schema);
 // This environment's per-call frame capacity in bits (all buses). An
 // oversized frameTx/frameRx is rejected whole with a diagnostic event.
 uint32_t frameCapacityBits();

@@ -18,7 +18,7 @@ struct FakePort : public ebdev::HostPort {
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
   uint8_t lastBus = 0xFF;
-  void frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
     lastBus = bus;
     lastFormat = format;
@@ -26,6 +26,7 @@ struct FakePort : public ebdev::HostPort {
     const size_t bytes = (bits + 7) / 8;
     memcpy(lastFrame, data, bytes < sizeof(lastFrame) ? bytes : sizeof(lastFrame));
     ++frames;
+    return true;
   }
 };
 

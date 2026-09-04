@@ -2,6 +2,7 @@
 // an experimental candidate whose behavior comes from measured winners in
 // the experiment ledger; rework is expected and nothing here is final.
 #include "embedbench_draft.h"
+#include "embedbench_device.h"
 
 #include <Arduino.h>
 #include <HostBus.h>
@@ -25,12 +26,14 @@ constexpr uint32_t kMaxFrameBits = 64;
 struct FormatSlot {
   bool used = false;
   char name[20] = {0};
+  uint32_t schema = 0;
 };
 
 struct WireDeviceSlot {
   bool used = false;
   uint16_t address = 0;
   WireDeviceOps ops = {nullptr, nullptr, nullptr};
+  bool open = false;  // last transfer to this device ended without STOP
 };
 
 struct State {
@@ -79,6 +82,14 @@ struct State {
   void* tickUser = nullptr;
   ZeroWaitHandler zeroHandler = nullptr;
   void* zeroUser = nullptr;
+
+  // Re-entrancy contract: effects raised while a device method is on the
+  // stack are delivered after the outermost device call has completed.
+  uint32_t deviceDepth = 0;
+  uint32_t maxDeviceDepth = 0;
+  uint8_t pendingIsr[8] = {0};
+  size_t pendingIsrCount = 0;
+  uint32_t deferredIsrs = 0;
 };
 
 State state;
@@ -150,6 +161,10 @@ void hexOf(const uint8_t* data, size_t len, char* out, size_t cap) {
 // Payloads up to four bytes print as hex; larger ones are summarized as
 // length plus checksum so bulk frames stay one readable line (SCOPE 3.2).
 void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
+  if (bytes == 0) {
+    snprintf(out, cap, "empty");
+    return;
+  }
   if (bytes <= 4) {
     char hex[12];
     hexOf(data, bytes, hex, sizeof(hex));
@@ -168,6 +183,33 @@ WireDeviceSlot* findWireDevice(uint16_t address) {
     }
   }
   return nullptr;
+}
+
+// --- Device call bracketing (re-entrancy contract) ------------------------
+
+void enterDevice() {
+  ++state.deviceDepth;
+  if (state.deviceDepth > state.maxDeviceDepth) {
+    state.maxDeviceDepth = state.deviceDepth;
+  }
+}
+
+void leaveDevice() {
+  if (state.deviceDepth > 0) --state.deviceDepth;
+}
+
+// Called once the operation that ran a device is fully recorded: deliver
+// the interrupts the device raised meanwhile, one at a time, each as a
+// fresh top-level call chain.
+void deliverDeferred() {
+  while (state.deviceDepth == 0 && state.pendingIsrCount > 0) {
+    const uint8_t pin = state.pendingIsr[0];
+    for (size_t i = 1; i < state.pendingIsrCount; ++i) {
+      state.pendingIsr[i - 1] = state.pendingIsr[i];
+    }
+    --state.pendingIsrCount;
+    HostArduino::triggerInterrupt(pin);
+  }
 }
 
 // --- Clock hooks --------------------------------------------------------
@@ -263,31 +305,42 @@ void onInterruptEvent(HostArduino::InterruptEvent event,
 
 // --- Wire hooks: request/response two-line events (X20 winner) ----------
 
-uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len, bool,
-                    void*) {
+uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
+                    bool stop, void*) {
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
-  const uint32_t req =
-      recordf(Origin::kApp, 0, "i2c.req addr=%02X data=%s", address, hex);
   WireDeviceSlot* dev = findWireDevice(address);
+  const bool continued = dev != nullptr && dev->open;
+  const uint32_t req = recordf(Origin::kApp, 0, "i2c.req addr=%02X data=%s stop=%u%s",
+                               address, hex, stop ? 1 : 0, continued ? " rs" : "");
   uint8_t status = 2;  // address NACK when no responder is bound (X11)
   if (dev != nullptr) {
-    status = dev->ops.onWrite(data, len, dev->ops.user);
+    enterDevice();
+    status = dev->ops.onWrite(data, len, stop, continued, dev->ops.user);
+    leaveDevice();
+    dev->open = !stop;
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
   }
   recordf(Origin::kDev, req, "i2c.resp status=%u", status);
+  deliverDeferred();
   return status;
 }
 
-size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool, void*) {
-  const uint32_t req = recordf(Origin::kApp, 0, "i2c.rd.req addr=%02X req=%u",
-                               address, static_cast<unsigned>(len));
+size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
+                  void*) {
   WireDeviceSlot* dev = findWireDevice(address);
+  const bool continued = dev != nullptr && dev->open;
+  const uint32_t req = recordf(Origin::kApp, 0, "i2c.rd.req addr=%02X req=%u stop=%u%s",
+                               address, static_cast<unsigned>(len), stop ? 1 : 0,
+                               continued ? " rs" : "");
   size_t count = 0;
   if (dev != nullptr) {
-    count = dev->ops.onRead(data, len, dev->ops.user);
+    enterDevice();
+    count = dev->ops.onRead(data, len, stop, continued, dev->ops.user);
+    leaveDevice();
+    dev->open = !stop;
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
@@ -296,6 +349,7 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool, void*) {
   hexOf(data, count, hex, sizeof(hex));
   recordf(Origin::kDev, req, "i2c.rd.resp len=%u data=%s",
           static_cast<unsigned>(count), hex);
+  deliverDeferred();
   return count;
 }
 
@@ -306,7 +360,11 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool, void*) {
 uint8_t onSpiTransfer(uint8_t mosi, void*) {
   if (state.inSpiTransaction) {
     uint8_t miso = 0xFF;
-    if (state.spiHandler != nullptr) miso = state.spiHandler(mosi, state.spiUser);
+    if (state.spiHandler != nullptr) {
+      enterDevice();
+      miso = state.spiHandler(mosi, state.spiUser);
+      leaveDevice();
+    }
     ++state.spiBulkCount;
     state.spiMosiSum = static_cast<uint8_t>(state.spiMosiSum + mosi);
     state.spiMisoSum = static_cast<uint8_t>(state.spiMisoSum + miso);
@@ -315,12 +373,15 @@ uint8_t onSpiTransfer(uint8_t mosi, void*) {
   const uint32_t req = recordf(Origin::kApp, 0, "spi.req mosi=%02X", mosi);
   uint8_t miso = 0xFF;  // host default: idle bus
   if (state.spiHandler != nullptr) {
+    enterDevice();
     miso = state.spiHandler(mosi, state.spiUser);
+    leaveDevice();
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound spi");
   }
   recordf(Origin::kDev, req, "spi.resp miso=%02X", miso);
+  deliverDeferred();
   return miso;
 }
 
@@ -335,6 +396,7 @@ void onSpiTransaction(bool begin, const SPISettings&, void*) {
     state.inSpiTransaction = false;
     recordf(Origin::kApp, 0, "spi.bulk n=%u mosi_sum=%02X miso_sum=%02X",
             state.spiBulkCount, state.spiMosiSum, state.spiMisoSum);
+    deliverDeferred();
   }
 }
 
@@ -348,7 +410,12 @@ void onUartActivity(HostUart::ActivityEvent event, HostUart&,
       snprintf(text, sizeof(text), "%.*s", static_cast<int>(len),
                reinterpret_cast<const char*>(data));
       recordf(Origin::kApp, 0, "uart.tx %s", text);
-      if (state.uartHandler) state.uartHandler(data, len, state.uartUser);
+      if (state.uartHandler) {
+        enterDevice();
+        state.uartHandler(data, len, state.uartUser);
+        leaveDevice();
+        deliverDeferred();
+      }
       break;
     }
     case HostUart::kUartRx:
@@ -450,6 +517,11 @@ void runBegin(uint32_t tickUs) {
   state.spiBulkCount = 0;
   state.spiMosiSum = 0;
   state.spiMisoSum = 0;
+  state.deviceDepth = 0;
+  state.maxDeviceDepth = 0;
+  state.pendingIsrCount = 0;
+  state.deferredIsrs = 0;
+  for (size_t i = 0; i < kMaxWireDevices; ++i) state.wireDevices[i].open = false;
   state.running = true;
 
   HostArduino::setPinWriteHook(&onPinWrite);
@@ -489,7 +561,20 @@ void pinInject(Origin origin, uint8_t pin, uint8_t level) {
   recordf(origin, 0, "gpio.inject pin=%u %u->%u match=%d", pin, previous,
           level, match ? 1 : 0);
   HostArduino::setPinValue(pin, level);
-  if (match) HostArduino::triggerInterrupt(pin);
+  if (!match) return;
+  if (state.deviceDepth > 0) {
+    // A device raised this line from inside one of its methods: the ISR
+    // runs after that device call has completed (re-entrancy contract).
+    if (state.pendingIsrCount < sizeof(state.pendingIsr)) {
+      state.pendingIsr[state.pendingIsrCount++] = pin;
+      ++state.deferredIsrs;
+    } else {
+      ++state.diagCount;
+      recordf(Origin::kDiag, 0, "diag.isr_queue_full pin=%u", pin);
+    }
+    return;
+  }
+  HostArduino::triggerInterrupt(pin);
 }
 
 void uartInject(Origin origin, const char* bytes) {
@@ -503,7 +588,16 @@ void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
   hexOf(data, len, hex, sizeof(hex));
   recordf(origin, 0, "chan.write chan=%u data=%s", channel, hex);
   if (state.channelHandler) {
-    state.channelHandler(channel, data, len, state.channelUser);
+    enterDevice();
+    const bool applied =
+        state.channelHandler(channel, data, len, state.channelUser);
+    leaveDevice();
+    if (!applied) {
+      ++state.diagCount;
+      recordf(Origin::kDiag, 0, "diag.chan_reject chan=%u len=%u", channel,
+              static_cast<unsigned>(len));
+    }
+    deliverDeferred();
   }
 }
 
@@ -517,54 +611,87 @@ void formatLabel(uint16_t id, char* out, size_t cap) {
   }
 }
 
-bool frameWithinLimit(uint8_t bus, size_t bits) {
-  if (bits <= kMaxFrameBits) return true;
-  ++state.diagCount;
-  recordf(Origin::kDiag, 0, "diag.frame_oversize bus=%u bits=%u max=%u", bus,
-          static_cast<unsigned>(bits), kMaxFrameBits);
-  return false;
+// Atomic acceptance: every refusal is a diagnostic, never a truncation.
+bool frameAccept(uint8_t bus, uint16_t format, const uint8_t* data,
+                 size_t bits) {
+  if (format == 0) {
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.frame_noformat bus=%u", bus);
+    return false;
+  }
+  if (bits > kMaxFrameBits) {
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.frame_oversize bus=%u bits=%u max=%u", bus,
+            static_cast<unsigned>(bits), kMaxFrameBits);
+    return false;
+  }
+  if (bits > 0 && data == nullptr) {
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.frame_nodata bus=%u bits=%u", bus,
+            static_cast<unsigned>(bits));
+    return false;
+  }
+  if (bits > 0 && !ebdev::framePaddingClean(data, bits)) {
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.frame_padding bus=%u bits=%u", bus,
+            static_cast<unsigned>(bits));
+    return false;
+  }
+  return true;
 }
 
-void frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
+bool frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
              size_t bits) {
-  if (!frameWithinLimit(bus, bits)) return;
+  if (!frameAccept(bus, format, data, bits)) return false;
   char payload[20];
   char label[20];
-  payloadLabel(data, (bits + 7) / 8, payload, sizeof(payload));
+  payloadLabel(data, ebdev::frameBytes(bits), payload, sizeof(payload));
   formatLabel(format, label, sizeof(label));
   recordf(origin, 0, "frame.tx bus=%u fmt=%s bits=%u %s", bus, label,
           static_cast<unsigned>(bits), payload);
   if (state.frameDevice) {
+    enterDevice();
     state.frameDevice(bus, format, data, bits, state.frameDeviceUser);
+    leaveDevice();
+    deliverDeferred();
   }
+  return true;
 }
 
-void frameRx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
+bool frameRx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
              size_t bits) {
-  if (!frameWithinLimit(bus, bits)) return;
+  if (!frameAccept(bus, format, data, bits)) return false;
   char payload[20];
   char label[20];
-  payloadLabel(data, (bits + 7) / 8, payload, sizeof(payload));
+  payloadLabel(data, ebdev::frameBytes(bits), payload, sizeof(payload));
   formatLabel(format, label, sizeof(label));
   recordf(origin, 0, "dev.frame bus=%u fmt=%s bits=%u %s", bus, label,
           static_cast<unsigned>(bits), payload);
   if (state.frameReceiver) {
     state.frameReceiver(bus, format, data, bits, state.frameReceiverUser);
   }
+  return true;
 }
 
 uint32_t frameCapacityBits() { return kMaxFrameBits; }
 
-uint16_t registerFormat(const char* name) {
+uint16_t registerFormat(const char* name, uint32_t schema) {
   if (name == nullptr || name[0] == '\0') return 0;
   for (size_t i = 0; i < kMaxFormats; ++i) {
     if (state.formats[i].used && strcmp(state.formats[i].name, name) == 0) {
+      if (state.formats[i].schema != schema) {
+        // Same name, different layout: two libraries collided on a name.
+        ++state.diagCount;
+        recordf(Origin::kDiag, 0, "diag.fmt_conflict name=%s", name);
+        return 0;
+      }
       return static_cast<uint16_t>(i + 1);
     }
   }
   for (size_t i = 0; i < kMaxFormats; ++i) {
     if (!state.formats[i].used) {
       state.formats[i].used = true;
+      state.formats[i].schema = schema;
       snprintf(state.formats[i].name, sizeof(state.formats[i].name), "%s",
                name);
       return static_cast<uint16_t>(i + 1);
@@ -576,7 +703,7 @@ uint16_t registerFormat(const char* name) {
 }
 
 void dumpf(const char* fmt, ...) {
-  char text[36];
+  char text[50];  // fills the 56-byte event text after the "dump " prefix
   va_list ap;
   va_start(ap, fmt);
   vsnprintf(text, sizeof(text), fmt, ap);
@@ -595,6 +722,8 @@ Stats stats() {
   s.lateTicks = state.lateTicks;
   s.ticks = state.ticks;
   s.diagCount = state.diagCount;
+  s.deferredIsrs = state.deferredIsrs;
+  s.maxDeviceDepth = state.maxDeviceDepth;
   return s;
 }
 

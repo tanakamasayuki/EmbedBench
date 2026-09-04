@@ -16,8 +16,8 @@ void NamedNodeModel::resolveFormats() {
   if (resolved_ || port() == nullptr) return;
   // Names are the cross-library identity; the numeric ids are local to
   // this environment. Resolved once, then every frame compares integers.
-  commandId_ = port()->formatId("node.cmd");
-  telemetryId_ = port()->formatId("node.tel");
+  commandId_ = port()->formatId("acme.node.1", 0x0001);
+  telemetryId_ = port()->formatId("acme.tele.1", 0x0001);
   resolved_ = true;
 }
 
