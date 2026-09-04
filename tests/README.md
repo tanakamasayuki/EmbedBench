@@ -24,10 +24,12 @@ tests/<experiment>/
   test_<experiment>.py
 ```
 
-Native-only experiments (`native_env/`) have no `.ino` or `sketch.yaml`; pytest
-builds them directly with g++. Reference models shared across experiments and
-environments live in `common_models/` (Arduino library layout, pure C++ models
-under `src/`), referenced by `libraries: dir` from sketches and by `-I` natively.
+Native-only experiments (`native_env/`, `contracts/`) have no `.ino` or
+`sketch.yaml`; pytest builds them directly with g++. Reference models shared
+across experiments and environments live in `common_models/` (Arduino library
+layout, pure C++ models under `src/`), referenced by `libraries: dir` from
+sketches and by `-I` natively. Environment example #2 (pure C++) lives in
+`common_env/` for native experiments to share.
 
 The current `smoke/` test is the minimal end-to-end check for Arduino library
 resolution, host core 1.7.1, lifecycle hooks, the virtual clock, and pytest
@@ -68,5 +70,9 @@ Additional experiments:
 - `frame_bits/`: frame bit packing (MSB-first, padding check, empty frames) and atomicity (a 128-bit frame is refused, never split).
 - `reentry/`: the re-entrancy rule: a model raising IRQ mid-response, immediate delivery (depth 2) vs deferred delivery (depth 1).
 - `contracts/`: channel / dump / time contracts (native only): return values, NUL termination, repeated time, jumps, reset.
-- `format_schema/`: format names with schema fingerprints: same name+schema idempotent, same name different schema diagnosed.
+- `format_schema/`: format names with schema fingerprints: same name+schema idempotent, same name different schema diagnosed, 19-char names kept, 20-char refused, unregistered ids refused.
+- `reentry_paths/`: the re-entrancy guarantee on every device path (lineIn, advanceTo, frameIn, i2cRead) and the deferral-capacity diagnostic.
+- `i2c_multi/`: repeated start is bus state: another address's STOP closes it, shown with two models.
+- `serial_stream/`: serial is a byte stream: one call, byte-by-byte, or two chunks give the same reply; two commands in one call give two.
+- `common_env/`: environment example #2 (`nenv`), used by `native_env/`.
 - `common_models/`: reference models (temperature sensor, AT modem) shared across experiments and environments.

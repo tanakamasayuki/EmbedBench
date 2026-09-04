@@ -17,6 +17,9 @@ struct FakePort : public ebdev::HostPort {
   uint64_t nowMicros() override { return now; }
   void lineOut(uint8_t, uint8_t) override {}
   void serialOut(const uint8_t*, size_t) override {}
+  uint16_t formatId(const char* name, uint32_t) override {
+    return strcmp(name, "acme.node.1") == 0 ? 1 : 2;
+  }
   uint8_t lastBus = 0xFF;
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
@@ -41,13 +44,13 @@ int main() {
 
   // A frame addressed to someone else is ignored entirely.
   const uint8_t foreign[2] = {0x05, 0x08};
-  node.frameIn(0, RemoteNodeModel::kFormatCommand, foreign, 16);
+  node.frameIn(0, 1, foreign, 16);
   const uint32_t framesAfterForeign = port.frames;
 
   // Our own command: the telemetry reply comes only from advanceTo.
   const uint8_t own[2] = {0x04, 0x08};
   port.now = 0;
-  node.frameIn(0, RemoteNodeModel::kFormatCommand, own, 16);
+  node.frameIn(0, 1, own, 16);
   node.advanceTo(999);
   const uint32_t framesAt999 = port.frames;
   node.advanceTo(1000);

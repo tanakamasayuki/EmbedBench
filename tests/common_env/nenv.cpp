@@ -43,7 +43,7 @@ void Env::reset() {
   inTick_ = false;
   rxHead_ = 0;
   rxCount_ = 0;
-  for (size_t i = 0; i < 2; ++i) i2c_[i].open = false;
+  openAddress_ = 0xFFFF;
 }
 
 // --- Bindings ----------------------------------------------------------------
@@ -55,7 +55,6 @@ bool Env::bindI2c(uint8_t address, ebdev::Device* device) {
       i2c_[i].used = true;
       i2c_[i].address = address;
       i2c_[i].device = device;
-      i2c_[i].open = false;
       return true;
     }
   }
@@ -136,24 +135,27 @@ uint8_t Env::i2cWrite(uint8_t address, const uint8_t* data, size_t len,
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
   I2cSlot* slot = findI2c(address);
-  const bool continued = slot != nullptr && slot->open;
+  const bool continued = slot != nullptr && openAddress_ == address;
   const uint32_t req = record("app", 0, "i2c.req addr=%02X data=%s stop=%u%s",
                               address, hex, stop ? 1 : 0, continued ? " rs" : "");
   uint8_t status = ebdev::kI2cAddressNack;
   if (slot != nullptr) {
     const ebdev::I2cTransfer xfer = {stop, continued};
     status = slot->device->i2cWrite(data, len, xfer);
-    slot->open = !stop;
+    if (status > ebdev::kI2cOther) {
+      record("diag", req, "diag.i2c_status addr=%02X status=%u", address, status);
+    }
   } else {
     record("diag", req, "diag.unbound addr=%02X", address);
   }
+  openAddress_ = stop ? 0xFFFF : address;  // any transfer moves the bus state
   record("dev", req, "i2c.resp status=%u", status);
   return status;
 }
 
 size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
   I2cSlot* slot = findI2c(address);
-  const bool continued = slot != nullptr && slot->open;
+  const bool continued = slot != nullptr && openAddress_ == address;
   const uint32_t req = record("app", 0, "i2c.rd.req addr=%02X req=%u stop=%u%s",
                               address, static_cast<unsigned>(len), stop ? 1 : 0,
                               continued ? " rs" : "");
@@ -161,10 +163,10 @@ size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
   if (slot != nullptr) {
     const ebdev::I2cTransfer xfer = {stop, continued};
     count = slot->device->i2cRead(out, len, xfer);
-    slot->open = !stop;
   } else {
     record("diag", req, "diag.unbound addr=%02X", address);
   }
+  openAddress_ = stop ? 0xFFFF : address;
   char hex[12];
   hexOf(out, count, hex, sizeof(hex));
   record("dev", req, "i2c.rd.resp len=%u data=%s", static_cast<unsigned>(count),
@@ -251,6 +253,10 @@ bool Env::frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
     record("diag", 0, "diag.frame_noformat bus=%u", bus);
     return false;
   }
+  if (format > 8 || !formats_[format - 1].used) {
+    record("diag", 0, "diag.frame_unknown_format bus=%u fmt=%u", bus, format);
+    return false;
+  }
   if (bits > kMaxFrameBits) {
     record("diag", 0, "diag.frame_oversize bus=%u bits=%u max=%u", bus,
            static_cast<unsigned>(bits), kMaxFrameBits);
@@ -272,6 +278,11 @@ bool Env::frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
 
 uint16_t Env::formatId(const char* name, uint32_t schema) {
   if (name == nullptr || name[0] == '\0') return 0;
+  if (strlen(name) > ebdev::kFormatNameMaxLength) {
+    record("diag", 0, "diag.fmt_name_long len=%u",
+           static_cast<unsigned>(strlen(name)));
+    return 0;
+  }
   for (size_t i = 0; i < 8; ++i) {
     if (formats_[i].used && strcmp(formats_[i].name, name) == 0) {
       if (formats_[i].schema != schema) {

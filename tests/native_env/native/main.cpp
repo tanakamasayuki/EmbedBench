@@ -7,7 +7,7 @@
 #include <modem_model.h>
 #include <temp_model.h>
 
-#include "../nenv.h"
+#include <nenv.h>
 
 namespace {
 
@@ -46,7 +46,7 @@ void runOnce(char* out, size_t cap, Values* values) {
 
   // Application: AT+S, answered one tick later by the modem.
   const uint64_t before = env.nowMicros();
-  env.serialWrite(reinterpret_cast<const uint8_t*>("AT+S"), 4);
+  env.serialWrite(reinterpret_cast<const uint8_t*>("AT+S;"), 5);
   uint8_t reply[2] = {0};
   env.serialRead(reply, 2, 10000);
   values->reply[0] = static_cast<char>(reply[0]);

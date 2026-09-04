@@ -44,7 +44,7 @@ bool TempSensorModel::channelWrite(uint8_t channel, const uint8_t* data,
 
 size_t TempSensorModel::channelRead(uint8_t channel, uint8_t* out,
                                     size_t cap) {
-  if (channel != kChannelTemp) return 0;
+  if (channel != kChannelTemp) return ebdev::kChannelUnsupported;
   if (cap >= 1) out[0] = static_cast<uint8_t>(tempRaw_ >> 8);
   if (cap >= 2) out[1] = static_cast<uint8_t>(tempRaw_ & 0xFF);
   return 2;  // needed length, regardless of how much fit

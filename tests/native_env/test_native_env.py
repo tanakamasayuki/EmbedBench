@@ -6,6 +6,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 SRC = HERE.parent.parent / "src"
 MODELS = HERE.parent / "common_models" / "src"
+ENV = HERE.parent / "common_env"
 
 EXPECTED_TRACE = [
     "01 000000 main app i2c.req addr=48 data=0105 stop=1",
@@ -16,7 +17,7 @@ EXPECTED_TRACE = [
     "06 000000 main dev i2c.resp status=0 re=5",
     "07 000000 main app i2c.rd.req addr=48 req=2 stop=1",
     "08 000000 main dev i2c.rd.resp len=2 data=012C re=7",
-    "09 000000 main app uart.tx AT+S",
+    "09 000000 main app uart.tx AT+S;",
     "10 001000 tick dev dev.tx OK",
     "11 001000 main app uart.rx O",
     "12 001000 main app uart.rx K",
@@ -34,7 +35,7 @@ def loc(path: Path) -> int:
 
 def test_native_env():
     # The environment itself must be as platform-free as the models.
-    for source in [HERE / "nenv.h", HERE / "nenv.cpp"]:
+    for source in [ENV / "nenv.h", ENV / "nenv.cpp"]:
         includes = [
             l for l in source.read_text().splitlines()
             if l.strip().startswith("#include")
@@ -50,9 +51,9 @@ def test_native_env():
     subprocess.run(
         [
             "g++", "-std=c++11", "-Wall", "-Wextra", "-Werror",
-            f"-I{SRC}", f"-I{MODELS}",
+            f"-I{SRC}", f"-I{MODELS}", f"-I{ENV}",
             str(HERE / "native" / "main.cpp"),
-            str(HERE / "nenv.cpp"),
+            str(ENV / "nenv.cpp"),
             str(MODELS / "temp_model.cpp"),
             str(MODELS / "modem_model.cpp"),
             "-o", str(binary),
@@ -69,10 +70,12 @@ def test_native_env():
     assert "run2_same=1 run3_same=1" in out
     assert "NATIVE done" in out
 
-    sizes = {"env": loc(HERE / "nenv.h") + loc(HERE / "nenv.cpp")}
+    sizes = {"env": loc(ENV / "nenv.h") + loc(ENV / "nenv.cpp")}
     print(f"LOC {sizes}")
     # Environment example #2 in full: HostPort, app-side bus API, director
-    # path, tick clock, and trace recorder (X29: 290). +38 for the contract
-    # revision: I2C transaction context, schema-checked formats, frame
-    # padding/atomicity checks, channel rejection diagnostics (X30-X34).
-    assert sizes == {"env": 328}
+    # path, tick clock, and trace recorder (X29: 290). +38 for the first
+    # contract revision (I2C transaction context, schema-checked formats,
+    # frame padding/atomicity checks, channel rejection diagnostics;
+    # X30-X34), +11 for the second (bus-level repeated start, name length
+    # limit, unregistered format ids refused, I2C status range; X35-X37).
+    assert sizes == {"env": 339}

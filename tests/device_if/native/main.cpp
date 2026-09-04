@@ -68,10 +68,10 @@ int main() {
   modem.attach(&port);
   modem.reset();
   port.now = 0;
-  modem.serialIn(reinterpret_cast<const uint8_t*>("AT"), 2);
+  modem.serialIn(reinterpret_cast<const uint8_t*>("AT;"), 3);
   printf("modem at=<%s> at_t=%llu\n", port.lastOut,
          static_cast<unsigned long long>(port.outAt));
-  modem.serialIn(reinterpret_cast<const uint8_t*>("AT+S"), 4);
+  modem.serialIn(reinterpret_cast<const uint8_t*>("AT+S;"), 5);
   port.now = 999;
   modem.advanceTo(port.now);
   const uint32_t callsAt999 = port.outCalls;

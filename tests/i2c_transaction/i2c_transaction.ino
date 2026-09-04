@@ -8,7 +8,7 @@
 #include <embedbench_draft.h>
 #include <string.h>
 
-#include "regmap_model.h"
+#include <regmap_model.h>
 
 static RegisterMapModel model;
 

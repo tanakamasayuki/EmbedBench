@@ -29,7 +29,7 @@ def test_contracts():
     # applied. channelRead / dump: snprintf-style needed length, partial
     # write within cap, dump NUL-terminated after truncation.
     assert ("channel bad_chan=0 bad_len=0 ok=1 cap1_need=2 b0=01 b1=EE "
-            "cap2_need=2 bad_read=0 dump_need=16 dump_out=<temp=01> dump_len=7"
+            "cap2_need=2 bad_read_unsupported=1 dump_need=16 dump_out=<temp=01> dump_len=7"
             ) in result.stdout
     # advanceTo: repeated time emits once, a jump delivers the due reply at
     # the jump time, reset drops pending due times.

@@ -471,4 +471,12 @@ transaction文脈、frameのbit packingと原子性、再入規則、channel/dum
 時間契約、複数リンク、format名の衝突、専用port分類）を、ヘッダ本文への契約
 明記と新規5実験（X30〜X34）で解消した。デバイスIFは契約込みで106行。
 影響を受けた既存実験（X22/X23/X25〜X29）は新契約へ追随更新済み（手戻り記録は
-台帳の各節）。残りはSCOPE 5節の未決4項目の決定と凍結。
+台帳の各節）。
+
+**同日、第2回レビュー（凍結ブロッカー5点）の反映:** 再入保証を全Device経路へ
+適用し延期容量の契約を追加、I2Cのrepeated startをbus単位へ、format名の長さ上限
+（19文字・切り詰め禁止）、serialのbyte stream契約、未登録format idの拒否、
+契約の小穴（nullptr・overflow・`kChannelUnsupported`・`I2cStatus`範囲）を解消し、
+未決のうちframe `re=`（payloadの責務）とschema指紋（`uint32_t`＋FNV-1a helper）を
+決定した（X34追記、X35〜X37）。IFヘッダは実効LOC 120（物理314行）。SCOPE 5節の
+残り2項目はIF外のため、**IFは凍結判断が可能な状態**。

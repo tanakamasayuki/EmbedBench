@@ -55,9 +55,9 @@ static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   modemModel.serialIn(data, len);
 }
-static void onTick(uint32_t, void*) {
-  tempModel.advanceTo(ebd::nowUs());
-  modemModel.advanceTo(ebd::nowUs());
+static void advanceDevices(uint64_t nowUs, void*) {
+  tempModel.advanceTo(nowUs);
+  modemModel.advanceTo(nowUs);
 }
 // [adapter end]
 
@@ -108,7 +108,7 @@ static void appScenario() {
   appT1 = readTemp();
 
   const uint64_t before = ebd::nowUs();
-  Serial1.print("AT+S");
+  Serial1.print("AT+S;");
   uint8_t reply[2] = {0};
   Serial1.readBytes(reply, sizeof(reply));
   appReply[0] = static_cast<char>(reply[0]);
@@ -163,7 +163,7 @@ void setup() {
   ebd::bindWireDevice(0x48, ops);
   ebd::bindUartDevice(&devUartTx);
   ebd::setChannelHandler(&devChannel);
-  ebd::setTickHandler(&onTick);
+  ebd::bindTickDevice(&advanceDevices);
   ebd::setZeroWaitHandler(&onZeroWait);
 
   runOnce(run1, sizeof(run1));

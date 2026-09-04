@@ -2,7 +2,7 @@
 // under a repeated start and fail standalone, purely from I2cTransfer.
 #include <stdio.h>
 
-#include "../regmap_model.h"
+#include <regmap_model.h>
 
 namespace {
 

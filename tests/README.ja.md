@@ -24,10 +24,11 @@ tests/<実験名>/
   test_<実験名>.py
 ```
 
-ネイティブ専用の実験（`native_env/`）は `.ino` と `sketch.yaml` を持たず、
+ネイティブ専用の実験（`native_env/`、`contracts/`）は `.ino` と `sketch.yaml` を持たず、
 pytestがg++で直接ビルドする。複数の実験と複数の環境で共有する参照模型は
 `common_models/`（Arduinoライブラリ形式、`src/` に純粋C++の模型）に置き、
 sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-I` で参照する。
+環境実装例#2（純粋C++）は `common_env/` に置き、ネイティブ実験が共有する。
 
 現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.1、
 ライフサイクルフック、仮想時計、pytestとの接続をまとめて検査する最小テストである。
@@ -67,5 +68,9 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `frame_bits/`: frameのbit packing（MSB-first・padding検査・空frame）と原子性（128bit frameは分割せず拒否）
 - `reentry/`: 再入規則。応答中にIRQを上げる模型で、即時配送（depth 2）と延期配送（depth 1）を比較
 - `contracts/`: channel/dump/時間の契約（ネイティブのみ）。戻り値の意味、NUL終端、同時刻再呼び出し・飛び・reset
-- `format_schema/`: format名＋schema指紋の照合。同名同schemaは冪等、同名異schemaは衝突診断
+- `format_schema/`: format名＋schema指紋の照合。同名同schemaは冪等、同名異schemaは衝突診断、19文字は保持・20文字は拒否、未登録idは拒否
+- `reentry_paths/`: 再入保証の全経路適用（lineIn・advanceTo・frameIn・i2cRead）と延期容量超過の診断
+- `i2c_multi/`: repeated startはbusの状態。別アドレスのSTOPがbusを閉じることを2模型で確認
+- `serial_stream/`: serialはbyte stream。1回・1byteずつ・2分割で同一応答、1回に2コマンドで2応答
+- `common_env/`: 環境実装例#2（`nenv`）。`native_env/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム）

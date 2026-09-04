@@ -22,6 +22,18 @@ constexpr size_t kCapacity = 64;
 constexpr size_t kMaxWireDevices = 2;
 constexpr size_t kMaxFormats = 8;
 constexpr uint32_t kMaxFrameBits = 64;
+constexpr size_t kDeferralCapacity = 4;
+
+// An effect raised while a device method was on the stack, held until
+// the outermost device call has completed (re-entrancy contract).
+struct Deferred {
+  uint8_t kind;  // 0 = interrupt on `pin`, 1 = frame to the app receiver
+  uint8_t pin;
+  uint8_t bus;
+  uint16_t format;
+  uint8_t bits;
+  uint8_t data[8];
+};
 
 struct FormatSlot {
   bool used = false;
@@ -33,7 +45,6 @@ struct WireDeviceSlot {
   bool used = false;
   uint16_t address = 0;
   WireDeviceOps ops = {nullptr, nullptr, nullptr};
-  bool open = false;  // last transfer to this device ended without STOP
 };
 
 struct State {
@@ -87,9 +98,18 @@ struct State {
   // stack are delivered after the outermost device call has completed.
   uint32_t deviceDepth = 0;
   uint32_t maxDeviceDepth = 0;
-  uint8_t pendingIsr[8] = {0};
-  size_t pendingIsrCount = 0;
+  Deferred deferred[kDeferralCapacity];
+  size_t deferredCount = 0;
   uint32_t deferredIsrs = 0;
+  uint32_t deferredFrames = 0;
+  uint32_t deferredDropped = 0;
+
+  // I2C is one bus: the address whose last transfer ended without STOP,
+  // or 0xFFFF. Any transfer to another address closes the sequence.
+  uint16_t i2cOpenAddress = 0xFFFF;
+
+  TickDeviceFn tickDevice = nullptr;
+  void* tickDeviceUser = nullptr;
 };
 
 State state;
@@ -198,17 +218,40 @@ void leaveDevice() {
   if (state.deviceDepth > 0) --state.deviceDepth;
 }
 
+// Hold an effect raised inside a device call. Beyond the capacity the
+// effect is diagnosed and dropped: never delivered re-entrantly, never
+// lost in silence.
+void queueDeferred(const Deferred& effect) {
+  if (state.deferredCount < kDeferralCapacity) {
+    state.deferred[state.deferredCount++] = effect;
+    if (effect.kind == 0) ++state.deferredIsrs;
+    else ++state.deferredFrames;
+    return;
+  }
+  ++state.deferredDropped;
+  ++state.diagCount;
+  if (effect.kind == 0) {
+    recordf(Origin::kDiag, 0, "diag.deferred_full kind=isr pin=%u", effect.pin);
+  } else {
+    recordf(Origin::kDiag, 0, "diag.deferred_full kind=frame bus=%u", effect.bus);
+  }
+}
+
 // Called once the operation that ran a device is fully recorded: deliver
-// the interrupts the device raised meanwhile, one at a time, each as a
-// fresh top-level call chain.
+// the held effects in order, each as a fresh top-level call chain.
 void deliverDeferred() {
-  while (state.deviceDepth == 0 && state.pendingIsrCount > 0) {
-    const uint8_t pin = state.pendingIsr[0];
-    for (size_t i = 1; i < state.pendingIsrCount; ++i) {
-      state.pendingIsr[i - 1] = state.pendingIsr[i];
+  while (state.deviceDepth == 0 && state.deferredCount > 0) {
+    const Deferred effect = state.deferred[0];
+    for (size_t i = 1; i < state.deferredCount; ++i) {
+      state.deferred[i - 1] = state.deferred[i];
     }
-    --state.pendingIsrCount;
-    HostArduino::triggerInterrupt(pin);
+    --state.deferredCount;
+    if (effect.kind == 0) {
+      HostArduino::triggerInterrupt(effect.pin);
+    } else if (state.frameReceiver) {
+      state.frameReceiver(effect.bus, effect.format, effect.data, effect.bits,
+                          state.frameReceiverUser);
+    }
   }
 }
 
@@ -219,6 +262,12 @@ uint64_t onNow(void*) { return state.vnow; }
 void fireTick() {
   ++state.ticks;
   ++state.dirDepth;
+  if (state.tickDevice) {
+    enterDevice();
+    state.tickDevice(state.vnow, state.tickDeviceUser);
+    leaveDevice();
+    deliverDeferred();
+  }
   if (state.tickHandler) state.tickHandler(state.ticks, state.tickUser);
   --state.dirDepth;
 }
@@ -268,7 +317,13 @@ void onWait(uint32_t us, void*) {
 
 void onPinWrite(uint8_t pin, uint8_t value, void*) {
   recordf(Origin::kApp, 0, "gpio.write pin=%u val=%u", pin, value);
-  if (state.pinForward) state.pinForward(pin, value, state.pinForwardUser);
+  if (state.pinForward) {
+    // The forward routes into a device's lineIn: a device call.
+    enterDevice();
+    state.pinForward(pin, value, state.pinForwardUser);
+    leaveDevice();
+    deliverDeferred();
+  }
 }
 
 int onPinRead(uint8_t pin, uint8_t held, void*) {
@@ -310,7 +365,7 @@ uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
   WireDeviceSlot* dev = findWireDevice(address);
-  const bool continued = dev != nullptr && dev->open;
+  const bool continued = dev != nullptr && state.i2cOpenAddress == address;
   const uint32_t req = recordf(Origin::kApp, 0, "i2c.req addr=%02X data=%s stop=%u%s",
                                address, hex, stop ? 1 : 0, continued ? " rs" : "");
   uint8_t status = 2;  // address NACK when no responder is bound (X11)
@@ -318,11 +373,16 @@ uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
     enterDevice();
     status = dev->ops.onWrite(data, len, stop, continued, dev->ops.user);
     leaveDevice();
-    dev->open = !stop;
+    if (status > ebdev::kI2cOther) {
+      ++state.diagCount;
+      recordf(Origin::kDiag, req, "diag.i2c_status addr=%02X status=%u", address,
+              status);
+    }
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
   }
+  state.i2cOpenAddress = stop ? 0xFFFF : address;
   recordf(Origin::kDev, req, "i2c.resp status=%u", status);
   deliverDeferred();
   return status;
@@ -331,7 +391,7 @@ uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
 size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
                   void*) {
   WireDeviceSlot* dev = findWireDevice(address);
-  const bool continued = dev != nullptr && dev->open;
+  const bool continued = dev != nullptr && state.i2cOpenAddress == address;
   const uint32_t req = recordf(Origin::kApp, 0, "i2c.rd.req addr=%02X req=%u stop=%u%s",
                                address, static_cast<unsigned>(len), stop ? 1 : 0,
                                continued ? " rs" : "");
@@ -340,11 +400,11 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
     enterDevice();
     count = dev->ops.onRead(data, len, stop, continued, dev->ops.user);
     leaveDevice();
-    dev->open = !stop;
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
   }
+  state.i2cOpenAddress = stop ? 0xFFFF : address;
   char hex[12];
   hexOf(data, count, hex, sizeof(hex));
   recordf(Origin::kDev, req, "i2c.rd.resp len=%u data=%s",
@@ -493,6 +553,11 @@ void setTickHandler(TickHandler handler, void* user) {
   state.tickUser = user;
 }
 
+void bindTickDevice(TickDeviceFn fn, void* user) {
+  state.tickDevice = fn;
+  state.tickDeviceUser = user;
+}
+
 void setZeroWaitHandler(ZeroWaitHandler handler, void* user) {
   state.zeroHandler = handler;
   state.zeroUser = user;
@@ -519,9 +584,11 @@ void runBegin(uint32_t tickUs) {
   state.spiMisoSum = 0;
   state.deviceDepth = 0;
   state.maxDeviceDepth = 0;
-  state.pendingIsrCount = 0;
+  state.deferredCount = 0;
   state.deferredIsrs = 0;
-  for (size_t i = 0; i < kMaxWireDevices; ++i) state.wireDevices[i].open = false;
+  state.deferredFrames = 0;
+  state.deferredDropped = 0;
+  state.i2cOpenAddress = 0xFFFF;
   state.running = true;
 
   HostArduino::setPinWriteHook(&onPinWrite);
@@ -565,13 +632,8 @@ void pinInject(Origin origin, uint8_t pin, uint8_t level) {
   if (state.deviceDepth > 0) {
     // A device raised this line from inside one of its methods: the ISR
     // runs after that device call has completed (re-entrancy contract).
-    if (state.pendingIsrCount < sizeof(state.pendingIsr)) {
-      state.pendingIsr[state.pendingIsrCount++] = pin;
-      ++state.deferredIsrs;
-    } else {
-      ++state.diagCount;
-      recordf(Origin::kDiag, 0, "diag.isr_queue_full pin=%u", pin);
-    }
+    Deferred effect = {0, pin, 0, 0, 0, {0}};
+    queueDeferred(effect);
     return;
   }
   HostArduino::triggerInterrupt(pin);
@@ -617,6 +679,14 @@ bool frameAccept(uint8_t bus, uint16_t format, const uint8_t* data,
   if (format == 0) {
     ++state.diagCount;
     recordf(Origin::kDiag, 0, "diag.frame_noformat bus=%u", bus);
+    return false;
+  }
+  if (format > kMaxFormats || !state.formats[format - 1].used) {
+    // Only ids handed out by registerFormat() are valid: a raw number
+    // would bypass the name + schema collision check.
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.frame_unknown_format bus=%u fmt=%u", bus,
+            format);
     return false;
   }
   if (bits > kMaxFrameBits) {
@@ -668,15 +738,36 @@ bool frameRx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
   recordf(origin, 0, "dev.frame bus=%u fmt=%s bits=%u %s", bus, label,
           static_cast<unsigned>(bits), payload);
   if (state.frameReceiver) {
-    state.frameReceiver(bus, format, data, bits, state.frameReceiverUser);
+    if (state.deviceDepth > 0) {
+      // Raised from inside a device method: the application receiver
+      // runs after that device call has completed (re-entrancy contract).
+      Deferred effect = {1, 0, bus, format, static_cast<uint8_t>(bits), {0}};
+      const size_t bytes = ebdev::frameBytes(bits);
+      for (size_t i = 0; i < bytes && i < sizeof(effect.data); ++i) {
+        effect.data[i] = data[i];
+      }
+      queueDeferred(effect);
+    } else {
+      state.frameReceiver(bus, format, data, bits, state.frameReceiverUser);
+    }
   }
   return true;
 }
 
 uint32_t frameCapacityBits() { return kMaxFrameBits; }
 
+size_t deferralCapacity() { return kDeferralCapacity; }
+
 uint16_t registerFormat(const char* name, uint32_t schema) {
   if (name == nullptr || name[0] == '\0') return 0;
+  const size_t length = strlen(name);
+  if (length > ebdev::kFormatNameMaxLength) {
+    // Never truncate: a clipped name could alias another registration.
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.fmt_name_long len=%u",
+            static_cast<unsigned>(length));
+    return 0;
+  }
   for (size_t i = 0; i < kMaxFormats; ++i) {
     if (state.formats[i].used && strcmp(state.formats[i].name, name) == 0) {
       if (state.formats[i].schema != schema) {
@@ -723,6 +814,8 @@ Stats stats() {
   s.ticks = state.ticks;
   s.diagCount = state.diagCount;
   s.deferredIsrs = state.deferredIsrs;
+  s.deferredFrames = state.deferredFrames;
+  s.deferredDropped = state.deferredDropped;
   s.maxDeviceDepth = state.maxDeviceDepth;
   return s;
 }

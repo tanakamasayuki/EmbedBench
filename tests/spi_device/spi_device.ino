@@ -35,7 +35,7 @@ static void forwardPins(uint8_t pin, uint8_t value, void*) {
   // The app's DC line (pin 4) is input line 0 of the display.
   if (pin == 4) display.lineIn(SpiDisplayModel::kLineDc, value);
 }
-static void onTick(uint32_t, void*) { display.advanceTo(ebd::nowUs()); }
+static void advanceDevice(uint64_t nowUs, void*) { display.advanceTo(nowUs); }
 // [adapter end]
 
 // --- Application: unmodified Arduino code ----------------------------------
@@ -91,7 +91,7 @@ void setup() {
   display.attach(&draftPort);
   ebd::bindSpiDevice(&devTransfer);
   ebd::setPinWriteForward(&forwardPins);
-  ebd::setTickHandler(&onTick);
+  ebd::bindTickDevice(&advanceDevice);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values ack=%02X s1=%02X s2=%02X busy_reads=%u\n", appAck,

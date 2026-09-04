@@ -41,6 +41,8 @@ struct Stats {
   uint32_t ticks = 0;
   uint32_t diagCount = 0;
   uint32_t deferredIsrs = 0;    // ISRs held back while a device ran
+  uint32_t deferredFrames = 0;  // application frame deliveries held back
+  uint32_t deferredDropped = 0; // effects beyond the deferral capacity
   uint32_t maxDeviceDepth = 0;  // 1 means no device was ever re-entered
 };
 
@@ -55,6 +57,9 @@ struct WireDeviceOps {
 };
 
 using TickHandler = void (*)(uint32_t tick, void* user);
+// Advances device models to the tick time. Bracketed as a device call
+// (re-entrancy contract) and run before the director's TickHandler.
+using TickDeviceFn = void (*)(uint64_t nowUs, void* user);
 using ZeroWaitHandler = void (*)(uint32_t count, void* user);
 using UartTxHandler = void (*)(const uint8_t* data, size_t len, void* user);
 // Returns whether the device applied the whole payload; a false return is
@@ -73,6 +78,7 @@ void bindUartDevice(UartTxHandler handler, void* user = nullptr);
 void bindSpiDevice(SpiTransferFn handler, void* user = nullptr);
 void setChannelHandler(ChannelHandler handler, void* user = nullptr);
 void setTickHandler(TickHandler handler, void* user = nullptr);
+void bindTickDevice(TickDeviceFn fn, void* user = nullptr);
 void setZeroWaitHandler(ZeroWaitHandler handler, void* user = nullptr);
 // Forwards recorded application pin writes (chip-select, data/command
 // lines) to whoever routes them into a device model's lineIn.
@@ -109,6 +115,10 @@ uint16_t registerFormat(const char* name, uint32_t schema);
 // This environment's per-call frame capacity in bits (all buses). An
 // oversized frameTx/frameRx is rejected whole with a diagnostic event.
 uint32_t frameCapacityBits();
+// How many effects (interrupts, application frame deliveries) raised
+// while a device runs can be held for delivery after it returns; beyond
+// this an effect is diagnosed and dropped, never delivered re-entrantly.
+size_t deferralCapacity();
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
 void dumpf(const char* fmt, ...);

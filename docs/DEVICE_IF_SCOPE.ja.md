@@ -3,7 +3,7 @@
 内部の記録。日本語のみ。固定対象である `src/embedbench_device.h` について、
 何を専用portにし、何をframeに載せ、どこまでをカバーし、どこから先は他の
 テスト手段に任せ、そして**何には絶対に手を出さないか**を定める。
-根拠は[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)のX12・X19〜X34。
+根拠は[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)のX12・X19〜X37。
 IFの契約（再入・時間・借用バッファ・リンク所有・bit packing・原子性・
 channel/dumpの戻り値）はヘッダ本文に明記してあり、本書はその範囲と理由を扱う。
 
@@ -43,7 +43,8 @@ host版shimが符号化前の論理frameを環境へ渡す必要がある。GPIO
 | 要素 | 決定 | 根拠 |
 | --- | --- | --- |
 | bus | `uint8_t`、デバイス論理番号。実リンク対応はbinding側 | 同一プロトコルの複数リンク（PIOの複数SM、複数IRチャネル、複数CAN）を区別（X26） |
-| format | `uint16_t`、環境がinternしたid。名前は `<vendor>.<protocol>.<version>`、登録時に**schema指紋**を照合し、同名・異schemaは衝突として拒否 | 固定番号は独立ライブラリ間で静かに衝突（X26）。名前だけでも同名を選べば衝突するため、schema照合で「同名・異仕様」を検出（X34）。解決は1回でキャッシュ、以後は整数比較 |
+| format | `uint16_t`、環境がinternしたid。名前は `<vendor>.<protocol>.<version>`（**最大19文字、超過は全量拒否・切り詰め禁止**）、登録時に**schema指紋**（`uint32_t`、`schemaFingerprint(layout)`=FNV-1a推奨）を照合し、同名・異schemaは衝突として拒否。**registryに無い非0 idのframeは拒否** | 固定番号は独立ライブラリ間で静かに衝突（X26）。名前だけでも同名を選べば衝突するため、schema照合で「同名・異仕様」を検出（X34）。切り詰めは「同名は同一id」を破る（X34追記）。解決は1回でキャッシュ、以後は整数比較 |
+| 要求/応答の対応付け | **frameは一方向。対応付けが要るprotocolはformat payload内で行う。IFにframe単位のlinkは持たず、今後も増やさない（決定）** | X25/X26/X31/X35の実例は全て一方向＋遅延応答で足りた |
 | bits + data | MSB-first packing（frame bit 0 = data[0]のbit 7）、末尾の未使用bitは0、bits=0は空frame（trigger）でdata=nullptr可 | packingを定めないと同じ模型が環境ごとに別の動作になる。汚れたpaddingは環境が拒否（X31） |
 | 原子性 | `maxFrameBits(bus)`は「原子的に送れる最大frame」。上限内は全量受理を保証、超過は`frameOut`がfalseを返し環境が診断。**模型は自動分割しない**。分割はformat自身が定義する場合だけ（各frameがそのformatの完全なframe） | 1つの128bit commandを64bit×2に割ると別のframeになる。X27では分割規則を持つ`acme.bulk.1`と分割不能な`acme.snap.1`を対比 |
 | サイズ上限の所在 | 環境の性質（記録バッファ、MTU）なのでヘッダに定数を焼き込まず環境とネゴする。既定0=frame経路なし | X27 |
@@ -97,21 +98,26 @@ host版shimが符号化前の論理frameを環境へ渡す必要がある。GPIO
 
 | 契約 | 決定 | 検証 |
 | --- | --- | --- |
-| 再入 | 環境はDeviceを再入しない。Device内からの`HostPort`呼び出しが引き起こす効果（ISR等）は即時記録・**Device呼び出し完了後に配送** | X32（即時配送ならdepth 2、延期でdepth 1） |
+| 再入 | 環境はDeviceを再入しない（**全経路**: bus ops・lineIn・frameIn・channel・advanceTo・dump）。Device内からの`HostPort`呼び出しが引き起こす効果（ISR、アプリのframe受信callback等）は即時記録・**Device呼び出し完了後に配送**。延期は環境の容量まで保証、超過は診断＋破棄（再入配送も無音欠落もしない） | X32（即時配送ならdepth 2、延期でdepth 1）、X35（全経路depth 1、容量4で5件目破棄） |
 | 時間 | `advanceTo`のnowUsは`reset()`間で単調非減少、同値の再呼び出し可（二重発火禁止）、飛びは全ての期限到来分をその呼び出しで期限順に処理、`reset()`は保留期限を破棄、callback中の`nowMicros()`は最後の`advanceTo`以上 | X33 |
-| I2C | `I2cTransfer{stop, continued}`とArduino準拠の`I2cStatus`（0〜4） | X30 |
-| channel | `channelWrite`は全量適用時のみtrue（falseは環境が診断）。`channelRead`はsnprintf型（必要長を返し、cap分だけ書く） | X33 |
+| I2C | `I2cTransfer{stop, continued}`とArduino準拠の`I2cStatus`（0〜4、範囲外は環境が診断）。`continued`は**busの状態**: 直前転送が同一アドレスへSTOPなしで終わった場合のみ | X30、X36（他アドレスのSTOPがbusを閉じる） |
+| channel | `channelWrite`は全量適用時のみtrue（falseは環境が診断）。`channelRead`はsnprintf型（必要長を返し、cap分だけ書く）、未対応は`kChannelUnsupported`、0は正常な空。cap>0なら`out`非null | X33 |
+| serial | `serialIn`/`serialOut`はbyte stream。**呼び出し境界に意味を持たせない**。模型がbufferingとparse（終端・長さ）を担う | X37（1回・1byteずつ・2分割で同一応答、1回に2コマンドで2応答） |
 | dump | snprintf型（必要長を返し、cap>0なら常にNUL終端） | X33 |
 | serialOut | 任意byte（NUL含む）を運ぶ。表示側の課題でIFの課題ではない | — |
 | 借用バッファ | 引数のポインタはcall中のみ有効 | ヘッダ |
 
-## 5. 未決（IF最終決定時に締める）
+## 5. 未決（IF外。凍結を妨げない）
 
-1. frame経路にも要求/応答の対応付け（`re=`）が要るユースケースが出るか
-   （現状の実例は全て一方向+遅延応答で足りている）
-2. registry容量の既定値と、schema指紋の生成規約（手書き定数か、レイアウト
-   からの派生か）
-3. 集約記録をtransaction以外の塊（`writeBytes`、frame連送）へ広げる基準と
-   checksumの種類（X28の未決）
-4. `maxFrameBits`のbusごとの差を実際に持つ環境が現れた場合の、format側の
-   分割規則の書き方（X27の`acme.bulk.1`が1例目）
+決定済み: frameの要求/応答対応付けはformat payloadの責務（2節）、schema指紋は
+`uint32_t`で凍結し生成規則は`schemaFingerprint`（4節）。
+
+1. 集約記録をtransaction以外の塊（`writeBytes`、frame連送）へ広げる基準と
+   checksumの種類（X28の未決。ログ側の課題）
+2. `maxFrameBits`のbusごとの差を実際に持つ環境が現れた場合の、format側の
+   分割規則の書き方（X27の`acme.bulk.1`が1例目。format側の責務）
+
+registry容量の既定値は環境の性質（実装例は8）で、IFには定数を置かない。
+
+行数の表記: 本書と台帳の「LOC」は空行・コメントを除いた**実効LOC**。
+`embedbench_device.h`は実効LOC 120、物理314行（2026-09-04）。

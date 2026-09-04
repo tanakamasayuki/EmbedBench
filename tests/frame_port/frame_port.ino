@@ -22,7 +22,13 @@ class DraftPort : public ebdev::HostPort {
                 size_t bits) override {
     return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
   }
+  uint16_t formatId(const char* name, uint32_t schema) override {
+    return ebd::registerFormat(name, schema);
+  }
 };
+
+static uint16_t commandFormat = 0;
+static uint16_t telemetryFormat = 0;
 
 static DraftPort draftPort;
 
@@ -30,7 +36,7 @@ static void devFrame(uint8_t bus, uint16_t format, const uint8_t* data,
                      size_t bits, void*) {
   node.frameIn(bus, format, data, bits);
 }
-static void onTick(uint32_t, void*) { node.advanceTo(ebd::nowUs()); }
+static void advanceDevice(uint64_t nowUs, void*) { node.advanceTo(nowUs); }
 
 // Application-side shim: what the host variant of a protocol driver does
 // instead of encoding to a waveform.
@@ -39,7 +45,7 @@ static uint8_t telemetry[2] = {0, 0};
 
 static void appFrameReceiver(uint8_t, uint16_t format, const uint8_t* data,
                              size_t bits, void*) {
-  if (format == RemoteNodeModel::kFormatTelemetry && bits == 16) {
+  if (format == telemetryFormat && bits == 16) {
     telemetry[0] = data[0];
     telemetry[1] = data[1];
     gotTelemetry = true;
@@ -48,8 +54,8 @@ static void appFrameReceiver(uint8_t, uint16_t format, const uint8_t* data,
 
 static void appSendCommand(uint8_t address, uint8_t command) {
   const uint8_t frame[2] = {address, command};
-  ebd::frameTx(ebd::Origin::kApp, RemoteNodeModel::kBus,
-               RemoteNodeModel::kFormatCommand, frame, 16);
+  ebd::frameTx(ebd::Origin::kApp, RemoteNodeModel::kBus, commandFormat, frame,
+               16);
 }
 // [adapter end]
 
@@ -87,7 +93,10 @@ void setup() {
   node.attach(&draftPort);
   ebd::bindFrameDevice(&devFrame);
   ebd::setFrameReceiver(&appFrameReceiver);
-  ebd::setTickHandler(&onTick);
+  ebd::bindTickDevice(&advanceDevice);
+  // The application shim resolves the same names the model does.
+  commandFormat = ebd::registerFormat("acme.node.1", ebdev::schemaFingerprint("u8 addr,u8 cmd"));
+  telemetryFormat = ebd::registerFormat("acme.tele.1", ebdev::schemaFingerprint("u8 addr,u8 power"));
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values got=%d telemetry=%02X%02X\n", gotTelemetry ? 1 : 0,

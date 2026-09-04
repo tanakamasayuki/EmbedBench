@@ -41,33 +41,35 @@ int main() {
   const uint8_t firstByte = out[0];
   const uint8_t untouched = out[1];
   const size_t needCap2 = temp.channelRead(0, out, 2);
-  const size_t badRead = temp.channelRead(9, out, 2);
+  const bool badReadUnsupported =
+      temp.channelRead(9, out, 2) == ebdev::kChannelUnsupported;
   char small[8];
   memset(small, 'x', sizeof(small));
   const size_t dumpNeed = temp.dump(small, sizeof(small));
   printf("channel bad_chan=%d bad_len=%d ok=%d cap1_need=%zu b0=%02X b1=%02X "
-         "cap2_need=%zu bad_read=%zu dump_need=%zu dump_out=<%s> dump_len=%zu\n",
+         "cap2_need=%zu bad_read_unsupported=%d dump_need=%zu dump_out=<%s> dump_len=%zu\n",
          badChannel ? 1 : 0, badLength ? 1 : 0, ok ? 1 : 0, needCap1, firstByte,
-         untouched, needCap2, badRead, dumpNeed, small, strlen(small));
+         untouched, needCap2, badReadUnsupported ? 1 : 0, dumpNeed, small,
+         strlen(small));
 
   // --- time contract --------------------------------------------------------
   AtModemModel modem;
   modem.attach(&port);
   modem.reset();
-  const uint8_t cmd[4] = {'A', 'T', '+', 'S'};
+  const uint8_t cmd[5] = {'A', 'T', '+', 'S', ';'};
   port.now = 0;
-  modem.serialIn(cmd, 4);  // due at 1000
+  modem.serialIn(cmd, 5);  // due at 1000
   port.now = 1000;
   modem.advanceTo(1000);
   const uint32_t first = port.outCalls;
   modem.advanceTo(1000);  // same time again: must not emit twice
   const uint32_t repeat = port.outCalls;
-  modem.serialIn(cmd, 4);  // due at 2000
+  modem.serialIn(cmd, 5);  // due at 2000
   port.now = 5000;
   modem.advanceTo(5000);  // jump past the due time: emitted now
   const uint32_t jumpCalls = port.outCalls;
   const uint64_t jumpAt = port.outAt;
-  modem.serialIn(cmd, 4);  // due at 6000, then dropped by reset
+  modem.serialIn(cmd, 5);  // due at 6000, then dropped by reset
   modem.reset();
   port.now = 99999;
   modem.advanceTo(99999);

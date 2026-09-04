@@ -5,10 +5,11 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 SRC = HERE.parent.parent / "src"
+MODELS = HERE.parent / "common_models" / "src"
 
 
 def test_native_portability():
-    for source in [HERE / "regmap_model.h", HERE / "regmap_model.cpp"]:
+    for source in [MODELS / "regmap_model.h", MODELS / "regmap_model.cpp"]:
         includes = [
             l for l in source.read_text().splitlines()
             if l.strip().startswith("#include")
@@ -24,9 +25,9 @@ def test_native_portability():
     subprocess.run(
         [
             "g++", "-std=c++11", "-Wall", "-Wextra", "-Werror",
-            f"-I{SRC}", f"-I{HERE}",
+            f"-I{SRC}", f"-I{MODELS}",
             str(HERE / "native" / "main.cpp"),
-            str(HERE / "regmap_model.cpp"),
+            str(MODELS / "regmap_model.cpp"),
             "-o", str(binary),
         ],
         check=True,

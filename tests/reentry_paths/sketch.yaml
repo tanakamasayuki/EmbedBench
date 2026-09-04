@@ -7,6 +7,5 @@ profiles:
         platform_index_url: https://tanakamasayuki.github.io/lang-ship-arduino-core/package_lang-ship_index.json
     libraries:
       - dir: ../../
-      - dir: ../common_models
 
 default_profile: host

@@ -1079,11 +1079,99 @@ ISRは「バス転送完了時＝`Wire.requestFrom()`が戻る前」に走り、
 **事実:** 名前だけでは独立ライブラリが同名を選べば衝突するため、schema指紋の
 照合で「同名・異仕様」を登録時に検出できる。命名規約は`<vendor>.<protocol>.<version>`。
 
+## 凍結前レビュー第2回への対応（2026-09-04、X35〜X37、X34追記）
+
+所有者の第2回レビューで「凍結を止める」とされた5点と契約の小穴を、ヘッダ・
+両環境実装例・新規3実験＋X34の拡張で解消した。IFヘッダは**実効LOC 120
+（空行・コメント除く。物理314行）**。台帳では以後「実効LOC」と表記する。
+
+| 指摘 | 対応 | 検証 |
+| --- | --- | --- |
+| 再入禁止がI2C経路だけ | draft coreで全Device経路を括る: pin forward（lineIn）、`bindTickDevice`（advanceTo。進行役の`setTickHandler`と分離）、frame受信側callbackは**Device実行中なら延期**。ISRとframe配送を1本の延期queueに統一 | X35 |
+| 延期queue満杯の契約 | 容量超過は`diag.deferred_full`を記録して**破棄**（再入配送も無音欠落もしない）。ヘッダに「環境の延期容量まで保証、超過は診断＋破棄」を明記。draftは容量4 | X35（5発中1発破棄） |
+| I2C `continued`がdevice単位で複数アドレスで壊れる | **bus単位**に変更: 直前転送のアドレスがSTOPなしで終わった場合だけ、同一アドレスへの次転送が`continued`。他アドレスへの転送はbusを閉じる（両環境実装例） | X36 |
+| format名の長さ契約がなく19文字で切り詰め | `kFormatNameMaxLength = 19`をIF定数に。超過は0＋`diag.fmt_name_long`で**全量拒否、切り詰め禁止** | X34追記 |
+| byte streamのchunk境界規則 | `serialIn`は呼び出し境界に意味を持たないbyte streamと明記。模型側がbuffering・parse（ATモデムは`;`終端で再実装） | X37 |
+| 未登録の非0 format idでschema検査を迂回 | `frameOut`/`frameTx`はregistryに存在するidのみ受理（`diag.frame_unknown_format`） | X34追記 |
+| `framePaddingClean`のnullptr参照、`frameBytes`のoverflow | nullptr→false、`bits/8 + (bits%8?1:0)`でoverflow不可 | ヘッダ |
+| `channelRead`の0の曖昧さ | `kChannelUnsupported`（SIZE_MAX）を導入。0は正常な空 | X33更新 |
+| `out != nullptr`（cap>0）の明記、`I2cStatus`範囲 | ヘッダに明記。範囲外statusは環境が`diag.i2c_status` | ヘッダ／両環境 |
+| 未決: frameの`re=` | **決定**: 対応付けはformat payloadの責務。IFにframe単位のlinkは持たず、今後も増やさない | ヘッダ |
+| 未決: schema指紋 | **決定**: `uint32_t`で凍結。生成規則として`schemaFingerprint(layout)`（FNV-1a）をヘッダに提供、手書き定数も可 | X34追記 |
+
+手戻り記録: ATモデムを`;`終端のbyte-streamパーサへ再実装したため、X23/X29/X33の
+入力が`AT+S;`に変わった（traceの`uart.tx AT+S;`）。X25のframe_portは未登録idが
+拒否されるため名前解決へ変更（X26と同形）。環境実装例#2は`tests/common_env/`へ
+移し（実効LOC 339）、repeated start要求のregister-map模型は`common_models`へ
+移して複数実験で共有。adapterは`bindTickDevice`使用へ更新。
+
+## X34追記. 名前長・未登録id・schema指紋
+
+| 登録 / 送出 | 結果 |
+| --- | --- |
+| `acme.cmd.longnam.12`（19文字） | id 3、再登録も3 |
+| `acme.cmd.longname.12`（20文字） | **0** + `diag.fmt_name_long len=20`（切り詰めない） |
+| 未登録のid 7でframe送出 | 拒否 + `diag.frame_unknown_format bus=0 fmt=7` |
+| schema | `schemaFingerprint("u8 addr,u8 cmd")` と `("u8 cmd,u8 addr")` が異なる指紋になり、同名登録は衝突として検出 |
+
+## X35. 再入保証の全経路適用と延期容量
+
+対象: `tests/reentry_paths/`
+
+lineIn・frameIn・advanceTo・i2cReadの**全経路**から効果（IRQパルス、frame）を
+出す模型で、draft coreの括りを検証した。
+
+| 経路 | 発生源 | 配送 | 模型depth |
+| --- | --- | --- | ---: |
+| lineIn（pin forward） | `digitalWrite(4)`→lineIn内でIRQパルス | ISRはlineIn完了後 | 1 |
+| advanceTo（`bindTickDevice`） | tick内でstatus frame送出 | アプリ受信shimはadvanceTo完了後に実行、shimのframeTxでframeIn | 1 |
+| frameIn | 受信したcommandでIRQパルス | ISRはframeIn完了後 | 1 |
+| i2cRead（burst） | 1回のread内で5パルス | 容量4: 4件延期配送、**5件目は`diag.deferred_full`で破棄** | 1 |
+
+stats: `deferred_isrs=6 deferred_frames=1 dropped=1 device_depth=1 capacity=4`、
+46イベント、2回一致。native（callbackのない環境）でもdepth 1。
+
+**事実:** 括りを「Deviceを呼ぶ全ての場所」に置き、Device実行中に生じた効果を
+1本のqueueへ集約すれば、経路によらずdepth 1が成立する。容量は環境の性質で、
+超過は破棄でも診断イベントとして可視化される。
+
+## X36. I2C repeated startはbusの状態
+
+対象: `tests/i2c_multi/`（`common_models`のrepeated start要求模型×2、0x50/0x51）
+
+```text
+01 i2c.req addr=50 data=01 stop=0     ← Aがbusを開けたまま
+03 i2c.req addr=51 data=01 stop=1     ← BのSTOPがbusを閉じる
+05 i2c.rd.req addr=50 req=1 stop=1    ← rsなし → Aは応答しない（len=0）
+07 i2c.req addr=50 data=01 stop=0
+09 i2c.rd.req addr=50 req=1 stop=1 rs ← 真のrepeated start → len=1 data=5A
+```
+
+**事実:** device単位の`open`では05が誤って`rs`になり応答してしまう。bus単位の
+「直前転送のアドレス＋STOP有無」で管理すると正しく区別できる。両環境実装例を
+bus単位へ統一した。
+
+## X37. serialはbyte stream — 呼び出し境界に意味を持たせない
+
+対象: `tests/serial_stream/`（`common_models`のATモデム、`;`終端）
+
+| 入力の与え方 | 応答 |
+| --- | ---: |
+| `"AT+S;"` を1回 | 1（+1,000us） |
+| 1byteずつ5回 | 1（同じ） |
+| `"AT"` + `"+S;"` の2回 | 1（同じ） |
+| `"AT;AT;"` を1回 | 2（1回の呼び出しに2コマンド） |
+
+host: `print("AT+S;")`は`uart.tx AT+S;`1行、1byteずつの`write`は`uart.tx A`〜`;`の
+5行として**アプリの行為はそのまま記録**され、devの応答（`dev.tx OK`、+1,000us）は
+どちらも同一。
+
 ## 次に必要な実験
 
 1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
 2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
 3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
 4. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
-5. SCOPE 5節の未決4項目を決めた上で、IFヘッダを「決定版」として凍結する
+5. SCOPE 5節の残り2項目（集約記録の基準とchecksum種別、bus別`maxFrameBits`下の
+   format分割規則）はIF外なので、IFヘッダを「決定版」として凍結する判断へ
    （実験ではなく決定。凍結後の変更は台帳へ理由を残す）

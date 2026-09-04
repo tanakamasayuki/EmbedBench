@@ -92,17 +92,19 @@ def test_native_portability():
         "adapter": region_loc(HERE / "device_if.ino", "adapter"),
     }
     print(f"LOC {sizes}")
-    # Growth log: 58 at X23, +4 for lineIn (composite devices, X24), +10
-    # for frameOut/frameIn (generic frame path, X25), +8 for frame bus ids
-    # and formatId interning (X26), +4 for negotiated maxFrameBits (X27),
-    # +22 for the contract review (I2cStatus/I2cTransfer, frame packing
-    # helpers, bool frameOut/channelWrite, schema in formatId; X30-X34).
-    # Models grew by their contract-conformant channelRead / signatures.
+    # Growth log (effective LOC, blank and comment lines excluded): 58 at
+    # X23, +4 lineIn (X24), +10 frameOut/frameIn (X25), +8 bus ids and
+    # formatId interning (X26), +4 negotiated maxFrameBits (X27), +22 for
+    # the first contract review (I2cStatus/I2cTransfer, frame helpers, bool
+    # frameOut/channelWrite, schema; X30-X34), +14 for the second review
+    # (name length limit, kChannelUnsupported, safe frame helpers,
+    # schemaFingerprint; X35-X37). Models grew with their contracts: the
+    # modem became a real byte-stream parser.
     print(f"LOC {sizes}")
     assert sizes == {
-        "device_if_header": 106,
+        "device_if_header": 120,
         "temp_model": 64,
-        "modem_model": 50,
+        "modem_model": 75,
         "adapter": 36,
     }
 
@@ -127,7 +129,7 @@ def test_device_if(dut):
     dut.expect("11 000000 main app i2c.rd.req addr=48 req=2 stop=1", timeout=10)
     dut.expect("12 000000 main dev i2c.rd.resp len=2 data=012C re=11",
                timeout=10)
-    dut.expect(r"13 000000 main app uart.tx AT\+S", timeout=10)
+    dut.expect(r"13 000000 main app uart.tx AT\+S;", timeout=10)
     # The modem's latency reply arrives via advanceTo at the next tick.
     dut.expect("14 001000 tick dev dev.tx OK", timeout=10)
     dut.expect("15 001000 main app uart.rx O", timeout=10)

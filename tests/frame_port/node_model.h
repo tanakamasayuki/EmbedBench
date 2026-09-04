@@ -10,8 +10,8 @@
 
 class RemoteNodeModel : public ebdev::Device {
  public:
-  static const uint16_t kFormatCommand = 1;    // [address, command]
-  static const uint16_t kFormatTelemetry = 2;  // [address, power]
+  // Formats are resolved by name: "acme.node.1" = [address, command],
+  // "acme.tele.1" = [address, power].
   static const uint8_t kBus = 0;  // the logical link this node lives on
   static const uint8_t kAddress = 0x04;
   static const uint8_t kCommandPowerOn = 0x08;
@@ -25,6 +25,11 @@ class RemoteNodeModel : public ebdev::Device {
   size_t dump(char* out, size_t cap) override;
 
  private:
+  void resolve();
+
+  uint16_t commandFormat_ = 0;
+  uint16_t telemetryFormat_ = 0;
+  bool resolved_ = false;
   uint8_t power_ = 0;
   bool hasPending_ = false;
   uint64_t replyDueUs_ = 0;

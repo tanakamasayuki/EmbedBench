@@ -5,6 +5,11 @@
 // injection path, a virtual clock with ticks, and an ordered event trace
 // in the same line format — so the same model sources can be compared
 // across two independent environments. Pure C++11.
+//
+// Re-entrancy contract: this environment makes no callback into the
+// application while a device method runs (serialOut only queues bytes,
+// frames are recorded, there are no interrupts), so a device is never
+// re-entered by construction.
 #pragma once
 
 #include <stddef.h>
@@ -70,7 +75,6 @@ class Env : public ebdev::HostPort {
     bool used;
     uint8_t address;
     ebdev::Device* device;
-    bool open;  // last transfer ended without STOP
   };
   struct FormatSlot {
     bool used;
@@ -91,7 +95,8 @@ class Env : public ebdev::HostPort {
   uint64_t nextTickUs_ = kTickUs;
   bool inTick_ = false;
 
-  I2cSlot i2c_[2] = {{false, 0, nullptr, false}, {false, 0, nullptr, false}};
+  I2cSlot i2c_[2] = {{false, 0, nullptr}, {false, 0, nullptr}};
+  uint16_t openAddress_ = 0xFFFF;  // bus-level: last transfer without STOP
   ebdev::Device* serialDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;
   ebdev::Device* ticking_[4] = {nullptr, nullptr, nullptr, nullptr};

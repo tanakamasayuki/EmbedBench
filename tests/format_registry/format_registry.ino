@@ -35,8 +35,9 @@ static void devFrame(uint8_t bus, uint16_t format, const uint8_t* data,
   node.frameIn(bus, format, data, bits);
 }
 
+static void advanceDevice(uint64_t nowUs, void*) { node.advanceTo(nowUs); }
+
 static void onTick(uint32_t tick, void*) {
-  node.advanceTo(ebd::nowUs());
   if (tick == 2) {
     // Director probe: fill the registry, then overflow it once.
     ebd::registerFormat("acme.xa.1", 0);
@@ -99,6 +100,7 @@ void setup() {
   node.attach(&draftPort);
   ebd::bindFrameDevice(&devFrame);
   ebd::setFrameReceiver(&appFrameReceiver);
+  ebd::bindTickDevice(&advanceDevice);
   ebd::setTickHandler(&onTick);
 
   // The shim registers by name; re-registering the same name is
