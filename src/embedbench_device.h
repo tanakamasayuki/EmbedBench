@@ -56,14 +56,30 @@
 //   composed by the environment's adapter from child Devices. Lines,
 //   channels, and frame buses are numbered per device.
 //
-// Still provisional while the draft phase runs, but this file is the
-// candidate being hardened, not an implementation detail.
+// FROZEN — interface version 1 (2026-09-04). The experiment phase that
+// hardened this surface is recorded in docs/EXPERIMENTS.ja.md (X23-X41)
+// and the freeze itself in docs/DEVICE_IF_FROZEN.ja.md.
+//
+// Change rules from here on:
+//   - version 1 stays source- and behavior-compatible: a device written
+//     against it keeps compiling and behaving the same
+//   - only additive changes are allowed, and only as new virtual methods
+//     with a default implementation, new constants, or new helpers; the
+//     existing signatures, defaults, and contracts do not move
+//   - anything that would change an existing signature or contract is
+//     version 2, decided the same way version 1 was: measured first
+//   - kDeviceInterfaceVersion is bumped by such a change, never silently
+//   - tests/if_frozen/ pins the surface, so drift fails the suite
 #pragma once
 
 #include <stddef.h>
 #include <stdint.h>
 
 namespace ebdev {
+
+// Interface version, bumped only by a deliberate breaking change (see the
+// change rules above). Environments and devices may assert on it.
+constexpr uint16_t kDeviceInterfaceVersion = 1;
 
 // I2C write status as Arduino's Wire::endTransmission() reports it. A
 // device's i2cWrite() must return one of these five values; anything

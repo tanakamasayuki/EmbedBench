@@ -1254,9 +1254,68 @@ X38が正常系だけを通していたため、契約の残り半分——「�
 **事実:** 部分配送は起き得るが、必ず診断イベントを伴い、送信側の模型も
 戻り値で知る。黙って消えるbyteはない。
 
+## X42. デバイスIFの凍結と凍結ガード
+
+対象: `src/embedbench_device.h`（version 1）、`tests/if_frozen/`
+
+所有者の判断でデバイスIFを**凍結**した（2026-09-04）。決定内容と変更規則は
+[DEVICE_IF_FROZEN.ja.md](DEVICE_IF_FROZEN.ja.md)。ヘッダ冒頭にも凍結宣言・変更規則・
+`kDeviceInterfaceVersion`（=1）を書いた。
+
+凍結ガード `tests/if_frozen/` が3点を固定する。
+
+| 検査 | 内容 |
+| --- | --- |
+| 面の固定 | ヘッダの宣言行を抽出し、凍結一覧と**双方向**に照合（消えても、無断で増えても失敗）。実際に仮想関数を1つ足すと `undeclared additions to the interface` で落ちることを確認した |
+| 単独ビルド | ヘッダだけをincludeする翻訳単位を `-Wall -Wextra -Werror -pedantic` でビルド。純粋virtualは`HostPort`の3つ、`Device`は`reset()`のみ |
+| 既定の挙動 | 何もoverrideしないデバイスの応答（`i2cWrite`=2、`i2cRead`=0、`spiTransfer`=0xFF、`channelWrite`=false、`channelRead`=`kChannelUnsupported`、`dump`=0でNUL終端）と、frameを配送しない環境の応答（`frameOut`=false、`formatId`=0、`maxFrameBits`=0）、helper（`frameBytes`の0/1/8/9、padding検査のnullptr両ケース、指紋の一致・不一致） |
+
+**副産物:** 検査コード自身に、printfの引数評価順に依存する不具合（X13で見たのと
+同種）が入り込み、`dump_nul=0` として現れた。呼び出しを変数へ順序付けて解消した。
+
+## X43. 環境の準拠キット（デバイス側からの契約検証）
+
+対象: `tests/conformance/`、probeは `tests/common_models/src/conformance_probe.*`
+
+凍結後の最初の実装課題。「環境側は実装例」という整理には、**環境が契約を
+満たしているかを判定する共通の物差し**が要る。IFだけに依存する probe 模型を書き、
+どの環境でも同じ標準シナリオを流して**判定（bitmask）で比較**する方式にした。
+
+probeがデバイス側から観測できる契約:
+
+| bit | 検査 | 判定方法 |
+| ---: | --- | --- |
+| 0x001 | 再入なし | 各inboundメソッドが自分を括り、開いたまま次が来ないこと |
+| 0x002 | 時間の単調性 | `advanceTo` の値が前回以上 |
+| 0x004 | 同一時刻の再呼び出し | 起きた場合に観測（**契約上は許可であって必須ではない**ので必須集合から除外） |
+| 0x008 | 時計の整合 | メソッド内の `nowMicros()` が直近の `advanceTo` 以上 |
+| 0x010 | 借用バッファ | call中に渡されたbyteが変化しない |
+| 0x020 | 上限内frameの受理 | `frameOut` がtrue |
+| 0x040 | 上限超過frameの拒否 | `frameOut` がfalse（切り詰めない） |
+| 0x080 | format idの安定 | 同名・同schemaが同じ非0 idを返す |
+| 0x100 | format名の長さ上限 | 20文字は0を返す |
+
+| 環境 | 判定 |
+| --- | --- |
+| 環境実装例#2（純粋C++） | `ok=1 checks=1FB violations=0` |
+| host（draft core） | `ok=1 checks=1FB violations=0`、環境自身の計測も `device_depth=1` |
+
+**事実:** 同一のprobeと同一シナリオで、**2つの独立実装が同じ判定に達する**。
+ログ形式や事象名の違いは判定に影響しない——環境の受け入れ試験として機能する。
+
+**キットが空振りでないことの確認（negative test）:** 意図的に契約を破る環境
+（デバイス呼び出しの中から再入、時間の逆行、上限超過frameの切り詰め受理）を
+probeへ当てると `ok=0 violations=6` になる——内訳は時間逆行1、上限超過の受理1、
+再入1、および直近の`advanceTo`より後ろの時計を見た3回。合格判定が
+「何も検査していないから合格」ではないことを担保する。
+
+**設計上の収穫:** 最初 `checks` の必須集合に「同一時刻の再呼び出し」を含めていたため
+host環境が不合格になった。契約が**許可**しているだけの挙動を要求していた誤りで、
+必須集合から外した。準拠キットは「契約が要求すること」だけを要求しなければならない。
+
 ## 次に必要な実験
 
-（IF凍結に必要な実験は完了。以下はIF外の実装例・ログ側の課題）
+（デバイスIFはX42で凍結済み。以下はIF外の実装例・ログ側の課題）
 
 1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
 2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装

@@ -100,10 +100,11 @@ def test_native_portability():
     # schemaFingerprint; X35-X37). The third review (X38-X40) changed
     # contract text only, so the header held at 120 while the modem grew a
     # binary reply branch and the adapter shrank to a binary-safe
-    # serialOut.
+    # serialOut. +1 for kDeviceInterfaceVersion at the freeze (X42); the
+    # exact surface is pinned in tests/if_frozen/, this is the size signal.
     print(f"LOC {sizes}")
     assert sizes == {
-        "device_if_header": 120,
+        "device_if_header": 121,
         "temp_model": 64,
         "modem_model": 80,
         "adapter": 33,

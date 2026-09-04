@@ -77,5 +77,7 @@ Additional experiments:
 - `serial_binary/`: a NUL-containing reply survives the interface, the queue, the log, and the application.
 - `serial_overflow/`: `serialOut` when the receive queue is too small: accepted prefix delivered, rest dropped, one diagnostic, false returned.
 - `i2c_badlen/`: a model returning more than `len` is diagnosed and treated as having supplied nothing.
-- `common_env/`: environment example #2 (`nenv`), used by `native_env/`.
-- `common_models/`: reference models (temperature sensor, AT modem) shared across experiments and environments.
+- `if_frozen/`: guards the frozen device interface (version 1): pinned surface, standalone build, documented defaults.
+- `conformance/`: the environment conformance kit: one probe and one scenario, both environments reaching the same verdict.
+- `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
+- `common_models/`: reference models (temperature sensor, AT modem, register map, conformance probe) shared across experiments and environments.

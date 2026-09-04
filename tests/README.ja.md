@@ -75,5 +75,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `serial_binary/`: NULを含むbyte列がIF・queue・ログ・アプリを通って欠けないこと
 - `serial_overflow/`: 受信容量が足りない場合の`serialOut`（prefix配送・残り破棄・診断1件・false）
 - `i2c_badlen/`: 模型が`len`超過を返した場合に環境が診断して無効化すること
-- `common_env/`: 環境実装例#2（`nenv`）。`native_env/` が使用
-- `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム）
+- `if_frozen/`: 凍結したデバイスIFの面の固定・単独ビルド・既定挙動（version 1のガード）
+- `conformance/`: 環境の準拠キット。共通probeで同一シナリオを流し、両環境が同じ判定になることを確認
+- `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
+- `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム、register-map、準拠probe）
