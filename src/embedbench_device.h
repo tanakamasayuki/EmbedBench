@@ -20,17 +20,23 @@
 //
 // Contracts every environment must honor (devices may rely on them):
 //
-//   Re-entrancy. The environment never re-enters a Device: while ANY
-//   Device method (bus operation, lineIn, frameIn, channel access,
-//   advanceTo, dump) is on the call stack, effects that the device's
-//   HostPort calls trigger elsewhere — interrupt handlers, application
-//   callbacks receiving frames or bytes, other devices — are recorded at
-//   once but DELIVERED only after the outermost Device method returns.
-//   A device therefore needs no re-entrancy guards and may call HostPort
-//   freely from any method. Deferred delivery is bounded by the
-//   environment's deferral capacity; an effect beyond it is recorded as a
-//   diagnostic and dropped — never delivered re-entrantly, never lost in
-//   silence.
+//   Re-entrancy. The environment never re-enters a Device: while any
+//   effect-capable Device method (i2cWrite, i2cRead, spiTransfer,
+//   serialIn, lineIn, frameIn, channelWrite, advanceTo) is on the call
+//   stack, effects that the device's HostPort calls trigger elsewhere —
+//   interrupt handlers, application callbacks receiving frames or bytes,
+//   other devices — are recorded at once but DELIVERED only after the
+//   outermost Device method returns. A device therefore needs no
+//   re-entrancy guards and may call HostPort freely from those methods.
+//   Deferred delivery is bounded by the environment's deferral capacity;
+//   an effect beyond it is recorded as a diagnostic and dropped — never
+//   delivered re-entrantly, never lost in silence.
+//
+//   Effect-free methods. reset(), channelRead(), and dump() are
+//   initialization and inspection: they MUST NOT call HostPort (no lines,
+//   bytes, or frames). Because they can raise no effect they sit outside
+//   the deferral mechanism and an environment may call them directly at
+//   any time, including from setup and teardown code.
 //
 //   Time. The nowUs passed to advanceTo() is monotonic non-decreasing
 //   between two reset() calls and may repeat the same value; a device
@@ -71,18 +77,19 @@ enum I2cStatus : uint8_t {
 };
 
 // Transaction context of one I2C transfer, as the bus master issued it.
-// `continued` is a property of the BUS, not of the device: it is true
-// only when the immediately preceding transfer on that bus went to this
-// same device and ended without STOP. A transfer to any other address in
-// between closes the sequence.
+// `continued` means "continuation of the immediately preceding transfer
+// to THIS device": it is derived from bus state and is true only when the
+// preceding transfer on the bus went to this same device and ended
+// without STOP. It is narrower than "a repeated START happened on the
+// bus": a repeated START that switches to another address yields
+// continued=false for that other device.
 struct I2cTransfer {
   // A STOP condition follows this transfer. false = the master intends to
   // continue with another transfer to this device (repeated start).
   bool stop;
-  // This transfer follows a transfer to this device that ended without
-  // STOP, i.e. it was issued under a repeated start. The classic
-  // "write register pointer, then read" sequence arrives as a write with
-  // stop=false followed by a read with continued=true.
+  // This transfer continues a transfer to this device that ended without
+  // STOP. The classic "write register pointer, then read" sequence arrives
+  // as a write with stop=false followed by a read with continued=true.
   bool continued;
 };
 
@@ -116,7 +123,9 @@ inline bool framePaddingClean(const uint8_t* data, size_t bits) {
 // Recommended schema fingerprint for formatId(): FNV-1a over a short text
 // describing the frame layout, e.g. schemaFingerprint("u8 addr,u8 cmd").
 // The fingerprint is caller-chosen; this helper just makes the common
-// choice deterministic and portable. The uint32_t width is fixed.
+// choice deterministic and portable. The uint32_t width is fixed. Being a
+// 32-bit hash it can collide: a conflict is detected when the fingerprints
+// DIFFER, not for every differing layout.
 inline uint32_t schemaFingerprint(const char* layout) {
   uint32_t hash = 2166136261u;
   for (const char* p = layout; p != nullptr && *p != '\0'; ++p) {
@@ -141,9 +150,13 @@ class HostPort {
   virtual void lineOut(uint8_t line, uint8_t level) = 0;
 
   // Send bytes toward the application (the device's serial TX). Any byte
-  // value, including NUL, is carried. Call boundaries carry no meaning:
-  // the receiver sees one byte stream.
-  virtual void serialOut(const uint8_t* data, size_t len) = 0;
+  // value, including NUL, is carried — environments must not treat the
+  // buffer as a C string, in transport or in their logs. Call boundaries
+  // carry no meaning: the receiver sees one byte stream. Returns true when
+  // every byte was queued; when the environment's receive queue cannot
+  // take them all it records a diagnostic, drops the remainder, and
+  // returns false — never a silent partial delivery.
+  virtual bool serialOut(const uint8_t* data, size_t len) = 0;
 
   // Emit one logical protocol frame toward the application side: the bits
   // as they exist before physical encoding, plus a format id naming how
@@ -180,9 +193,9 @@ class HostPort {
   // within an environment while the number stays environment-local.
   // `schema` is a caller-chosen fingerprint of the frame layout (see
   // schemaFingerprint): a registration whose name is already known with a
-  // different schema is a conflict — the environment returns 0 and
+  // different fingerprint is a conflict — the environment returns 0 and
   // records a diagnostic — which catches two libraries that picked the
-  // same name for different layouts. 0 also means no frame routing, a
+  // same name for layouts whose fingerprints differ. 0 also means no frame routing, a
   // full registry, or a name over the length limit; a device holding id 0
   // must match no frame. Devices resolve once and cache; every frame call
   // then compares integers.
@@ -210,7 +223,8 @@ class Device {
  public:
   virtual ~Device() {}
 
-  // Return to power-on state and drop every pending due time.
+  // Return to power-on state and drop every pending due time. Effect-free:
+  // must not call HostPort.
   virtual void reset() = 0;
 
   // The environment attaches its port before any other call.
@@ -227,7 +241,9 @@ class Device {
     return kI2cAddressNack;  // this device is not on that bus
   }
   // Fill up to `len` bytes; return how many were supplied (0 = nothing,
-  // which the master sees as a failed read).
+  // which the master sees as a failed read). Returning more than `len` is
+  // a contract violation: environments diagnose it and treat the read as
+  // having supplied nothing.
   virtual size_t i2cRead(uint8_t* data, size_t len, const I2cTransfer& xfer) {
     (void)data;
     (void)len;
@@ -280,7 +296,8 @@ class Device {
   // snprintf-style: returns the length the channel needs and writes
   // min(needed, cap) bytes into `out` (non-null when cap > 0). A return
   // value larger than `cap` means truncation; 0 is a valid empty value;
-  // kChannelUnsupported means the device has no such channel.
+  // kChannelUnsupported means the device has no such channel. Effect-free:
+  // must not call HostPort.
   virtual size_t channelRead(uint8_t channel, uint8_t* out, size_t cap) {
     (void)channel;
     (void)out;
@@ -298,7 +315,8 @@ class Device {
   // snprintf-style: returns the length of the full text (excluding the
   // terminating NUL), writes at most cap - 1 characters into `out`
   // (non-null when cap > 0) and always NUL-terminates when cap > 0. A
-  // return value >= cap means truncation.
+  // return value >= cap means truncation. Effect-free: must not call
+  // HostPort.
   virtual size_t dump(char* out, size_t cap) {
     if (cap > 0) out[0] = '\0';
     return 0;

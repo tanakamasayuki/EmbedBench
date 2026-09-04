@@ -23,7 +23,7 @@ class DraftPort : public ebdev::HostPort {
       ebd::pinInject(ebd::Origin::kDev, 27, level);
     }
   }
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
 };
 
 static DraftPort draftPort;

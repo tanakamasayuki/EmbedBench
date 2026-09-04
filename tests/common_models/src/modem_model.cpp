@@ -41,6 +41,12 @@ void AtModemModel::dispatch() {
   if (lineLength_ == 2 && line_[0] == 'A' && line_[1] == 'T') {
     // Plain "AT" answers on the wire immediately.
     send("OK");
+  } else if (lineLength_ == 4 && line_[0] == 'A' && line_[1] == 'T' &&
+             line_[2] == '+' && line_[3] == 'B') {
+    // "AT+B": an immediate binary reply containing a NUL byte.
+    const uint8_t binary[3] = {0x41, 0x00, 0x42};
+    if (port() != nullptr) port()->serialOut(binary, sizeof(binary));
+    ++replies_;
   } else if (lineLength_ > 2 && line_[0] == 'A' && line_[1] == 'T') {
     // Extended commands answer after a fixed processing latency, driven
     // entirely by advanceTo() so the behavior stays deterministic.

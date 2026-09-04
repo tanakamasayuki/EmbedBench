@@ -14,7 +14,7 @@ struct QuietPort : public ebdev::HostPort {
   void lineOut(uint8_t, uint8_t level) override {
     if (level == 1) ++pulses;
   }
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   uint16_t formatId(const char* name, uint32_t) override {
     return strcmp(name, "acme.stat.1") == 0 ? 1 : 2;
   }

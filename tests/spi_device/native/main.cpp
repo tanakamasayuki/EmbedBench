@@ -19,7 +19,7 @@ struct FakePort : public ebdev::HostPort {
     lastLevel = level;
     ++lineCalls;
   }
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
 };
 
 }  // namespace

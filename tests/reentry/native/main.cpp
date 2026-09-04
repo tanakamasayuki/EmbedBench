@@ -18,7 +18,7 @@ struct MiniEnv : public ebdev::HostPort {
   explicit MiniEnv(bool defer) : deferIsr(defer) {}
 
   uint64_t nowMicros() override { return 0; }
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   void lineOut(uint8_t, uint8_t level) override {
     if (level == 0) return;
     if (deferIsr && deviceDepth > 0) {

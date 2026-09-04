@@ -27,7 +27,7 @@ struct RegistryPort : public ebdev::HostPort {
 
   uint64_t nowMicros() override { return now; }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
     lastBus = bus;
@@ -81,7 +81,7 @@ struct PlainPort : public ebdev::HostPort {
   uint32_t frames = 0;
   uint64_t nowMicros() override { return 0; }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t, uint16_t, const uint8_t*, size_t) override {
     ++frames;
     return true;

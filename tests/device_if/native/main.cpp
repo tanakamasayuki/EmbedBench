@@ -27,12 +27,13 @@ struct FakePort : public ebdev::HostPort {
     lineAt = now;
     ++lineCalls;
   }
-  void serialOut(const uint8_t* data, size_t len) override {
+  bool serialOut(const uint8_t* data, size_t len) override {
     const size_t n = len < sizeof(lastOut) - 1 ? len : sizeof(lastOut) - 1;
     memcpy(lastOut, data, n);
     lastOut[n] = '\0';
     outAt = now;
     ++outCalls;
+    return true;
   }
 };
 

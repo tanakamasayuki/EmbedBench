@@ -91,21 +91,22 @@ def test_native_portability():
                        loc(MODELS / "modem_model.cpp"),
         "adapter": region_loc(HERE / "device_if.ino", "adapter"),
     }
-    print(f"LOC {sizes}")
     # Growth log (effective LOC, blank and comment lines excluded): 58 at
     # X23, +4 lineIn (X24), +10 frameOut/frameIn (X25), +8 bus ids and
     # formatId interning (X26), +4 negotiated maxFrameBits (X27), +22 for
     # the first contract review (I2cStatus/I2cTransfer, frame helpers, bool
     # frameOut/channelWrite, schema; X30-X34), +14 for the second review
     # (name length limit, kChannelUnsupported, safe frame helpers,
-    # schemaFingerprint; X35-X37). Models grew with their contracts: the
-    # modem became a real byte-stream parser.
+    # schemaFingerprint; X35-X37). The third review (X38-X40) changed
+    # contract text only, so the header held at 120 while the modem grew a
+    # binary reply branch and the adapter shrank to a binary-safe
+    # serialOut.
     print(f"LOC {sizes}")
     assert sizes == {
         "device_if_header": 120,
         "temp_model": 64,
-        "modem_model": 75,
-        "adapter": 36,
+        "modem_model": 80,
+        "adapter": 33,
     }
 
 

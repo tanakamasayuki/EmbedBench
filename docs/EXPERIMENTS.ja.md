@@ -1166,7 +1166,67 @@ host: `print("AT+S;")`は`uart.tx AT+S;`1行、1byteずつの`write`は`uart.tx 
 5行として**アプリの行為はそのまま記録**され、devの応答（`dev.tx OK`、+1,000us）は
 どちらも同一。
 
+## X38. serialOutのbinary契約（NUL入りbyte列）
+
+対象: `tests/serial_binary/`
+
+第3回レビューのブロッカー1。IFは「NULを含む任意byte列を運ぶ」と保証しているが、
+host adapterが一度C文字列へ変換していたため `{0x41, 0x00, 0x42}` が0x41だけに
+なっていた。IFとhost実装を次のように直した。
+
+- `HostPort::serialOut` を **`bool` 戻り値**へ変更（全量queue成功でtrue）。
+  受理しきれない場合は環境が診断イベントを出し残りを破棄、**部分配送を黙って
+  行わない**
+- `ebd::uartInject(origin, const uint8_t*, size_t)` へ変更し、`pushRx` の受理
+  byte数を検査（不足なら `diag.uart_rx_full`）
+- ログはprintableなら文字列、そうでなければhex（`data=410042`）。受信1byteは
+  printableなら文字、そうでなければ `0x00` 表記
+
+ATモデム模型に「`AT+B;` は `{0x41,0x00,0x42}` を即答」を追加して検証した。
+
+| 検証 | 結果 |
+| --- | --- |
+| native（環境実装例#2経由） | アプリが3 byte受信 `410042`、ログは `dev.tx data=410042`、受信は `A` / `0x00` / `B` |
+| host（draft core経由） | 同一（3 byte、同じ6行、2回byte一致） |
+
+**事実:** IFのbinary契約が、両環境の転送経路とログの両方で成立する。
+`serialOut`は全量保証＋失敗時boolで、部分配送や無音欠落は起きない。
+
+## X39. i2cReadの不正な戻り長
+
+対象: `tests/i2c_badlen/`
+
+ブロッカー3。模型が `len + 1` を返すと、環境がその値をログ用bufferの長さとして
+使い**buffer外を読む**。両環境に検査を入れ、意図的に契約違反する模型で確かめた。
+
+| 操作 | 結果 |
+| --- | --- |
+| 2 byte要求に対し模型が3を返す | 環境が `diag.i2c_read_length addr=60 got=3 max=2` を記録し、`count = 0` として扱う |
+| アプリが受け取る長さ | 0（不正な模型の主張を信用しない） |
+| ログの応答行 | `i2c.rd.resp len=0 data=`（buffer外を描写しない） |
+
+native（環境実装例#2）とhost（draft core）で同一。IFヘッダにも
+「`len`超過は契約違反、環境は診断して何も供給されなかったものとして扱う」と明記した。
+
+## X40. effect-freeメソッドの確定（再入管理の穴）
+
+ブロッカー2。文書は「dumpを含む全Device経路で再入禁止」としていたが、両環境とも
+`dump()` をDevice呼び出しとして括らずに直接呼んでいた。`channelRead` も同様で、
+`reset()` は列挙から漏れていた。
+
+**決定: `reset()` / `channelRead()` / `dump()` は effect-free（`HostPort`を呼んで
+はならない）**とし、再入保証の対象外にする。効果を起こせない以上、環境はいつでも
+直接呼んでよい。残る効果あり経路（`i2cWrite`/`i2cRead`/`spiTransfer`/`serialIn`/
+`lineIn`/`frameIn`/`channelWrite`/`advanceTo`）が再入保証の対象で、これはX32/X35で
+全経路を実測済み。
+
+検証は `tests/contracts/` に追加した: 参照模型に対し `reset` / `channelRead`
+（対応・未対応の両方）/ `dump` を呼び、`HostPort`への効果呼び出しが**0件**である
+ことを確認する（`effect_free effects=0`）。
+
 ## 次に必要な実験
+
+（IF凍結に必要な実験は完了。以下はIF外の実装例・ログ側の課題）
 
 1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
 2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装

@@ -9,7 +9,8 @@
 // Re-entrancy contract: this environment makes no callback into the
 // application while a device method runs (serialOut only queues bytes,
 // frames are recorded, there are no interrupts), so a device is never
-// re-entered by construction.
+// re-entered by construction. Serial bytes are binary-safe in transport
+// and in the log (text when printable, payload label otherwise).
 #pragma once
 
 #include <stddef.h>
@@ -51,7 +52,7 @@ class Env : public ebdev::HostPort {
   // --- HostPort ----------------------------------------------------------------
   uint64_t nowMicros() override;
   void lineOut(uint8_t line, uint8_t level) override;
-  void serialOut(const uint8_t* data, size_t len) override;
+  bool serialOut(const uint8_t* data, size_t len) override;
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override;
   uint16_t formatId(const char* name, uint32_t schema) override;

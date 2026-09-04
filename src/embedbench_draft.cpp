@@ -196,6 +196,21 @@ void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
   }
 }
 
+// Serial bytes print as text when every byte is printable ASCII, and as a
+// binary payload label otherwise, so NUL or high bytes never cut a line.
+void bytesLabel(const uint8_t* data, size_t len, char* out, size_t cap) {
+  bool printable = len > 0;
+  for (size_t i = 0; i < len && printable; ++i) {
+    if (data[i] < 0x20 || data[i] > 0x7E) printable = false;
+  }
+  if (printable) {
+    snprintf(out, cap, "%.*s", static_cast<int>(len),
+             reinterpret_cast<const char*>(data));
+  } else {
+    payloadLabel(data, len, out, cap);
+  }
+}
+
 WireDeviceSlot* findWireDevice(uint16_t address) {
   for (size_t i = 0; i < kMaxWireDevices; ++i) {
     if (state.wireDevices[i].used && state.wireDevices[i].address == address) {
@@ -400,6 +415,14 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
     enterDevice();
     count = dev->ops.onRead(data, len, stop, continued, dev->ops.user);
     leaveDevice();
+    if (count > len) {
+      // A model that claims more bytes than the buffer holds would make
+      // the master read past it: diagnose and treat as nothing supplied.
+      ++state.diagCount;
+      recordf(Origin::kDiag, req, "diag.i2c_read_length addr=%02X got=%u max=%u",
+              address, static_cast<unsigned>(count), static_cast<unsigned>(len));
+      count = 0;
+    }
   } else {
     ++state.diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
@@ -467,8 +490,7 @@ void onUartActivity(HostUart::ActivityEvent event, HostUart&,
   switch (event) {
     case HostUart::kUartTx: {
       char text[24];
-      snprintf(text, sizeof(text), "%.*s", static_cast<int>(len),
-               reinterpret_cast<const char*>(data));
+      bytesLabel(data, len, text, sizeof(text));
       recordf(Origin::kApp, 0, "uart.tx %s", text);
       if (state.uartHandler) {
         enterDevice();
@@ -479,7 +501,11 @@ void onUartActivity(HostUart::ActivityEvent event, HostUart&,
       break;
     }
     case HostUart::kUartRx:
-      recordf(Origin::kApp, 0, "uart.rx %c", data[0]);
+      if (data[0] >= 0x20 && data[0] <= 0x7E) {
+        recordf(Origin::kApp, 0, "uart.rx %c", data[0]);
+      } else {
+        recordf(Origin::kApp, 0, "uart.rx 0x%02X", data[0]);
+      }
       break;
     case HostUart::kUartBegin:
       recordf(Origin::kApp, 0, "uart.begin");
@@ -639,9 +665,18 @@ void pinInject(Origin origin, uint8_t pin, uint8_t level) {
   HostArduino::triggerInterrupt(pin);
 }
 
-void uartInject(Origin origin, const char* bytes) {
-  recordf(origin, 0, "dev.tx %s", bytes);
-  Serial1.pushRx(bytes);
+bool uartInject(Origin origin, const uint8_t* data, size_t len) {
+  char text[24];
+  bytesLabel(data, len, text, sizeof(text));
+  recordf(origin, 0, "dev.tx %s", text);
+  const size_t accepted = Serial1.pushRx(data, len);
+  if (accepted < len) {
+    ++state.diagCount;
+    recordf(Origin::kDiag, 0, "diag.uart_rx_full accepted=%u len=%u",
+            static_cast<unsigned>(accepted), static_cast<unsigned>(len));
+    return false;
+  }
+  return true;
 }
 
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,

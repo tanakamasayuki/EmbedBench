@@ -16,7 +16,7 @@ struct EnvPort : public ebdev::HostPort {
 
   uint64_t nowMicros() override { return 0; }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   uint16_t formatId(const char* name, uint32_t) override {
     return strcmp(name, "acme.ir.1") == 0 ? 1 : 2;
   }

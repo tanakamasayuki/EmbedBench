@@ -35,4 +35,7 @@ def test_contracts():
     # the jump time, reset drops pending due times.
     assert ("time first=1 repeat=1 jump_calls=2 jump_at=5000 after_reset=2"
             in result.stdout)
+    # reset / channelRead / dump raise no outward effect, so they need no
+    # deferral machinery and an environment may call them directly.
+    assert "effect_free effects=0" in result.stdout
     assert "NATIVE done" in result.stdout

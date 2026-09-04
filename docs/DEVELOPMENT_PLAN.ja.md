@@ -448,9 +448,10 @@ X23で、同一の模型ソースがネイティブg++単体とhost環境の両�
 X24で複合デバイス（SPI＋入出力line＋時間）を追加し、必要なIF拡張が
 `lineIn` 1メソッド（+4行）だけであることを確認。register-map型・command型・
 SPI複合型の3類型が同一IFで成立している。
-最終決定の主対象はデバイスIF（残る未決: 汎用frame経路、大量転送の記録粒度、
-serialOutのNUL、channel id規約、dump文字列規約）で、Gate A/Bの環境側項目は
-実装例のガイドラインへ格下げする方向で最後に整理する。
+最終決定の主対象はデバイスIF（**当時の未決**: 汎用frame経路、大量転送の記録粒度、
+serialOutのNUL、channel id規約、dump文字列規約——いずれもX25〜X40で解決済み。
+現在地は本節末尾を参照）で、Gate A/Bの環境側項目は実装例のガイドラインへ
+格下げする方向で最後に整理する。
 
 **抽象度の方針（所有者、2026-09-03）:** 物理層は実機で試す領域と
 し、本ライブラリは**送受信前の論理ビット列＋フォーマット情報**までを受け渡す
@@ -463,8 +464,9 @@ serialOutのNUL、channel id規約、dump文字列規約）で、Gate A/Bの環�
 （環境ローカルid）とbus idで決着、X27でサイズ上限を環境ネゴに、X28で大量転送
 を集約サマリに、X29で**環境実装例#2（純粋C++、290行）**を書いて同一模型の
 デバイス側イベント列が2環境で一致することを確認した。
-IF最終決定に必要な実験材料はこれで揃い、残りは
-[DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md) 5節の未決5項目の決定と凍結。
+IF最終決定に必要な実験材料はこれで揃った（**当時の残り**は
+[DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md) 5節の未決5項目。以後のレビューで
+解決・整理した。現在地は本節末尾）。
 
 **2026-09-04、固定前レビューの反映:** レビューで指摘された契約不足（I2Cの
 transaction文脈、frameのbit packingと原子性、再入規則、channel/dumpの戻り値、
@@ -478,5 +480,14 @@ transaction文脈、frameのbit packingと原子性、再入規則、channel/dum
 （19文字・切り詰め禁止）、serialのbyte stream契約、未登録format idの拒否、
 契約の小穴（nullptr・overflow・`kChannelUnsupported`・`I2cStatus`範囲）を解消し、
 未決のうちframe `re=`（payloadの責務）とschema指紋（`uint32_t`＋FNV-1a helper）を
-決定した（X34追記、X35〜X37）。IFヘッダは実効LOC 120（物理314行）。SCOPE 5節の
-残り2項目はIF外のため、**IFは凍結判断が可能な状態**。
+決定した（X34追記、X35〜X37）。
+
+**同日、第3回レビュー（凍結ブロッカー3点）の反映:** `serialOut`をbinary安全に
+（`bool`戻り値・全量保証・診断つき破棄、両環境の転送とログを修正、X38）、
+`i2cRead`の不正な戻り長を環境が検査して無効化（X39）、`reset`/`channelRead`/
+`dump`を**effect-free**と定めて再入保証の対象外に整理（X40）。あわせて
+schema指紋の保証表現を「指紋が異なる場合に検出」へ、`continued`の説明を
+「同一アドレス転送からの継続（bus上のrepeated START一般とは別）」へ弱め、
+本節の旧未決リストへ「当時の」と明記した。IFヘッダの実効LOCはテストの固定値
+（`tests/device_if/`）を正とする。SCOPE 5節の残り2項目はIF外のため、
+**デバイスIFは凍結してよい状態**。

@@ -60,7 +60,8 @@ static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
 }
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   if (len == 2 && data[0] == 'A' && data[1] == 'T') {
-    ebd::uartInject(ebd::Origin::kDev, "OK");
+    const uint8_t ok[2] = {'O', 'K'};
+    ebd::uartInject(ebd::Origin::kDev, ok, sizeof(ok));
   }
 }
 static void onTick(uint32_t tick, void*) {

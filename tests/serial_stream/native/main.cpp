@@ -12,7 +12,10 @@ struct FakePort : public ebdev::HostPort {
   uint32_t outCalls = 0;
   uint64_t nowMicros() override { return now; }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override { ++outCalls; }
+  bool serialOut(const uint8_t*, size_t) override {
+    ++outCalls;
+    return true;
+  }
 };
 
 uint32_t replies(FakePort* port, AtModemModel* modem,

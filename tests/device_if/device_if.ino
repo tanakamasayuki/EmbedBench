@@ -28,11 +28,8 @@ class DraftPort : public ebdev::HostPort {
     const uint8_t pin = line == TempSensorModel::kLineDataReady ? 27 : 0xFF;
     if (pin != 0xFF) ebd::pinInject(ebd::Origin::kDev, pin, level);
   }
-  void serialOut(const uint8_t* data, size_t len) override {
-    char text[16];
-    snprintf(text, sizeof(text), "%.*s", static_cast<int>(len),
-             reinterpret_cast<const char*>(data));
-    ebd::uartInject(ebd::Origin::kDev, text);
+  bool serialOut(const uint8_t* data, size_t len) override {
+    return ebd::uartInject(ebd::Origin::kDev, data, len);
   }
 };
 

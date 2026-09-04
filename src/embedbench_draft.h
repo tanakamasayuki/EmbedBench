@@ -96,7 +96,10 @@ void runEnd();
 // Sinks: every dir/dev-originated external effect is recorded here first,
 // then applied (matrix principle 3).
 void pinInject(Origin origin, uint8_t pin, uint8_t level);
-void uartInject(Origin origin, const char* bytes);
+// Binary-safe: any byte value is queued and logged (text when printable,
+// otherwise hex / length+checksum). Returns whether every byte was
+// accepted; a full receive queue is diagnosed and the remainder dropped.
+bool uartInject(Origin origin, const uint8_t* data, size_t len);
 // Logical frames (format id + pre-encoding bits): frameTx carries an
 // application frame to the bound device, frameRx carries a device frame
 // to the application-side receiver. Both record first.

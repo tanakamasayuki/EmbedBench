@@ -16,7 +16,7 @@ class DraftPort : public ebdev::HostPort {
  public:
   uint64_t nowMicros() override { return ebd::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
     return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);

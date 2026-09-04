@@ -14,11 +14,18 @@ struct FakePort : public ebdev::HostPort {
   uint64_t now = 0;
   uint32_t outCalls = 0;
   uint64_t outAt = 0;
+  uint32_t effects = 0;  // every outward effect, whatever its kind
   uint64_t nowMicros() override { return now; }
-  void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {
+  void lineOut(uint8_t, uint8_t) override { ++effects; }
+  bool serialOut(const uint8_t*, size_t) override {
     ++outCalls;
+    ++effects;
     outAt = now;
+    return true;
+  }
+  bool frameOut(uint8_t, uint16_t, const uint8_t*, size_t) override {
+    ++effects;
+    return true;
   }
 };
 
@@ -76,6 +83,21 @@ int main() {
   printf("time first=%u repeat=%u jump_calls=%u jump_at=%llu after_reset=%u\n",
          first, repeat, jumpCalls, static_cast<unsigned long long>(jumpAt),
          port.outCalls);
+
+  // --- effect-free methods ---------------------------------------------
+  // reset(), channelRead() and dump() are inspection and initialization:
+  // they must raise no outward effect, which is why an environment may
+  // call them directly instead of through its deferral machinery.
+  const uint32_t effectsBefore = port.effects;
+  temp.reset();
+  modem.reset();
+  uint8_t probe[2] = {0};
+  temp.channelRead(0, probe, sizeof(probe));
+  temp.channelRead(9, probe, sizeof(probe));
+  char text[40];
+  temp.dump(text, sizeof(text));
+  modem.dump(text, sizeof(text));
+  printf("effect_free effects=%u\n", port.effects - effectsBefore);
 
   printf("NATIVE done\n");
   return 0;

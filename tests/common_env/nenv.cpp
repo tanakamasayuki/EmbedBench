@@ -32,6 +32,20 @@ void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
   }
 }
 
+// Text when every byte is printable ASCII, binary payload label otherwise.
+void bytesLabel(const uint8_t* data, size_t len, char* out, size_t cap) {
+  bool printable = len > 0;
+  for (size_t i = 0; i < len && printable; ++i) {
+    if (data[i] < 0x20 || data[i] > 0x7E) printable = false;
+  }
+  if (printable) {
+    snprintf(out, cap, "%.*s", static_cast<int>(len),
+             reinterpret_cast<const char*>(data));
+  } else {
+    payloadLabel(data, len, out, cap);
+  }
+}
+
 }  // namespace
 
 void Env::reset() {
@@ -163,6 +177,11 @@ size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
   if (slot != nullptr) {
     const ebdev::I2cTransfer xfer = {stop, continued};
     count = slot->device->i2cRead(out, len, xfer);
+    if (count > len) {
+      record("diag", req, "diag.i2c_read_length addr=%02X got=%u max=%u", address,
+             static_cast<unsigned>(count), static_cast<unsigned>(len));
+      count = 0;
+    }
   } else {
     record("diag", req, "diag.unbound addr=%02X", address);
   }
@@ -175,8 +194,9 @@ size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
 }
 
 void Env::serialWrite(const uint8_t* data, size_t len) {
-  record("app", 0, "uart.tx %.*s", static_cast<int>(len),
-         reinterpret_cast<const char*>(data));
+  char text[24];
+  bytesLabel(data, len, text, sizeof(text));
+  record("app", 0, "uart.tx %s", text);
   if (serialDevice_ != nullptr) serialDevice_->serialIn(data, len);
 }
 
@@ -190,7 +210,11 @@ size_t Env::serialRead(uint8_t* out, size_t len, uint32_t timeoutUs) {
       const uint8_t value = rx_[rxHead_];
       rxHead_ = (rxHead_ + 1) % sizeof(rx_);
       --rxCount_;
-      record("app", 0, "uart.rx %c", value);
+      if (value >= 0x20 && value <= 0x7E) {
+        record("app", 0, "uart.rx %c", value);
+      } else {
+        record("app", 0, "uart.rx 0x%02X", value);
+      }
       out[got++] = value;
       continue;
     }
@@ -229,13 +253,21 @@ void Env::lineOut(uint8_t line, uint8_t level) {
   record("dev", 0, "gpio.inject line=%u val=%u", line, level);
 }
 
-void Env::serialOut(const uint8_t* data, size_t len) {
-  record("dev", 0, "dev.tx %.*s", static_cast<int>(len),
-         reinterpret_cast<const char*>(data));
-  for (size_t i = 0; i < len && rxCount_ < sizeof(rx_); ++i) {
-    rx_[(rxHead_ + rxCount_) % sizeof(rx_)] = data[i];
+bool Env::serialOut(const uint8_t* data, size_t len) {
+  char text[24];
+  bytesLabel(data, len, text, sizeof(text));
+  record("dev", 0, "dev.tx %s", text);
+  size_t accepted = 0;
+  for (; accepted < len && rxCount_ < sizeof(rx_); ++accepted) {
+    rx_[(rxHead_ + rxCount_) % sizeof(rx_)] = data[accepted];
     ++rxCount_;
   }
+  if (accepted < len) {
+    record("diag", 0, "diag.uart_rx_full accepted=%u len=%u",
+           static_cast<unsigned>(accepted), static_cast<unsigned>(len));
+    return false;
+  }
+  return true;
 }
 
 const char* Env::formatLabel(uint16_t id, char* out, size_t cap) const {

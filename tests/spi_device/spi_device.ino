@@ -23,7 +23,7 @@ class DraftPort : public ebdev::HostPort {
     const uint8_t pin = line == SpiDisplayModel::kLineBusy ? 26 : 0xFF;
     if (pin != 0xFF) ebd::pinInject(ebd::Origin::kDev, pin, level);
   }
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
 };
 
 static DraftPort draftPort;

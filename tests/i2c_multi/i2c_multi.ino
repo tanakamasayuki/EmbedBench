@@ -18,7 +18,7 @@ class DraftPort : public ebdev::HostPort {
  public:
   uint64_t nowMicros() override { return ebd::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
-  void serialOut(const uint8_t*, size_t) override {}
+  bool serialOut(const uint8_t*, size_t) override { return true; }
 };
 
 static DraftPort draftPort;

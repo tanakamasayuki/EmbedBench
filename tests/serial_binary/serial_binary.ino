@@ -1,7 +1,7 @@
-// Serial byte-stream contract on the host core: one print() versus five
-// single-byte write() calls produce different uart.tx records (the
-// environment records what the application did) but the same device
-// reply at the same virtual time.
+// Blocker check on the host core: the device's NUL-containing reply passes
+// through HostPort::serialOut, the environment's uartInject, the host UART
+// queue, and back into the application unchanged, and every log line stays
+// intact (no C-string truncation).
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <HostUart.h>
@@ -27,34 +27,21 @@ static DraftPort draftPort;
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   modem.serialIn(data, len);
 }
-static void advanceDevice(uint64_t nowUs, void*) { modem.advanceTo(nowUs); }
 // [adapter end]
 
-static char reply1[3] = {0};
-static char reply2[3] = {0};
-static uint64_t elapsed1 = 0;
-static uint64_t elapsed2 = 0;
-
-static void readReply(char* out, uint64_t* elapsed) {
-  const uint64_t before = ebd::nowUs();
-  uint8_t buf[2] = {0};
-  Serial1.readBytes(buf, sizeof(buf));
-  out[0] = static_cast<char>(buf[0]);
-  out[1] = static_cast<char>(buf[1]);
-  *elapsed = ebd::nowUs() - before;
-}
+static uint8_t appReply[3] = {0xEE, 0xEE, 0xEE};
+static size_t appGot = 0;
 
 static void runOnce(char* out, size_t cap) {
   modem.reset();
   uint8_t drain[16];
   while (Serial1.readTx(drain, sizeof(drain)) > 0) {
   }
+  appReply[0] = appReply[1] = appReply[2] = 0xEE;
+
   ebd::runBegin(1000);
-  Serial1.print("AT+S;");
-  readReply(reply1, &elapsed1);
-  const char* text = "AT+S;";
-  for (int i = 0; i < 5; ++i) Serial1.write(static_cast<uint8_t>(text[i]));
-  readReply(reply2, &elapsed2);
+  Serial1.print("AT+B;");
+  appGot = Serial1.readBytes(appReply, sizeof(appReply));
   char dump[40];
   modem.dump(dump, sizeof(dump));
   ebd::dumpf("%s", dump);
@@ -67,17 +54,16 @@ static char run2[1024];
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("TEST start serial_stream");
+  Serial.println("TEST start serial_binary");
   Serial1.begin(9600);
   Serial1.setTimeout(10);
   modem.attach(&draftPort);
   ebd::bindUartDevice(&devUartTx);
-  ebd::bindTickDevice(&advanceDevice);
 
   runOnce(run1, sizeof(run1));
-  Serial.printf("values whole=%s e1=%llu split=%s e2=%llu\n", reply1,
-                static_cast<unsigned long long>(elapsed1), reply2,
-                static_cast<unsigned long long>(elapsed2));
+  Serial.printf("values got=%u bytes=%02X%02X%02X\n",
+                static_cast<unsigned>(appGot), appReply[0], appReply[1],
+                appReply[2]);
   Serial.print(run1);
   runOnce(run2, sizeof(run2));
   Serial.printf("run2_same=%d\n", strcmp(run1, run2) == 0 ? 1 : 0);
