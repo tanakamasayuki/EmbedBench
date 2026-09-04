@@ -24,6 +24,11 @@ tests/<experiment>/
   test_<experiment>.py
 ```
 
+Native-only experiments (`native_env/`) have no `.ino` or `sketch.yaml`; pytest
+builds them directly with g++. Reference models shared across experiments and
+environments live in `common_models/` (Arduino library layout, pure C++ models
+under `src/`), referenced by `libraries: dir` from sketches and by `-I` natively.
+
 The current `smoke/` test is the minimal end-to-end check for Arduino library
 resolution, host core 1.7.1, lifecycle hooks, the virtual clock, and pytest
 connectivity.
@@ -58,3 +63,5 @@ Additional experiments:
 - `format_registry/`: four format-identity schemes compared (fixed-number collision, environment-interned names, strings only, no-registry degradation) plus frame bus ids.
 - `capacity/`: negotiated size limits (`maxFrameBits`): one model auto-splitting per environment, oversize rejected visibly.
 - `bulk_spi/`: bulk-transfer recording granularity: in-transaction count+checksum summaries vs the per-byte buffer explosion.
+- `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the X23 scenario with the same `common_models/` sources and matching device-side event lines.
+- `common_models/`: reference models (temperature sensor, AT modem) shared across experiments and environments.

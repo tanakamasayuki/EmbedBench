@@ -632,6 +632,7 @@ lifecycle連動のrun window、listener多重化、バッファ満杯時の診�
 ## X23. ポータブルなデバイスIF（固定対象の中心）
 
 対象: `tests/device_if/`、IF本体は `src/embedbench_device.h`
+（参照模型はX29で `tests/common_models/` へ移し、複数環境から同一ソースを共有する形にした）
 
 **工程上の位置づけ:** 所有者の判断（2026-09-03）で、**確実に固める対象を
 「デバイス模型とのIF」に絞った**。デバイスIFは純粋なC++11でプラットホーム差が
@@ -897,11 +898,74 @@ transaction境界という自然な区切りが集約の開始・終了を決め
 **未決:** 集約をtransaction以外（`writeBytes`等の塊API、frame経路の連送）へ
 広げる基準。checksumの種類（単純和で衝突が問題になるならCRC8等）。
 
+## X29. 環境実装例#2 — 純粋C++の最小記録環境で同一模型を駆動
+
+対象: `tests/native_env/`（環境実装例、`.ino`なし）、模型は `tests/common_models/`
+
+「IFより上はプラットホーム別実装例」という整理を締めるため、host環境とは
+独立に**2つ目の環境**を純粋C++11で書いた（`nenv::Env`、**290行**）。
+`HostPort`の全実装、アプリ側bus API（`i2cWrite`/`i2cRead`/`serialWrite`/
+`serialRead`/`delayMicros`）、進行役の注入（`chanWrite`/`dump`）、tick付き
+仮想時計、host draftと同じ行形式のイベント記録を持つ。Arduinoもhost coreも
+一切includeしない（テストが機械検査）。
+
+模型はX23の温度センサとATモデムを**そのまま**使う。共有のため両模型を
+`tests/common_models/`（Arduinoライブラリ形式）へ移し、host側は`sketch.yaml`の
+`libraries: dir`、ネイティブ側は`-I`で同一ファイルを参照する（手戻り記録:
+X23の配置変更、2026-09-04）。
+
+X23と同じシナリオ（config書込み → 注入でDRDY → 温度読取り → AT+Sの遅延応答 →
+dump）を環境#2で実行した結果（14行、3回byte一致）:
+
+```text
+01 000000 main app i2c.req addr=48 data=0105
+02 000000 main dev i2c.resp status=0 re=1
+03 000000 main dir chan.write chan=0 data=012C
+04 000000 main dev gpio.inject line=0 val=1
+05 000000 main app i2c.req addr=48 data=00
+06 000000 main dev i2c.resp status=0 re=5
+07 000000 main app i2c.rd.req addr=48 req=2
+08 000000 main dev i2c.rd.resp len=2 data=012C re=7
+09 000000 main app uart.tx AT+S
+10 001000 tick dev dev.tx OK
+11 001000 main app uart.rx O
+12 001000 main app uart.rx K
+13 001000 main dir dump temp=012C cfg=05
+14 001000 main dir dump modem replies=1 pending=0
+```
+
+X23（host環境、18行）との対応:
+
+| 内容 | host（X23） | native（X29） | 差の理由 |
+| --- | --- | --- | --- |
+| I2C config書込み req/resp | 01-02 | 01-02 | **同一** |
+| `attachInterrupt` | 03 | なし | Arduinoアプリ側の概念 |
+| 温度注入 chan.write | 04（ctx tick） | 03（ctx main） | 注入経路の差（hostは0us wait handler内、nativeは進行役が直接） |
+| デバイスのDRDY線 | 05 `pin=27 0->1 match=1` | 04 `line=0 val=1` | pin対応とedge判定は環境の責務。nativeは論理lineのまま記録 |
+| ISR enter/write/exit | 06-08 | なし | ISRはArduino側の機構 |
+| 温度読取り req/resp ×2 | 09-12 | 05-08 | **同一**（seq以外） |
+| uart.tx AT+S | 13 | 09 | **同一** |
+| dev.tx OK（tick、1,000us） | 14 | 10 | **同一** |
+| uart.rx O / K | 15-16 | 11-12 | **同一** |
+| dump ×2 | 17-18 | 13-14 | **同一** |
+
+アプリが観測した値も同一: t1=300、応答"OK"、経過1,000us。
+
+**事実:**
+
+- IFを挟んだ**デバイス側のイベント列は2環境で内容が一致**し、差は環境・
+  アプリ側の機構（割り込み、pin対応、注入の呼び出し文脈）だけに閉じた。
+  「環境側は実装例、IFが不変の境界」が2実装で成立
+- 環境実装例#2は290行で、host側実装例（draft core + adapter 32行）より
+  小さい。IFが要求する環境側の責務は小さく、決定的な再実装が容易
+- 同一模型ソースを2環境が共有できることを、ファイル配置（`common_models/`）
+  として固定した
+
 ## 次に必要な実験
 
-1. 別環境の実装例をもう1つ書き、IFが本当に環境非依存かを確認する
-   （最小のネイティブイベント記録環境など。native FakePortが最小例1つ目）
-2. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
-3. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
-4. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-5. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
+2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
+3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
+4. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+5. SCOPE 5節の未決5項目を決めた上で、IFヘッダを「決定版」として凍結する
+   （実験ではなく決定。凍結後の変更は台帳へ理由を残す）

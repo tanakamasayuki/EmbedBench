@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "modem_model.h"
-#include "temp_model.h"
+#include <modem_model.h>
+#include <temp_model.h>
 
 static TempSensorModel tempModel;
 static AtModemModel modemModel;

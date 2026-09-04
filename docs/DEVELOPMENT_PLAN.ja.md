@@ -459,4 +459,9 @@ serialOutのNUL、channel id規約、dump文字列規約）で、Gate A/Bの環�
 「アプリが何をしたいのかの通知」を扱う。詳細はEXPERIMENTS X24の方針メモ。
 この方針の拡張機構として、X25で汎用frame経路（`HostPort::frameOut` /
 `Device::frameIn`、format id + 任意bit数）をIFへ追加し、専用portのない
-プロトコルがビットバンへ落ちない道を確認済み。
+プロトコルがビットバンへ落ちない道を確認済み。X26でformat識別を名前intern
+（環境ローカルid）とbus idで決着、X27でサイズ上限を環境ネゴに、X28で大量転送
+を集約サマリに、X29で**環境実装例#2（純粋C++、290行）**を書いて同一模型の
+デバイス側イベント列が2環境で一致することを確認した。
+IF最終決定に必要な実験材料はこれで揃い、残りは
+[DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md) 5節の未決5項目の決定と凍結。

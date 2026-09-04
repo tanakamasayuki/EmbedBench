@@ -6,12 +6,13 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 SRC = HERE.parent.parent / "src"
+MODELS = HERE.parent / "common_models" / "src"
 PURE_SOURCES = [
     SRC / "embedbench_device.h",
-    HERE / "temp_model.h",
-    HERE / "temp_model.cpp",
-    HERE / "modem_model.h",
-    HERE / "modem_model.cpp",
+    MODELS / "temp_model.h",
+    MODELS / "temp_model.cpp",
+    MODELS / "modem_model.h",
+    MODELS / "modem_model.cpp",
 ]
 FORBIDDEN = [
     "Arduino.h",
@@ -64,10 +65,10 @@ def test_native_portability():
     subprocess.run(
         [
             "g++", "-std=c++11", "-Wall", "-Wextra", "-Werror",
-            f"-I{SRC}", f"-I{HERE}",
+            f"-I{SRC}", f"-I{MODELS}",
             str(HERE / "native" / "main.cpp"),
-            str(HERE / "temp_model.cpp"),
-            str(HERE / "modem_model.cpp"),
+            str(MODELS / "temp_model.cpp"),
+            str(MODELS / "modem_model.cpp"),
             "-o", str(binary),
         ],
         check=True,
@@ -84,9 +85,10 @@ def test_native_portability():
 
     sizes = {
         "device_if_header": loc(SRC / "embedbench_device.h"),
-        "temp_model": loc(HERE / "temp_model.h") + loc(HERE / "temp_model.cpp"),
-        "modem_model": loc(HERE / "modem_model.h") +
-                       loc(HERE / "modem_model.cpp"),
+        "temp_model": loc(MODELS / "temp_model.h") +
+                      loc(MODELS / "temp_model.cpp"),
+        "modem_model": loc(MODELS / "modem_model.h") +
+                       loc(MODELS / "modem_model.cpp"),
         "adapter": region_loc(HERE / "device_if.ino", "adapter"),
     }
     print(f"LOC {sizes}")

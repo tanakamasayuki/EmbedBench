@@ -24,6 +24,11 @@ tests/<実験名>/
   test_<実験名>.py
 ```
 
+ネイティブ専用の実験（`native_env/`）は `.ino` と `sketch.yaml` を持たず、
+pytestがg++で直接ビルドする。複数の実験と複数の環境で共有する参照模型は
+`common_models/`（Arduinoライブラリ形式、`src/` に純粋C++の模型）に置き、
+sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-I` で参照する。
+
 現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.1、
 ライフサイクルフック、仮想時計、pytestとの接続をまとめて検査する最小テストである。
 
@@ -57,3 +62,5 @@ tests/<実験名>/
 - `format_registry/`: format識別の4方式比較（固定番号の衝突・名前intern・文字列のみ・registry無し縮退）とframeのbus id
 - `capacity/`: 最大データ量の環境ネゴ（`maxFrameBits`）。同一模型の自動分割と上限超過の可視な拒否
 - `bulk_spi/`: 大量転送の記録粒度。transaction内の件数+checksum集約と、per-byte方式のバッファ爆発の実証
+- `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`common_models/` の同一模型でX23のシナリオを再現し、デバイス側イベント列の一致を確認
+- `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム）
