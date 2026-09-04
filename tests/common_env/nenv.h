@@ -45,6 +45,10 @@ class Env : public ebdev::HostPort {
   size_t serialRead(uint8_t* out, size_t len, uint32_t timeoutUs);
   void delayMicros(uint32_t us);
 
+  // Shrink the receive queue, the way a sketch can on the host core, so a
+  // test can drive serialOut into its capacity-shortfall branch.
+  void setRxCapacity(size_t bytes);
+
   // --- Director --------------------------------------------------------------
   void chanWrite(uint8_t channel, const uint8_t* data, size_t len);
   void dump(ebdev::Device* device);
@@ -106,6 +110,7 @@ class Env : public ebdev::HostPort {
   uint8_t rx_[64];
   size_t rxHead_ = 0;
   size_t rxCount_ = 0;
+  size_t rxLimit_ = sizeof(rx_);
 
   FormatSlot formats_[8];
 };

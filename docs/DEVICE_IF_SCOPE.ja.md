@@ -104,11 +104,11 @@ host版shimが符号化前の論理frameを環境へ渡す必要がある。GPIO
 | I2C | `I2cTransfer{stop, continued}`とArduino準拠の`I2cStatus`（0〜4、範囲外は環境が診断）。`continued`はbus状態から導く**「直前の同一アドレス転送からの継続」**であり、「bus上でrepeated STARTが起きた」一般とは別（別アドレスへのrepeated STARTはそのデバイスにとってfalse） | X30、X36（他アドレスのSTOPがbusを閉じる） |
 | channel | `channelWrite`は全量適用時のみtrue（falseは環境が診断）。`channelRead`はsnprintf型（必要長を返し、cap分だけ書く）、未対応は`kChannelUnsupported`、0は正常な空。cap>0なら`out`非null | X33 |
 | serial | `serialIn`/`serialOut`はbyte stream。**呼び出し境界に意味を持たせない**。模型がbufferingとparse（終端・長さ）を担う | X37（1回・1byteずつ・2分割で同一応答、1回に2コマンドで2応答） |
-| serialのbinary | NULを含む任意byteを運ぶ。環境は転送でもログでもC文字列として扱わない。`serialOut`は**全量queueでtrue**、受理しきれなければ診断＋残り破棄でfalse（部分配送を黙って行わない） | X38（`{41,00,42}` がnative/host両方で往復し、ログも欠けない） |
+| serialのbinary | NULを含む任意byteを運ぶ。環境は転送でもログでもC文字列として扱わない | X38（`{41,00,42}` がnative/host両方で往復し、ログも欠けない） |
+| serialOutの容量不足 | 受理できたprefixは配送し、残りは破棄し、診断を記録し、falseを返す。**部分配送は必ず診断を伴い、無音の欠落は起きない** | X41（容量8へ12 byte: prefix 8 byteが到達、残り4 byteは届かず、`diag.uart_rx_full accepted=8 len=12` が1件、模型もfalseを受け取る） |
 | effect-free | `reset` / `channelRead` / `dump` は`HostPort`を呼んではならない。効果を起こせないので再入保証の対象外で、環境は直接呼んでよい | X40（参照模型で効果0件を確認） |
 | i2cReadの戻り長 | `len`超過は契約違反。環境は診断し「何も供給されなかった」として扱う（buffer外を読まない） | X39（`len+1`を返す模型で確認） |
 | dump | snprintf型（必要長を返し、cap>0なら常にNUL終端） | X33 |
-| serialOut | 任意byte（NUL含む）を運ぶ。表示側の課題でIFの課題ではない | — |
 | 借用バッファ | 引数のポインタはcall中のみ有効 | ヘッダ |
 
 ## 5. 未決（IF外。凍結を妨げない）

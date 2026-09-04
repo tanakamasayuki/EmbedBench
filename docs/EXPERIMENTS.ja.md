@@ -1190,7 +1190,9 @@ ATモデム模型に「`AT+B;` は `{0x41,0x00,0x42}` を即答」を追加し�
 | host（draft core経由） | 同一（3 byte、同じ6行、2回byte一致） |
 
 **事実:** IFのbinary契約が、両環境の転送経路とログの両方で成立する。
-`serialOut`は全量保証＋失敗時boolで、部分配送や無音欠落は起きない。
+なお本実験は正常系（容量十分）だけを通す。容量不足時の分岐——受理prefixの配送、
+残りの破棄、診断、falseの返却——はX41で別途固定した。**部分配送は起き得るが、
+必ず診断を伴い、無音の欠落にはならない。**
 
 ## X39. i2cReadの不正な戻り長
 
@@ -1223,6 +1225,34 @@ native（環境実装例#2）とhost（draft core）で同一。IFヘッダに�
 検証は `tests/contracts/` に追加した: 参照模型に対し `reset` / `channelRead`
 （対応・未対応の両方）/ `dump` を呼び、`HostPort`への効果呼び出しが**0件**である
 ことを確認する（`effect_free effects=0`）。
+
+## X41. serialOutの容量不足経路
+
+対象: `tests/serial_overflow/`
+
+X38が正常系だけを通していたため、契約の残り半分——「受理できたprefixは配送、
+残りは破棄、診断を記録、falseを返す」——を両環境で固定した。受信queueを8 byteへ
+絞り、12 byteを返す模型で通す。ネイティブ環境例には受信容量を絞るAPI
+（`setRxCapacity`、host coreの`setRxBufferSize`に相当）を足した。
+
+| 検証 | native（環境実装例#2） | host（draft core） |
+| --- | --- | --- |
+| アプリが受け取るprefix | 8 byte `01234567` | 同一 |
+| 残り4 byte | 届かない（追加読取り0 byte） | 届かない（`available()`=0） |
+| 診断 | `diag.uart_rx_full accepted=8 len=12` が**1件だけ** | 同一（`diag=1`） |
+| 模型が見る戻り値 | false（`refused=1`） | 同一 |
+| 記録されない部分配送 | なし（`uart.rx` は受理8 byte分のみ） | 同一（12イベント、2回一致） |
+
+```text
+01 000000 main app uart.tx go
+02 000000 main dev dev.tx 0123456789AB
+03 000000 main diag diag.uart_rx_full accepted=8 len=12
+04-11 000000 main app uart.rx 0 … 7
+12 000000 main dir dump flood sent=1 refused=1
+```
+
+**事実:** 部分配送は起き得るが、必ず診断イベントを伴い、送信側の模型も
+戻り値で知る。黙って消えるbyteはない。
 
 ## 次に必要な実験
 

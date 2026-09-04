@@ -79,5 +79,6 @@ def test_native_env():
     # X30-X34), +11 for the second (bus-level repeated start, name length
     # limit, unregistered format ids refused, I2C status range; X35-X37),
     # +30 for the third (binary-safe serialOut and logging, i2cRead length
-    # guard; X38-X40).
-    assert sizes == {"env": 369}
+    # guard; X38-X40), +6 for the receive-capacity knob the shortfall test
+    # needs (X41).
+    assert sizes == {"env": 375}

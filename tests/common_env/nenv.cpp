@@ -77,6 +77,11 @@ bool Env::bindI2c(uint8_t address, ebdev::Device* device) {
 
 void Env::bindSerial(ebdev::Device* device) { serialDevice_ = device; }
 
+void Env::setRxCapacity(size_t bytes) {
+  rxLimit_ = bytes < sizeof(rx_) ? bytes : sizeof(rx_);
+  while (rxCount_ > rxLimit_) --rxCount_;
+}
+
 void Env::bindChannel(ebdev::Device* device) { channelDevice_ = device; }
 
 void Env::addTicking(ebdev::Device* device) {
@@ -258,7 +263,7 @@ bool Env::serialOut(const uint8_t* data, size_t len) {
   bytesLabel(data, len, text, sizeof(text));
   record("dev", 0, "dev.tx %s", text);
   size_t accepted = 0;
-  for (; accepted < len && rxCount_ < sizeof(rx_); ++accepted) {
+  for (; accepted < len && rxCount_ < rxLimit_; ++accepted) {
     rx_[(rxHead_ + rxCount_) % sizeof(rx_)] = data[accepted];
     ++rxCount_;
   }

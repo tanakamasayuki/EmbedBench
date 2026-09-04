@@ -75,6 +75,7 @@ Additional experiments:
 - `i2c_multi/`: repeated start is bus state: another address's STOP closes it, shown with two models.
 - `serial_stream/`: serial is a byte stream: one call, byte-by-byte, or two chunks give the same reply; two commands in one call give two.
 - `serial_binary/`: a NUL-containing reply survives the interface, the queue, the log, and the application.
+- `serial_overflow/`: `serialOut` when the receive queue is too small: accepted prefix delivered, rest dropped, one diagnostic, false returned.
 - `i2c_badlen/`: a model returning more than `len` is diagnosed and treated as having supplied nothing.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`.
 - `common_models/`: reference models (temperature sensor, AT modem) shared across experiments and environments.

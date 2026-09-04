@@ -73,6 +73,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `i2c_multi/`: repeated startはbusの状態。別アドレスのSTOPがbusを閉じることを2模型で確認
 - `serial_stream/`: serialはbyte stream。1回・1byteずつ・2分割で同一応答、1回に2コマンドで2応答
 - `serial_binary/`: NULを含むbyte列がIF・queue・ログ・アプリを通って欠けないこと
+- `serial_overflow/`: 受信容量が足りない場合の`serialOut`（prefix配送・残り破棄・診断1件・false）
 - `i2c_badlen/`: 模型が`len`超過を返した場合に環境が診断して無効化すること
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム）
