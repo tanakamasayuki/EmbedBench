@@ -80,5 +80,5 @@ def test_native_env():
     # limit, unregistered format ids refused, I2C status range; X35-X37),
     # +30 for the third (binary-safe serialOut and logging, i2cRead length
     # guard; X38-X40), +6 for the receive-capacity knob the shortfall test
-    # needs (X41).
-    assert sizes == {"env": 375}
+    # needs (X41), +10 for CRC-8 bulk summaries (X46).
+    assert sizes == {"env": 385}

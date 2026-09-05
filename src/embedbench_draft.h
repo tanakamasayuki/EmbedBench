@@ -8,10 +8,10 @@
 // and behavior here are provisional and rework is expected. Nothing in
 // this header is a public contract.
 //
-// Scope of this draft (v1): GPIO, interrupts, Wire (global instance),
-// Serial1, virtual clock with a fixed tick. Analog, SPI, Wire1/Serial2,
-// lifecycle-driven run windows, and listener fan-out are intentionally
-// left for a later round.
+// Scope of this draft (v2): GPIO, interrupts, Wire (global instance), SPI,
+// Serial1, analog, a virtual clock with a fixed tick, a lifecycle-driven
+// run window, and event listeners. Wire1/Serial2 and multi-instance
+// binding are still out.
 #pragma once
 
 #include <stddef.h>
@@ -70,6 +70,10 @@ using SpiTransferFn = uint8_t (*)(uint8_t mosi, void* user);
 using PinWriteForward = void (*)(uint8_t pin, uint8_t value, void* user);
 using FrameHandler = void (*)(uint8_t bus, uint16_t format,
                               const uint8_t* data, size_t bits, void* user);
+// Every recorded event is also offered to listeners, in slot order, with
+// no return value: an observer can watch the stream but never change it
+// (X9's observer/responder split).
+using EventListener = void (*)(const Event& event, void* user);
 
 // Bindings persist across runs; runBegin/runEnd own the host hooks and
 // the trace for one run window.
@@ -89,9 +93,24 @@ void setPinWriteForward(PinWriteForward handler, void* user = nullptr);
 // frames (HostPort::frameOut arrivals).
 void bindFrameDevice(FrameHandler handler, void* user = nullptr);
 void setFrameReceiver(FrameHandler handler, void* user = nullptr);
+// Observers of the event stream. addListener returns false when the table
+// is full (a diagnostic is recorded); removeListener works from inside a
+// callback and takes effect for the events that follow.
+bool addListener(EventListener fn, void* user = nullptr);
+bool removeListener(EventListener fn);
+size_t listenerCapacity();
 
 void runBegin(uint32_t tickUs);
 void runEnd();
+
+// Lifecycle-driven run window: arm it from a global constructor (before
+// main, the only point where the host core's single lifecycle hook still
+// catches kPreSetup) and the window opens at preSetup and closes at the
+// postLoop of the `loops`-th completed loop. The core decides when the
+// run ends; the application never participates.
+void armRunWindow(uint32_t tickUs, uint32_t loops);
+bool runWindowClosed();
+uint32_t completedLoops();
 
 // Sinks: every dir/dev-originated external effect is recorded here first,
 // then applied (matrix principle 3).
@@ -124,6 +143,11 @@ uint32_t frameCapacityBits();
 size_t deferralCapacity();
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
+// Analog injection sinks: recorded, then applied to the host's held
+// values. Analog inputs are environment state (the frozen device
+// interface has no analog port), so these are director-side.
+void analogInject(Origin origin, uint8_t pin, uint16_t raw);
+void analogInjectMilliVolts(Origin origin, uint8_t pin, uint32_t mv);
 void dumpf(const char* fmt, ...);
 
 uint64_t nowUs();

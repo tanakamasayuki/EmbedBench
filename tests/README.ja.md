@@ -77,5 +77,8 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `i2c_badlen/`: 模型が`len`超過を返した場合に環境が診断して無効化すること
 - `if_frozen/`: 凍結したデバイスIFの面の固定・単独ビルド・既定挙動（version 1のガード）
 - `conformance/`: 環境の準拠キット。共通probeで同一シナリオを流し、両環境が同じ判定になることを確認
+- `core_draft2/`: draft core v2（Analog・lifecycle連動のrun window・event listener）
+- `log_formats/`: 1行形式3候補のparse時間・ファイル長・diff変化行の比較（WP-B2の残り）
+- `bulk_checksum/`: 集約サマリのchecksum種別（byte和とCRC-8の検出率比較）
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム、register-map、準拠probe）

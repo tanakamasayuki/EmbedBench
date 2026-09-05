@@ -51,17 +51,17 @@ def test_capacity(dut):
     dut.expect("values capacity=64 device_calls=0", timeout=10)
     dut.expect("01 000000 main dir chan.write chan=0 data=10", timeout=10)
     dut.expect("02 000000 main dir chan.write chan=1 data=01", timeout=10)
-    # Five complete "acme.bulk.1" frames, summarized as length + checksum.
+    # Five complete "acme.bulk.1" frames, summarized as length + CRC-8.
     dut.expect("03 000000 main dev dev.frame bus=0 fmt=acme.bulk.1 bits=64 "
-               "len=8 sum=74", timeout=10)
+               "len=8 crc=58", timeout=10)
     dut.expect("04 000000 main dev dev.frame bus=0 fmt=acme.bulk.1 bits=64 "
-               "len=8 sum=99", timeout=10)
+               "len=8 crc=11", timeout=10)
     dut.expect("05 000000 main dev dev.frame bus=0 fmt=acme.bulk.1 bits=64 "
-               "len=8 sum=BE", timeout=10)
+               "len=8 crc=30", timeout=10)
     dut.expect("06 000000 main dev dev.frame bus=0 fmt=acme.bulk.1 bits=64 "
-               "len=8 sum=E3", timeout=10)
+               "len=8 crc=04", timeout=10)
     dut.expect("07 000000 main dev dev.frame bus=0 fmt=acme.bulk.1 bits=64 "
-               "len=8 sum=08", timeout=10)
+               "len=8 crc=E1", timeout=10)
     # The atomic snapshot does not fit: refused with a diagnostic, unsent.
     dut.expect("08 000000 main dir chan.write chan=2 data=01", timeout=10)
     dut.expect("09 000000 main diag diag.frame_oversize bus=0 bits=128 max=64",

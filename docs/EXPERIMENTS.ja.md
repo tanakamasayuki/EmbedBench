@@ -1313,14 +1313,117 @@ probeへ当てると `ok=0 violations=6` になる——内訳は時間逆行1�
 host環境が不合格になった。契約が**許可**しているだけの挙動を要求していた誤りで、
 必須集合から外した。準拠キットは「契約が要求すること」だけを要求しなければならない。
 
+## X44. 実装例の整備 — Analog・run window・listener（draft core v2）
+
+対象: `tests/core_draft2/`、実装は `src/embedbench_draft.{h,cpp}`
+
+凍結後に残っていた実装例側の3項目を入れた。IFは触っていない。
+
+**Analog:** アプリの読取りは他のバスと同じ要求/応答2行（`analog.req` /
+`analog.resp`）、mV読取りとread分解能、PWM/LEDC書込みは単一イベント。
+注入は進行役側のsink（`analogInject` / `analogInjectMilliVolts`）で記録してから
+host coreのheld値へ反映する。**凍結IFにanalog portは無い**ので、デバイスが
+アナログ値を出す経路は今回作らなかった——必要になったら回避策で埋めず、
+IF追加の是非をメンテナーへ諮る（凍結記録3節の規則）。
+
+**run window:** `armRunWindow(tickUs, loops)` を大域コンストラクタから呼ぶと、
+window は `kPreSetup` で開き、指定回数の loop を終えた `kPostLoop` で閉じる。
+アプリは関与しない（EVENT_MATRIXの実行区間候補どおり）。
+
+**listener:** 記録した全イベントを固定4枠の観測者へ配る。戻り値は無く、
+観測者がイベントを変えられない（X9/X11の分離）。
+
+観測されたイベント列（19行、3回目のloopには痕跡なし）:
+
+```text
+01 000000 main core life.pre_setup
+02 000000 main diag diag.listener_full cap=4      ← 5人目の登録は拒否
+03 000000 main dir analog.inject pin=8 val=1234
+05 000000 main app analog.config bits=10
+06 000000 main app analog.req pin=8
+07 000000 main core analog.resp val=1234 re=6
+10 000000 main app analog.out attach pin=9 duty=0 hz=1000  ← analogWriteは
+11 000000 main app analog.out write pin=9 duty=128 hz=1000    attach+writeの2件
+12 000000 main core life.post_setup
+15 001000 main core life.post_loop n=1
+19 002000 main core life.window_end loops=2
+```
+
+| 測定 | 値 |
+| --- | ---: |
+| イベント数 / 欠落 | 19 / 0 |
+| listener A・Bが見たイベント | 各18（登録後の全件） |
+| 自己解除するlistener | 1件で停止 |
+| 登録上限 | 4（5人目は`diag.listener_full`） |
+
+**事実（重要な副産物）:** 最初、run windowが開かなかった。原因は**静的初期化
+順序**——sketchの大域コンストラクタが、draft core側の`state`が構築される前に
+走り、設定が後から既定値で上書きされていた。host core自身が割り込み表を
+function-local staticにしている理由と同じ問題で、draft coreの`state`も
+function-local staticへ移して解消した。環境実装例を書く者が踏む穴として記録する。
+
+## X45. 1行形式のparse時間とdiff（WP-B2の残り）
+
+対象: `tests/log_formats/`
+
+X10が容量と生成時間だけを比べ、parse時間とdiffの読みやすさを残していた。
+100,000イベントを3形式で書き、同じparserで読み戻し、1フィールドだけ違う変種と
+diffを取った（実測値は環境依存、比率と決定的な値のみ固定）。
+
+| 形式 | ファイル長 | 生成 | parse | diffの変化行 |
+| --- | ---: | ---: | ---: | ---: |
+| sequence先頭・固定幅 | 6,000,000 byte（60 byte/行、値によらず一定） | 約21 ms | 約11 ms | 2 |
+| timestamp先頭・固定幅 | 6,000,000 byte | 約21 ms | 約11 ms | 2 |
+| JSON Lines | 9,977,782 byte（平均99.8 byte/行、**値の桁数で変動**） | 約24 ms | 約11 ms | 2 |
+
+**事実:**
+
+- **固定幅はファイル長が事前に決まる**（イベント数×60）。JSONは値の桁数で
+  変動し、同じイベント数でも長さが読めない
+- parse時間は3形式でほぼ同じ。ただしJSON側は鍵を検索するだけの楽観的parserで
+  あり、本物のJSONライブラリはこれより遅い。**JSONに速度上の利点はない**
+- diffが示す変化行数は3形式とも同じ2行。**形式はdiffの量を変えず、読む量だけ
+  変える**——固定幅は先頭が `00050001` なので変化行が自分で名乗る
+- 容量比はJSON/固定幅 = 1.66倍
+
+**結論の候補:** goldenの既定は sequence 先頭・固定幅。JSONを選ぶ理由は
+機械処理の容易さだけで、容量・可読性・parse速度のいずれでも優位はない。
+
+## X46. 集約サマリのchecksum種別（X28の未決）
+
+対象: `tests/bulk_checksum/`
+
+大量転送をサマリへ集約するとき、何を持てば差分を捕まえられるかを実測した。
+256 byteのグラデーション状payload（フレームバッファに近い）へ4種の破損を与え、
+byte和とCRC-8/ATMで検出率を比べた（各16,320ケース）。
+
+| 破損 | byte和 | CRC-8 |
+| --- | ---: | ---: |
+| 1 byte変化 | 16,320 / 16,320 | 16,320 / 16,320 |
+| 隣接2 byteの入れ替え | **0** | 16,066（99.4%） |
+| 1 byte欠落（以降シフト） | 16,257 | 16,255 |
+| 1 byte重複（以降シフト） | 16,320 | 16,253 |
+
+**事実:** byte和は**並べ替えに構造的に盲目**（0/16,320）で、しかも
+グラデーション状のpayloadは入れ替えだらけになる。長さが変わる破損では両者に
+差はない（どちらも99%以上、和がわずかに上回る場合すらある）——サマリは件数を
+別フィールドで持つので、そこは元々確実に捕まる。
+
+**決定:** 集約サマリのchecksumは**CRC-8/ATM**にする。両環境実装例の
+`payloadLabel` と SPI transaction サマリを `sum=` から `crc=` へ変更した
+（`spi.bulk n=256 mosi_crc=14 miso_crc=30`）。
+
+**集約の適用基準（決定）:** 集約するのは「**呼び出し側が1つの塊として発行した
+転送**」——SPI transaction、1回の`frameOut`、1回の`write(buffer, len)`——に限る。
+個々の呼び出しを勝手にまとめない。境界は呼び出し側が示したものだけを使う。
+
 ## 次に必要な実験
 
-（デバイスIFはX42で凍結済み。以下はIF外の実装例・ログ側の課題）
+（デバイスIFはX42で凍結済み。X44〜X46でIF外の課題も片付いた）
 
-1. draft coreへAnalogを追加し、X22のシナリオを拡張して順序が保たれるかの確認
-2. lifecycle連動のrun window（開始=preSetup、終了=指定loop回数の最後のpostLoop）をdraftへ実装
-3. 1行形式のparse時間とdiff差分行数の比較（WP-B2の残り）
-4. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+1. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
+2. Wire1/Serial2など複数instanceのbinding（実装例の残り）
+3. デバイスがアナログ値を出す経路の要否（必要ならIF追加としてメンテナー承認を要求）
 5. SCOPE 5節の残り2項目（集約記録の基準とchecksum種別、bus別`maxFrameBits`下の
    format分割規則）はIF外なので、IFヘッダを「決定版」として凍結する判断へ
    （実験ではなく決定。凍結後の変更は台帳へ理由を残す）

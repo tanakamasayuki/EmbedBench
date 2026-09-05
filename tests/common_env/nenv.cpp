@@ -16,6 +16,20 @@ void hexOf(const uint8_t* data, size_t len, char* out, size_t cap) {
   if (pos == 0 && cap > 0) out[0] = '\0';
 }
 
+// CRC-8/ATM, matching the host environment example: a byte sum cannot see
+// a reordering, which bulk payloads are full of (tests/bulk_checksum).
+uint8_t crc8(const uint8_t* data, size_t len) {
+  uint8_t crc = 0;
+  for (size_t i = 0; i < len; ++i) {
+    crc ^= data[i];
+    for (int bit = 0; bit < 8; ++bit) {
+      crc = (crc & 0x80) ? static_cast<uint8_t>((crc << 1) ^ 0x07)
+                         : static_cast<uint8_t>(crc << 1);
+    }
+  }
+  return crc;
+}
+
 void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
   if (bytes == 0) {
     snprintf(out, cap, "empty");
@@ -26,9 +40,8 @@ void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
     hexOf(data, bytes, hex, sizeof(hex));
     snprintf(out, cap, "data=%s", hex);
   } else {
-    uint8_t sum = 0;
-    for (size_t i = 0; i < bytes; ++i) sum = static_cast<uint8_t>(sum + data[i]);
-    snprintf(out, cap, "len=%u sum=%02X", static_cast<unsigned>(bytes), sum);
+    snprintf(out, cap, "len=%u crc=%02X", static_cast<unsigned>(bytes),
+             crc8(data, bytes));
   }
 }
 

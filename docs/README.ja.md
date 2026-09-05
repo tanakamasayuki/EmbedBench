@@ -24,5 +24,6 @@
 - [EVENT_MATRIX.ja.md](EVENT_MATRIX.ja.md): 操作経路表（WP-A1）。全操作の記録点・応答担当・注入・診断の候補
 - [DEVICE_IF_FROZEN.ja.md](DEVICE_IF_FROZEN.ja.md): デバイスIFの凍結記録（version 1）。決定台帳であり、変更規則の正本
 - [DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md): デバイスIFの範囲と線引き。専用portとframeの分担、カバー範囲、絶対にやらない領域
+- [DEVICE_CATALOG.ja.md](DEVICE_CATALOG.ja.md): 模型の置き場所、format名の登録運用、新しい模型を追加する手順
 - [HOST_EXTENSION_AUDIT.ja.md](HOST_EXTENSION_AUDIT.ja.md): host coreだけで可能な範囲と追加依頼案
 - [reference/tinygfx-emu/SOURCE.ja.md](reference/tinygfx-emu/SOURCE.ja.md): TinyGFXから一度だけ取り込んだ初期案の出典

@@ -79,5 +79,8 @@ Additional experiments:
 - `i2c_badlen/`: a model returning more than `len` is diagnosed and treated as having supplied nothing.
 - `if_frozen/`: guards the frozen device interface (version 1): pinned surface, standalone build, documented defaults.
 - `conformance/`: the environment conformance kit: one probe and one scenario, both environments reaching the same verdict.
+- `core_draft2/`: draft core v2 (analog, the lifecycle-driven run window, event listeners).
+- `log_formats/`: parse time, file size, and diff readability of the three line formats (WP-B2 remainder).
+- `bulk_checksum/`: what a bulk summary must carry: byte sum versus CRC-8 detection rates.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - `common_models/`: reference models (temperature sensor, AT modem, register map, conformance probe) shared across experiments and environments.

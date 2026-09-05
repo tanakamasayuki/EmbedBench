@@ -70,6 +70,14 @@
 //     version 2, decided the same way version 1 was: measured first
 //   - kDeviceInterfaceVersion is bumped by such a change, never silently
 //   - tests/if_frozen/ pins the surface, so drift fails the suite
+//
+// Frozen means "not changed without approval", not "never changed". When
+// later work hits something this interface handles badly, do NOT paper
+// over it with environment-side or model-side workarounds: first ask
+// whether changing the interface is the simpler answer. If it is, take
+// the measurement that shows it and ask the maintainer to approve the
+// change. A workaround that hides a design problem costs more than a
+// deliberate version bump.
 #pragma once
 
 #include <stddef.h>
