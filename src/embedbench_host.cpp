@@ -345,9 +345,21 @@ bool foldShapeCycle() {
       }
     }
     Event& head = st().buf[bestStart + k];
+    // A line that is already a summary carries a `crc=*` at its end once
+    // normalised. Appending another would stack them up
+    // (`miso=* crc=* crc=* crc=8F`), so the old one is dropped and the
+    // new checksum — taken over every copy, including the ones the
+    // earlier fold stood for — replaces it.
+    char* shape = shapes[bestStart + k];
+    const size_t shapeLen = strlen(shape);
+    const char* kTail = " crc=*";
+    const size_t tailLen = 6;
+    if (shapeLen > tailLen &&
+        strcmp(shape + shapeLen - tailLen, kTail) == 0) {
+      shape[shapeLen - tailLen] = '\0';
+    }
     char summary[sizeof(Event::text) * 2];
-    snprintf(summary, sizeof(summary), "%s crc=%02X", shapes[bestStart + k],
-             crc);
+    snprintf(summary, sizeof(summary), "%s crc=%02X", shape, crc);
     size_t copyLen = strlen(summary);
     if (copyLen > sizeof(head.text) - 1) copyLen = sizeof(head.text) - 1;
     memcpy(head.text, summary, copyLen);

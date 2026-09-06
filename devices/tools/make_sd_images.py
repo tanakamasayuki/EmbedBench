@@ -86,6 +86,39 @@ def build_with_file(content: bytes, name=b"HELLO", ext=b"TXT") -> bytearray:
     return image
 
 
+def build_broken(kind: str) -> bytearray:
+    """A volume that is wrong in one specific, plausible way.
+
+    The interesting corruptions are not the ones a driver rejects on its
+    first check — those are easy. They are the ones that pass the boot
+    sector and then make a reasonable driver do something bad: loop
+    forever, read a block that is not there, or run off the end of a file.
+    """
+    content = b"the chain leads elsewhere\n"
+    image = build_with_file(content)
+    fat_off = RESERVED * SECTOR
+    dir_off = (RESERVED + FAT_SECTORS) * SECTOR
+
+    if kind == "circular":
+        # 2 -> 3 -> 2: following the chain never ends.
+        image[fat_off:fat_off + SECTOR] = fat_sector({2: 3, 3: 2})
+        struct.pack_into("<I", image, dir_off + 28, SECTOR * 4)
+    elif kind == "outofrange":
+        # The second cluster is past the end of a volume this size.
+        image[fat_off:fat_off + SECTOR] = fat_sector({2: 200})
+        struct.pack_into("<I", image, dir_off + 28, SECTOR * 2)
+    elif kind == "sizemismatch":
+        # The directory claims four clusters; the chain ends after one.
+        struct.pack_into("<I", image, dir_off + 28, SECTOR * 4)
+    elif kind == "zerobps":
+        # Bytes-per-sector of zero. Every offset a driver computes from
+        # the BPB divides by this.
+        struct.pack_into("<H", image, 11, 0)
+    else:
+        raise ValueError(kind)
+    return image
+
+
 def build_empty() -> bytearray:
     image = bytearray(SECTOR * SECTORS)
     image[0:SECTOR] = boot_sector(b"EMPTY")
@@ -221,6 +254,11 @@ def main():
     corrupt = build_with_file(b"unreachable")
     corrupt[510:512] = b"\x00\x00"          # the boot signature is gone
 
+    circular = build_broken("circular")
+    outofrange = build_broken("outofrange")
+    sizemismatch = build_broken("sizemismatch")
+    zerobps = build_broken("zerobps")
+
     files = parse(bytes(hello))
     assert list(files) == ["HELLO.TXT"], files
     assert files["HELLO.TXT"].startswith(b"EmbedBench reads this"), files
@@ -232,13 +270,43 @@ def main():
     else:
         raise SystemExit("the corrupt image parsed, which defeats its purpose")
 
+    # Each broken image has to be broken in the way it claims to be, or
+    # the test built on it proves nothing.
+    def fat_entry(image, cluster):
+        off = RESERVED * SECTOR + cluster * 3 // 2
+        if cluster % 2 == 0:
+            return image[off] | ((image[off + 1] & 0x0F) << 8)
+        return (image[off] >> 4) | (image[off + 1] << 4)
+
+    def dir_size(image):
+        return struct.unpack_from(
+            "<I", image, (RESERVED + FAT_SECTORS) * SECTOR + 28)[0]
+
+    assert fat_entry(circular, 2) == 3 and fat_entry(circular, 3) == 2, \
+        "the circular image does not actually loop"
+    assert fat_entry(outofrange, 2) == 200, "the chain is not out of range"
+    assert fat_entry(sizemismatch, 2) == 0xFFF, "the chain should end at once"
+    assert dir_size(sizemismatch) == SECTOR * 4, "the size is not overstated"
+    assert struct.unpack_from("<H", zerobps, 11)[0] == 0, "BytsPerSec is set"
+    assert bytes(zerobps[510:512]) == b"\x55\xAA", \
+        "the zero-BPS image must still pass the signature check, or it is\n" \
+        "just another bad-boot image"
+
     images = [
         ("Fat12Hello", hello,
          "A FAT12 volume holding one file, HELLO.TXT."),
         ("Fat12Empty", empty,
          "A formatted FAT12 volume with no files on it."),
         ("Fat12BadBoot", corrupt,
-         "The same volume with its boot signature erased, so a driver has\n// something to refuse."),
+         "The boot signature erased, so a driver refuses on its first\n// check. The easy corruption."),
+        ("Fat12Circular", circular,
+         "The cluster chain loops back on itself (2 -> 3 -> 2). A reader\n// that follows it without a guard never finishes."),
+        ("Fat12OutOfRange", outofrange,
+         "The chain leads to a cluster past the end of the volume, so the\n// next block a reader asks for does not exist."),
+        ("Fat12SizeMismatch", sizemismatch,
+         "The directory claims four clusters; the chain ends after one, so\n// a reader trusting the size runs off the file."),
+        ("Fat12ZeroBps", zerobps,
+         "Bytes-per-sector is zero. The boot signature is intact, so this\n// gets past the easy check and into the arithmetic."),
     ]
     hdr, src = emit(images)
     root = Path(__file__).resolve().parents[1] / "src"

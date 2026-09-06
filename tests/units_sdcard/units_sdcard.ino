@@ -107,6 +107,13 @@ static uint32_t fileSize = 0;
 static char head[24] = {0};
 static int badMount = -1;
 static int emptyFound = -1;
+static int zeroBpsMount = -1;
+static uint8_t body[UnitSdCardModel::kBlockSize * 4];
+static int chainOk = -1;
+static uint32_t chainGot = 0;
+static int chainLoop = -1;
+static int chainRange = -1;
+static int chainShort = -1;
 static int wroteBack = -1;
 static uint8_t reread = 0;
 
@@ -157,6 +164,63 @@ void setup() {
   Volume v3;
   badMount = mountVolume(v3, scratch) ? 1 : 0;
 
+  // The volumes that are wrong in a way the first check cannot see. Each
+  // one gets past the boot sector; what happens next is the point.
+  struct Broken {
+    const ebsd::Image* image;
+    int* result;
+  };
+  // Zero bytes-per-sector: the signature is intact, so only checking the
+  // divisors before using them saves the reader.
+  card.loadImage(ebsd::kFat12ZeroBps);
+  Volume v4;
+  zeroBpsMount = mountVolume(v4, scratch) ? 1 : 0;
+
+  // A chain that loops: without the visited guard this never returns.
+  card.loadImage(ebsd::kFat12Circular);
+  Volume v5;
+  uint16_t c5 = 0;
+  uint32_t sz5 = 0;
+  if (mountVolume(v5, scratch) &&
+      findFile(v5, "HELLO   TXT", scratch, c5, sz5)) {
+    chainLoop = readChain(v5, c5, sz5, body, chainGot, scratch);
+  }
+
+  // A chain leading off the end of the volume.
+  card.loadImage(ebsd::kFat12OutOfRange);
+  Volume v6;
+  uint16_t c6 = 0;
+  uint32_t sz6 = 0;
+  if (mountVolume(v6, scratch) &&
+      findFile(v6, "HELLO   TXT", scratch, c6, sz6)) {
+    uint32_t got = 0;
+    chainRange = readChain(v6, c6, sz6, body, got, scratch);
+  }
+
+  // A directory entry claiming more than the chain holds.
+  card.loadImage(ebsd::kFat12SizeMismatch);
+  Volume v7;
+  uint16_t c7 = 0;
+  uint32_t sz7 = 0;
+  if (mountVolume(v7, scratch) &&
+      findFile(v7, "HELLO   TXT", scratch, c7, sz7)) {
+    uint32_t got = 0;
+    chainShort = readChain(v7, c7, sz7, body, got, scratch);
+  }
+
+  // And the good volume again, read through the same chain follower so
+  // the healthy path is exercised by the same code.
+  card.loadImage(ebsd::kFat12Hello);
+  Volume v8;
+  uint16_t c8 = 0;
+  uint32_t sz8 = 0;
+  if (mountVolume(v8, scratch) &&
+      findFile(v8, "HELLO   TXT", scratch, c8, sz8)) {
+    uint32_t got = 0;
+    chainOk = readChain(v8, c8, sz8, body, got, scratch);
+    chainGot = got;
+  }
+
   char text[64];
   card.dump(text, sizeof(text));
   ebhost::dumpf("%s", text);
@@ -168,6 +232,9 @@ void setup() {
                 fileSize, head);
   Serial.printf("values wrote=%d reread=%02X empty=%d bad=%d\n", wroteBack,
                 reread, emptyFound, badMount);
+  Serial.printf("values zerobps=%d ok=%d,%u loop=%d range=%d short=%d\n",
+                zeroBpsMount, chainOk, chainGot, chainLoop, chainRange,
+                chainShort);
   Serial.print(trace);
   const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u folded=%u diag=%u\n", s.events,

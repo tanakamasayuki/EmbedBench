@@ -37,9 +37,29 @@ extern const Image kFat12Hello;
 // 8 blocks, 58 non-zero bytes in 3 runs.
 extern const Image kFat12Empty;
 
-// The same volume with its boot signature erased, so a driver has
-// something to refuse.
+// The boot signature erased, so a driver refuses on its first
+// check. The easy corruption.
 // 8 blocks, 87 non-zero bytes in 6 runs.
 extern const Image kFat12BadBoot;
+
+// The cluster chain loops back on itself (2 -> 3 -> 2). A reader
+// that follows it without a guard never finishes.
+// 8 blocks, 105 non-zero bytes in 6 runs.
+extern const Image kFat12Circular;
+
+// The chain leads to a cluster past the end of the volume, so the
+// next block a reader asks for does not exist.
+// 8 blocks, 104 non-zero bytes in 6 runs.
+extern const Image kFat12OutOfRange;
+
+// The directory claims four clusters; the chain ends after one, so
+// a reader trusting the size runs off the file.
+// 8 blocks, 105 non-zero bytes in 6 runs.
+extern const Image kFat12SizeMismatch;
+
+// Bytes-per-sector is zero. The boot signature is intact, so this
+// gets past the easy check and into the arithmetic.
+// 8 blocks, 104 non-zero bytes in 6 runs.
+extern const Image kFat12ZeroBps;
 
 }  // namespace ebsd
