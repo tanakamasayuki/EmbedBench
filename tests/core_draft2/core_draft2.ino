@@ -4,8 +4,8 @@
 // being able to change it.
 #include <Arduino.h>
 #include <EmbedBench.h>
+#include <embedbench_internals.h>
 #include <HostBus.h>
-#include <embedbench_draft.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -15,21 +15,21 @@ static uint32_t seenB = 0;
 static uint32_t seenOnce = 0;
 static char lastA[32] = {0};
 
-static void listenerA(const ebd::Event& e, void*) {
+static void listenerA(const ebhost::Event& e, void*) {
   ++seenA;
   snprintf(lastA, sizeof(lastA), "%s", e.text);
 }
-static void listenerB(const ebd::Event&, void*) { ++seenB; }
-static void listenerOnce(const ebd::Event&, void*) {
+static void listenerB(const ebhost::Event&, void*) { ++seenB; }
+static void listenerOnce(const ebhost::Event&, void*) {
   ++seenOnce;
-  ebd::removeListener(&listenerOnce);
+  ebhost::removeListener(&listenerOnce);
 }
-static void listenerExtra(const ebd::Event&, void*) {}
+static void listenerExtra(const ebhost::Event&, void*) {}
 
 // --- The run window is armed before main, the only point where the host
 // core's lifecycle hook still catches preSetup.
 struct WindowArmer {
-  WindowArmer() { ebd::armRunWindow(1000, 2); }
+  WindowArmer() { ebhost::armRunWindow(1000, 2); }
 };
 static WindowArmer armer;
 
@@ -44,16 +44,16 @@ void setup() {
 
   // Listeners: A and B watch, "once" removes itself from its own callback,
   // and a fifth registration is refused by the fixed table.
-  ebd::addListener(&listenerA);
-  ebd::addListener(&listenerB);
-  ebd::addListener(&listenerOnce);
-  ebd::addListener(&listenerExtra);
-  const bool fifth = ebd::addListener(&listenerA, reinterpret_cast<void*>(1));
+  ebhost::addListener(&listenerA);
+  ebhost::addListener(&listenerB);
+  ebhost::addListener(&listenerOnce);
+  ebhost::addListener(&listenerExtra);
+  const bool fifth = ebhost::addListener(&listenerA, reinterpret_cast<void*>(1));
 
   // Analog: the director injects held values, the application reads them,
   // and a PWM write is observed.
-  ebd::analogInject(ebd::Origin::kDir, 8, 1234);
-  ebd::analogInjectMilliVolts(ebd::Origin::kDir, 8, 3300);
+  ebhost::analogInject(ebhost::Origin::kDir, 8, 1234);
+  ebhost::analogInjectMilliVolts(ebhost::Origin::kDir, 8, 3300);
   analogReadResolution(10);
   appRaw = analogRead(8);
   appMv = analogReadMilliVolts(8);
@@ -61,7 +61,7 @@ void setup() {
 
   Serial.printf("values raw=%u mv=%u fifth=%d capacity=%u\n", appRaw, appMv,
                 fifth ? 1 : 0,
-                static_cast<unsigned>(ebd::listenerCapacity()));
+                static_cast<unsigned>(ebhost::listenerCapacity()));
 }
 
 void loop() {
@@ -71,12 +71,12 @@ void loop() {
     // The window closed after the second loop: this third iteration must
     // leave no trace behind.
     static char trace[2048];
-    ebd::formatTrace(trace, sizeof(trace));
+    ebhost::formatTrace(trace, sizeof(trace));
     Serial.print(trace);
-    const ebd::Stats s = ebd::stats();
+    const ebhost::Stats s = ebhost::stats();
     Serial.printf("stats events=%u dropped=%u closed=%d loops=%u\n", s.events,
-                  s.dropped, ebd::runWindowClosed() ? 1 : 0,
-                  ebd::completedLoops());
+                  s.dropped, ebhost::runWindowClosed() ? 1 : 0,
+                  ebhost::completedLoops());
     Serial.printf("listeners a=%u b=%u once=%u last_a=%s\n", seenA, seenB,
                   seenOnce, lastA);
     Serial.println("TEST done");

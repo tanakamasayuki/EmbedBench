@@ -6,7 +6,6 @@
 #include <EmbedBench.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_encoder_model.h>
@@ -19,11 +18,11 @@ static const uint8_t kAddrNobody = 0x77;
 // [adapter begin]
 class MisusePort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return false; }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -65,9 +64,9 @@ void setup() {
   SPI.begin(18, 19, 23, 5);
 
   encoder.attach(&port);
-  const ebd::WireDeviceOps ops = {&encWrite, &encRead, nullptr};
-  ebd::bindWireDevice(kAddrEncoder, ops);
-  ebd::setChannelHandler(&routeChannel);
+  const ebhost::WireDeviceOps ops = {&encWrite, &encRead, nullptr};
+  ebhost::bindWireDevice(kAddrEncoder, ops);
+  ebhost::setChannelHandler(&routeChannel);
   encoder.reset();
 
   // Mistake 1: work before the run window is open. Bus traffic here is
@@ -78,11 +77,11 @@ void setup() {
   Wire.write(UnitEncoderModel::kRegCounter);
   beforeStatus = Wire.endTransmission();
   const uint8_t early[1] = {0x01};
-  ebd::chanWrite(ebd::Origin::kDir, 0, early, 1);
-  windowsBefore = ebd::stats().windows;
-  outsideBefore = ebd::stats().outsideWindow;
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, early, 1);
+  windowsBefore = ebhost::stats().windows;
+  outsideBefore = ebhost::stats().outsideWindow;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // Mistake 2: an address nobody is bound to. The host core's Wire has no
   // opinion; the environment says so.
@@ -104,18 +103,18 @@ void setup() {
 
   // Mistake 4: a channel nobody handles.
   const uint8_t payload[1] = {0x01};
-  ebd::chanWrite(ebd::Origin::kDir, 9, payload, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, 9, payload, 1);
 
   // Mistake 5: SPI with no device bound at all.
   noDeviceSpi = SPI.transfer(0x5A);
 
   // Mistake 6: a frame in a format that was never registered.
   const uint8_t frame[2] = {0x01, 0x02};
-  badFrame = ebd::frameTx(ebd::Origin::kApp, 0, 0x1234, frame, 16);
+  badFrame = ebhost::frameTx(ebhost::Origin::kApp, 0, 0x1234, frame, 16);
   // And a format name longer than the interface allows.
-  badFormat = ebd::registerFormat("vendor.protocol.version.1", 0x1234);
+  badFormat = ebhost::registerFormat("vendor.protocol.version.1", 0x1234);
 
-  ebd::runEnd();
+  ebhost::runEnd();
 
   // Mistake 7: work after the window closed, which is the same trap as
   // the first one at the other end of the run.
@@ -123,11 +122,11 @@ void setup() {
   Wire.beginTransmission(kAddrEncoder);
   Wire.write(UnitEncoderModel::kRegCounter);
   Wire.endTransmission();
-  ebd::chanWrite(ebd::Origin::kDir, 0, early2, 1);
-  outsideAfter = ebd::stats().outsideWindow;
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, early2, 1);
+  outsideAfter = ebhost::stats().outsideWindow;
 
   static char trace[4096];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values before=%u windows0=%u outside=%u,%u unbound=%u,%u\n",
                 beforeStatus, windowsBefore, outsideBefore, outsideAfter,
                 unboundStatus, static_cast<unsigned>(unboundBytes));
@@ -135,7 +134,7 @@ void setup() {
                 staleRead[0], staleRead[1], noDeviceSpi, badFrame ? 1 : 0,
                 badFormat);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u outside=%u windows=%u\n",
                 s.events, s.dropped, s.diagCount, s.outsideWindow, s.windows);
   Serial.println("TEST done");

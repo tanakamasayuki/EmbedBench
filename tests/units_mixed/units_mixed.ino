@@ -8,7 +8,6 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_codec_model.h>
@@ -24,12 +23,12 @@ static const uint8_t kAddrCodec = 0x1A;
 // [adapter begin]
 class MixedPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return false; }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -105,15 +104,15 @@ void setup() {
 
   flash.attach(&port);
   codec.attach(&port);
-  ebd::bindSpiDevice(&spiTransfer);
-  ebd::setPinWriteForward(&forwardPins);
-  const ebd::WireDeviceOps codecOps = {&codecWrite, &codecRead, nullptr};
-  ebd::bindWireDevice(kAddrCodec, codecOps);
-  ebd::bindTickDevice(&advanceMixed);
+  ebhost::bindSpiDevice(&spiTransfer);
+  ebhost::setPinWriteForward(&forwardPins);
+  const ebhost::WireDeviceOps codecOps = {&codecWrite, &codecRead, nullptr};
+  ebhost::bindWireDevice(kAddrCodec, codecOps);
+  ebhost::bindTickDevice(&advanceMixed);
   flash.reset();
   codec.reset();
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // The mistake this part exists to catch: program without enabling
   // writes first. A real chip drops it and says nothing.
@@ -174,13 +173,13 @@ void setup() {
 
   char text[64];
   flash.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   codec.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[6144];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values sr0=%02X sr_wren=%02X sr_busy=%02X no_wren=%02X "
                 "after=%02X\n",
                 statusBeforeWren, statusAfterWren, statusDuringProgram,
@@ -188,7 +187,7 @@ void setup() {
   Serial.printf("values loud=%02X quiet=%02X muted=%02X count=%u\n",
                 loudSample, quietSample, mutedSample, codecCount);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u folded=%u diag=%u\n", s.events,
                 s.dropped, s.folded, s.diagCount);
   Serial.println("TEST done");

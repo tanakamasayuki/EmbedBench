@@ -8,7 +8,7 @@ IFの外側の**運用**であり、IFの変更を伴わない。
 
 | 置き場所 | 用途 | 例 |
 | --- | --- | --- |
-| `tests/common_models/src/` | 複数の実験・複数の環境から共有する参照模型 | 温度センサ、ATモデム、register-map、準拠probe、環境センサー（BME280相当）、GPS受信機 |
+| `devices/src/` | 複数の実験・複数の環境から共有する参照模型 | 温度センサ、ATモデム、register-map、準拠probe、環境センサー（BME280相当）、GPS受信機 |
 | `tests/<実験名>/` | その実験でしか意味を持たない模型 | 契約違反を仕込んだ `badlen_model`、容量試験の `flood_model` |
 
 判断基準は「2つ目の利用者が現れたか」。現れた時点で `common_models/` へ移す

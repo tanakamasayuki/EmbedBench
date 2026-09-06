@@ -4,11 +4,11 @@
 // device interface (src/embedbench_device.h) is the surface being fixed.
 #include <Arduino.h>
 #include <EmbedBench.h>
+#include <embedbench_internals.h>
 #include <HostBus.h>
 #include <HostInterrupt.h>
 #include <HostUart.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,14 +22,14 @@ static AtModemModel modemModel;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t line, uint8_t level) override {
     // Logical line 0 of the temp sensor is wired to pin 27 here.
     const uint8_t pin = line == TempSensorModel::kLineDataReady ? 27 : 0xFF;
-    if (pin != 0xFF) ebd::pinInject(ebd::Origin::kDev, pin, level);
+    if (pin != 0xFF) ebhost::pinInject(ebhost::Origin::kDev, pin, level);
   }
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
+    return ebhost::uartInject(ebhost::Origin::kDev, data, len);
   }
 };
 
@@ -61,7 +61,7 @@ static void advanceDevices(uint64_t nowUs, void*) {
 static void onZeroWait(uint32_t count, void*) {
   if (count == 3) {
     const uint8_t raw300[2] = {0x01, 0x2C};
-    ebd::chanWrite(ebd::Origin::kDir, 0, raw300, 2);
+    ebhost::chanWrite(ebhost::Origin::kDir, 0, raw300, 2);
   }
 }
 
@@ -104,13 +104,13 @@ static void appScenario() {
 
   appT1 = readTemp();
 
-  const uint64_t before = ebd::nowUs();
+  const uint64_t before = ebhost::nowUs();
   Serial1.print("AT+S;");
   uint8_t reply[2] = {0};
   Serial1.readBytes(reply, sizeof(reply));
   appReply[0] = static_cast<char>(reply[0]);
   appReply[1] = static_cast<char>(reply[1]);
-  appElapsed = ebd::nowUs() - before;
+  appElapsed = ebhost::nowUs() - before;
 }
 
 // --- One run ---------------------------------------------------------------
@@ -129,15 +129,15 @@ static void runOnce(char* out, size_t cap) {
   while (Serial1.readTx(drain, sizeof(drain)) > 0) {
   }
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appScenario();
   char text[40];
   tempModel.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   modemModel.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1600];
@@ -156,22 +156,22 @@ void setup() {
 
   tempModel.attach(&draftPort);
   modemModel.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);
-  ebd::bindUartDevice(&devUartTx);
-  ebd::setChannelHandler(&devChannel);
-  ebd::bindTickDevice(&advanceDevices);
-  ebd::setZeroWaitHandler(&onZeroWait);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);
+  ebhost::bindUartDevice(&devUartTx);
+  ebhost::setChannelHandler(&devChannel);
+  ebhost::bindTickDevice(&advanceDevices);
+  ebhost::setZeroWaitHandler(&onZeroWait);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values t1=%u spins=%u reply=%s elapsed=%llu\n", appT1,
                 appSpins, appReply,
                 static_cast<unsigned long long>(appElapsed));
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u resp_lines=%u diag=%u\n",
                 s.events, s.dropped,
-                static_cast<unsigned>(ebd::respLineCount()), s.diagCount);
+                static_cast<unsigned>(ebhost::respLineCount()), s.diagCount);
 
   runOnce(run2, sizeof(run2));
   runOnce(run3, sizeof(run3));

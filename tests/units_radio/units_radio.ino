@@ -4,7 +4,7 @@
 // order. Three logical links (bus 0, 1, 2) are live at once.
 #include <Arduino.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
+#include <embedbench_internals.h>
 #include <string.h>
 
 #include <unit_ir_model.h>
@@ -23,22 +23,22 @@ static const uint8_t kPinTxDone = 12;
 class RadioPort : public ebdev::HostPort {
  public:
   explicit RadioPort(uint8_t donePin = 0xFF) : donePin_(donePin) {}
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t level) override {
-    if (donePin_ != 0xFF) ebd::pinInject(ebd::Origin::kDev, donePin_, level);
+    if (donePin_ != 0xFF) ebhost::pinInject(ebhost::Origin::kDev, donePin_, level);
   }
   bool serialOut(const uint8_t*, size_t) override { return false; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
-  uint32_t maxFrameBits(uint8_t) override { return ebd::frameCapacityBits(); }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  uint32_t maxFrameBits(uint8_t) override { return ebhost::frameCapacityBits(); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 
@@ -134,11 +134,11 @@ static void appFrameReceiver(uint8_t bus, uint16_t format, const uint8_t* data,
 static void appPoll(uint8_t tag, uint8_t seq) {
   const uint8_t frame[2] = {static_cast<uint8_t>((tag << 4) | (seq >> 4)),
                             static_cast<uint8_t>((seq << 4) & 0xF0)};
-  ebd::frameTx(ebd::Origin::kApp, UnitUwbModel::kBus, uwbPoll, frame, 12);
+  ebhost::frameTx(ebhost::Origin::kApp, UnitUwbModel::kBus, uwbPoll, frame, 12);
 }
 
 static bool appLoraSend(const uint8_t* payload, size_t len) {
-  return ebd::frameTx(ebd::Origin::kApp, UnitLoraModel::kBus, loraUp, payload,
+  return ebhost::frameTx(ebhost::Origin::kApp, UnitLoraModel::kBus, loraUp, payload,
                       len * 8);
 }
 
@@ -152,10 +152,10 @@ void setup() {
   anchor0.attach(&uwbPort);
   anchor1.attach(&uwbPort);
   anchor2.attach(&uwbPort);
-  ebd::bindFrameDevice(&devFrame);
-  ebd::setFrameReceiver(&appFrameReceiver);
-  ebd::setChannelHandler(&routeChannel);
-  ebd::bindTickDevice(&advanceRadios);
+  ebhost::bindFrameDevice(&devFrame);
+  ebhost::setFrameReceiver(&appFrameReceiver);
+  ebhost::setChannelHandler(&routeChannel);
+  ebhost::bindTickDevice(&advanceRadios);
   ir.reset();
   lora.reset();
   anchor0.reset();
@@ -164,23 +164,23 @@ void setup() {
 
   // The application resolves the same names the devices do; the ids come
   // from the environment, so both sides agree without sharing a number.
-  irCode = ebd::registerFormat("m5.ir.nec.1", ebdev::schemaFingerprint("u8 addr,u8 cmd"));
-  irRepeat = ebd::registerFormat("m5.ir.rep.1", ebdev::schemaFingerprint("empty"));
-  loraUp = ebd::registerFormat("m5.lora.up.1", ebdev::schemaFingerprint("u8 payload[]"));
-  loraDown = ebd::registerFormat("m5.lora.dn.1", ebdev::schemaFingerprint("u8 payload[]"));
-  uwbPoll = ebd::registerFormat("m5.uwb.poll.1", ebdev::schemaFingerprint("u4 tag,u8 seq"));
-  uwbResp = ebd::registerFormat("m5.uwb.resp.1", ebdev::schemaFingerprint("u8 anchor,u16 mm"));
+  irCode = ebhost::registerFormat("m5.ir.nec.1", ebdev::schemaFingerprint("u8 addr,u8 cmd"));
+  irRepeat = ebhost::registerFormat("m5.ir.rep.1", ebdev::schemaFingerprint("empty"));
+  loraUp = ebhost::registerFormat("m5.lora.up.1", ebdev::schemaFingerprint("u8 payload[]"));
+  loraDown = ebhost::registerFormat("m5.lora.dn.1", ebdev::schemaFingerprint("u8 payload[]"));
+  uwbPoll = ebhost::registerFormat("m5.uwb.poll.1", ebdev::schemaFingerprint("u4 tag,u8 seq"));
+  uwbResp = ebhost::registerFormat("m5.uwb.resp.1", ebdev::schemaFingerprint("u8 anchor,u16 mm"));
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // IR: the volume-up button is held. One code frame, then two repeats,
   // each an empty frame carrying no payload at all.
   const uint8_t press[3] = {0x40, 0x12, 0x02};
-  ebd::chanWrite(ebd::Origin::kDir, 0, press, 3);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, press, 3);
   delay(5);
   // The unit also receives: another remote in the room sends a code.
   const uint8_t foreign[2] = {0x40, 0x99};
-  ebd::frameTx(ebd::Origin::kApp, UnitIrModel::kBus, irCode, foreign, 16);
+  ebhost::frameTx(ebhost::Origin::kApp, UnitIrModel::kBus, irCode, foreign, 16);
   uint8_t lastRx[2] = {0, 0};
   ir.channelRead(UnitIrModel::kChannelLastRx, lastRx, sizeof(lastRx));
 
@@ -202,7 +202,7 @@ void setup() {
   const bool twelveAccepted = appLoraSend(big, sizeof(big));
   // A downlink arrives with a signal quality that is not in the payload.
   const uint8_t downlink[5] = {97, 8, 0x01, 0x02, 0x03};  // -97 dBm, 8 dB
-  ebd::chanWrite(ebd::Origin::kDir, 1, downlink, 5);
+  ebhost::chanWrite(ebhost::Origin::kDir, 1, downlink, 5);
   uint8_t status[3] = {0, 0, 0};
   const size_t statusLen = lora.channelRead(UnitLoraModel::kChannelStatus,
                                             status, sizeof(status));
@@ -212,24 +212,24 @@ void setup() {
   const uint8_t d0[2] = {0x00, 0xC8};  // 200 mm
   const uint8_t d1[2] = {0x03, 0xE8};  // 1,000 mm
   const uint8_t d2[2] = {0x0B, 0xB8};  // 3,000 mm
-  ebd::chanWrite(ebd::Origin::kDir, 2, d0, 2);
-  ebd::chanWrite(ebd::Origin::kDir, 3, d1, 2);
-  ebd::chanWrite(ebd::Origin::kDir, 4, d2, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 2, d0, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 3, d1, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 4, d2, 2);
   appPoll(0x5, 0xA3);
   appPoll(0x5, 0xA4);  // too soon: the round is still open
   delay(3);
 
   char text[64];
   ir.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   lora.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   anchor2.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[4096];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values presses=%u repeats=%u cmd=%02X rx=%02X%02X\n",
                 appPresses, appRepeats, appLastCmd, lastRx[0], lastRx[1]);
   Serial.printf("values tx1=%d tx2=%d six=%d twelve=%d busy=%d done=%d\n",
@@ -244,7 +244,7 @@ void setup() {
                 appRanges[1], appRanges[2], appRangeOrder[0], appRangeOrder[1],
                 appRangeOrder[2], appRangeCount);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
   Serial.println("TEST done");

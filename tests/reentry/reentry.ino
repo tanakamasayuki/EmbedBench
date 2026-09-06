@@ -7,7 +7,6 @@
 #include <HostBus.h>
 #include <HostInterrupt.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "irq_model.h"
@@ -17,10 +16,10 @@ static IrqSensorModel model;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t line, uint8_t level) override {
     if (line == IrqSensorModel::kLineIrq) {
-      ebd::pinInject(ebd::Origin::kDev, 27, level);
+      ebhost::pinInject(ebhost::Origin::kDev, 27, level);
     }
   }
   bool serialOut(const uint8_t*, size_t) override { return true; }
@@ -65,14 +64,14 @@ static void runOnce(char* out, size_t cap) {
   HostArduino::setPinValue(27, LOW);
   model.reset();
   isrReads = 0;
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   attachInterrupt(27, &onIrq, RISING);
   appValue = readSensor();
   char text[40];
   model.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1600];
@@ -84,11 +83,11 @@ void setup() {
   Wire.begin(21, 22, 400000);
   pinMode(27, INPUT);
   model.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);
 
   runOnce(run1, sizeof(run1));
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("values app=%04X isr_reads=%u deferred=%u device_depth=%u\n",
                 appValue, isrReads, s.deferredIsrs, s.maxDeviceDepth);
   Serial.print(run1);

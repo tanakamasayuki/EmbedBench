@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "badlen_model.h"
@@ -14,7 +13,7 @@ static BadLengthModel model;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
 };
@@ -37,15 +36,15 @@ static size_t appGot = 0;
 
 static void runOnce(char* out, size_t cap) {
   model.reset();
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appGot = Wire.requestFrom(static_cast<uint16_t>(0x60),
                             static_cast<size_t>(2), true);
   while (Wire.available()) Wire.read();
   char dump[40];
   model.dump(dump, sizeof(dump));
-  ebd::dumpf("%s", dump);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", dump);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[768];
@@ -56,11 +55,11 @@ void setup() {
   Serial.println("TEST start i2c_badlen");
   Wire.begin(21, 22, 400000);
   model.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x60, ops);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x60, ops);
 
   runOnce(run1, sizeof(run1));
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("values got=%u diag=%u\n", static_cast<unsigned>(appGot),
                 s.diagCount);
   Serial.print(run1);

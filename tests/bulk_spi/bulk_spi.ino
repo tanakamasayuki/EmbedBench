@@ -6,7 +6,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <SPI.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 static uint8_t devTransfer(uint8_t mosi, void*) {
@@ -14,7 +13,7 @@ static uint8_t devTransfer(uint8_t mosi, void*) {
 }
 
 static void runOnce(char* out, size_t cap) {
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // Framebuffer-scale burst inside a transaction: one summary line.
   SPI.beginTransaction(SPISettings(8000000, SPI_MSBFIRST, SPI_MODE0));
@@ -34,8 +33,8 @@ static void runOnce(char* out, size_t cap) {
     SPI.transfer(static_cast<uint8_t>(i));
   }
 
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[4096];
@@ -46,10 +45,10 @@ void setup() {
   Serial.println("TEST start bulk_spi");
 
   SPI.begin(18, 19, 23, 5);
-  ebd::bindSpiDevice(&devTransfer);
+  ebhost::bindSpiDevice(&devTransfer);
 
   runOnce(run1, sizeof(run1));
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u\n", s.events, s.dropped);
   // The head of the trace carries the whole story; print it.
   char head[640];

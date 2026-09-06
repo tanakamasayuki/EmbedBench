@@ -93,7 +93,7 @@ schema指紋、サイズのネゴ、`serialOut`の全量/診断つき部分配�
 
 - 環境側の実装（host hookの所有、時計、記録、ログ形式、診断イベント名）は
   **プラットホーム別の実装例**であり凍結しない。現在の例は
-  `src/embedbench_draft.*`（host-arduino-core）と `tests/common_env/`（純粋C++）
+  `src/embedbench_host.*`（host-arduino-core）と `tests/common_env/`（純粋C++）
 - 集約記録の適用基準とchecksum種別（X28の未決）
 - bus別 `maxFrameBits` 差がある環境でのformat側分割規則（X27の未決）
 - デバイスカタログ、format名の登録運用（プロジェクト運用の課題）

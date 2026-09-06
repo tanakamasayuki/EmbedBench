@@ -1,7 +1,7 @@
-// EmbedBench draft core implementation. See embedbench_draft.h: this is
+// EmbedBench draft core implementation. See embedbench_host.h: this is
 // an experimental candidate whose behavior comes from measured winners in
 // the experiment ledger; rework is expected and nothing here is final.
-#include "embedbench_draft.h"
+#include "embedbench_host.h"
 #include "embedbench_device.h"
 
 #include <Arduino.h>
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace ebd {
+namespace ebhost {
 namespace {
 
 constexpr size_t kCapacity = 64;
@@ -1531,4 +1531,98 @@ size_t formatTrace(char* out, size_t cap) {
   return pos;
 }
 
-}  // namespace ebd
+// --- DevicePort -------------------------------------------------------------
+// The ready-made port. Every method routes to the sink above it; the only
+// state is which pin each of the device's lines corresponds to.
+
+int DevicePort::find(const Mapping* table, uint8_t line) const {
+  for (size_t i = 0; i < kMaxLines; ++i) {
+    if (table[i].used && table[i].line == line) return static_cast<int>(i);
+  }
+  return -1;
+}
+
+bool DevicePort::mapLine(uint8_t line, uint8_t pin) {
+  const int existing = find(lines_, line);
+  if (existing >= 0) {
+    lines_[existing].pin = pin;
+    return true;
+  }
+  for (size_t i = 0; i < kMaxLines; ++i) {
+    if (!lines_[i].used) {
+      lines_[i].line = line;
+      lines_[i].pin = pin;
+      lines_[i].used = true;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool DevicePort::mapAnalog(uint8_t line, uint8_t pin) {
+  const int existing = find(analog_, line);
+  if (existing >= 0) {
+    analog_[existing].pin = pin;
+    return true;
+  }
+  for (size_t i = 0; i < kMaxLines; ++i) {
+    if (!analog_[i].used) {
+      analog_[i].line = line;
+      analog_[i].pin = pin;
+      analog_[i].used = true;
+      return true;
+    }
+  }
+  return false;
+}
+
+void DevicePort::useSerial(SerialPort port) { serial_ = port; }
+
+uint64_t DevicePort::nowMicros() { return nowUs(); }
+
+void DevicePort::lineOut(uint8_t line, uint8_t level) {
+  // An unmapped line goes nowhere, the same as a pin nobody wired up.
+  const int slot = find(lines_, line);
+  if (slot < 0) return;
+  pinInject(Origin::kDev, lines_[slot].pin, level);
+}
+
+bool DevicePort::serialOut(const uint8_t* data, size_t len) {
+  return uartInjectOn(Origin::kDev, serial_, data, len);
+}
+
+bool DevicePort::analogOut(uint8_t line, uint16_t raw) {
+  const int slot = find(analog_, line);
+  if (slot < 0) return false;
+  analogInject(Origin::kDev, analog_[slot].pin, raw);
+  return true;
+}
+
+bool DevicePort::analogOutMilliVolts(uint8_t line, uint32_t millivolts) {
+  const int slot = find(analog_, line);
+  if (slot < 0) return false;
+  analogInjectMilliVolts(Origin::kDev, analog_[slot].pin, millivolts);
+  return true;
+}
+
+bool DevicePort::requestWake(uint64_t whenUs) {
+  return ebhost::requestWake(whenUs);
+}
+
+bool DevicePort::diagnose(const char* text) {
+  deviceNote(text);
+  return true;
+}
+
+bool DevicePort::frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+                          size_t bits) {
+  return frameRx(Origin::kDev, bus, format, data, bits);
+}
+
+uint16_t DevicePort::formatId(const char* name, uint32_t schema) {
+  return registerFormat(name, schema);
+}
+
+uint32_t DevicePort::maxFrameBits(uint8_t) { return frameCapacityBits(); }
+
+}  // namespace ebhost

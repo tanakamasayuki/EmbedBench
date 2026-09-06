@@ -6,7 +6,6 @@
 #include <EmbedBench.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_faulty_model.h>
@@ -21,12 +20,12 @@ static const uint8_t kPinFlashCs = 5;
 // [adapter begin]
 class FaultPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return false; }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -72,7 +71,7 @@ static uint8_t probe(uint8_t reg, uint8_t* out, size_t want) {
 
 static void setFault(uint8_t mode, uint8_t count) {
   const uint8_t cmd[2] = {mode, count};
-  ebd::chanWrite(ebd::Origin::kDir, 0, cmd, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, cmd, 2);
 }
 
 static void flashCommand(const uint8_t* bytes, size_t len, uint8_t* reply) {
@@ -104,16 +103,16 @@ void setup() {
 
   faulty.attach(&port);
   flash.attach(&port);
-  const ebd::WireDeviceOps ops = {&faultyWrite, &faultyRead, nullptr};
-  ebd::bindWireDevice(kAddrFaulty, ops);
-  ebd::setChannelHandler(&routeChannel);
-  ebd::bindSpiDevice(&spiTransfer);
-  ebd::setPinWriteForward(&forwardPins);
-  ebd::bindTickDevice(&advanceFault);
+  const ebhost::WireDeviceOps ops = {&faultyWrite, &faultyRead, nullptr};
+  ebhost::bindWireDevice(kAddrFaulty, ops);
+  ebhost::setChannelHandler(&routeChannel);
+  ebhost::bindSpiDevice(&spiTransfer);
+  ebhost::setPinWriteForward(&forwardPins);
+  ebhost::bindTickDevice(&advanceFault);
   faulty.reset();
   flash.reset();
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   uint8_t buf[4] = {0, 0, 0, 0};
   healthy = probe(0x00, buf, 4);
@@ -168,20 +167,20 @@ void setup() {
 
   char text[64];
   faulty.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   flash.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[6144];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values ok=%02X absent=%02X refuse=%02X short=%02X back=%02X\n",
                 healthy, absent, refusing, shortRead, recovered);
   Serial.printf("values flaky=%02X,%02X,%02X\n", flaky[0], flaky[1], flaky[2]);
   Serial.printf("values cycle=%02X,%02X,%02X\n", beforeCycle, afterCycle,
                 afterErase);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u folded=%u diag=%u\n", s.events,
                 s.dropped, s.folded, s.diagCount);
   Serial.println("TEST done");

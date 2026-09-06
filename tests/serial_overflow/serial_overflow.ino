@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <HostUart.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "flood_model.h"
@@ -15,10 +14,10 @@ static FloodModel model;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
+    return ebhost::uartInject(ebhost::Origin::kDev, data, len);
   }
 };
 
@@ -42,7 +41,7 @@ static void runOnce(char* out, size_t cap) {
   Serial1.setRxBufferSize(8);     // room for eight of the twelve bytes
   memset(appPrefix, 0, sizeof(appPrefix));
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   Serial1.print("go");
   uint8_t got[8] = {0};
   appRead = Serial1.readBytes(got, sizeof(got));
@@ -50,9 +49,9 @@ static void runOnce(char* out, size_t cap) {
   appLeftover = Serial1.available();
   char dump[40];
   model.dump(dump, sizeof(dump));
-  ebd::dumpf("%s", dump);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", dump);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -64,13 +63,13 @@ void setup() {
   Serial1.begin(9600);
   Serial1.setTimeout(10);
   model.attach(&draftPort);
-  ebd::bindUartDevice(&devUartTx);
+  ebhost::bindUartDevice(&devUartTx);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values read=%u prefix=%s leftover=%d\n",
                 static_cast<unsigned>(appRead), appPrefix, appLeftover);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u diag=%u\n", s.events, s.diagCount);
   runOnce(run2, sizeof(run2));
   Serial.printf("run2_same=%d\n", strcmp(run1, run2) == 0 ? 1 : 0);

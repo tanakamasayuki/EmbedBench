@@ -7,7 +7,6 @@
 #include <EmbedBench.h>
 #include <HostUart.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <modem_model.h>
@@ -21,19 +20,19 @@ static AtModemModel modem2;       // Serial2
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  explicit DraftPort(ebd::SerialPort port) : port_(port) {}
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  explicit DraftPort(ebhost::SerialPort port) : port_(port) {}
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInjectOn(ebd::Origin::kDev, port_, data, len);
+    return ebhost::uartInjectOn(ebhost::Origin::kDev, port_, data, len);
   }
 
  private:
-  ebd::SerialPort port_;
+  ebhost::SerialPort port_;
 };
 
-static DraftPort port1(ebd::SerialPort::kSerial1);
-static DraftPort port2(ebd::SerialPort::kSerial2);
+static DraftPort port1(ebhost::SerialPort::kSerial1);
+static DraftPort port2(ebhost::SerialPort::kSerial2);
 
 static uint8_t devWrite(const uint8_t* data, size_t len, bool stop,
                         bool continued, void* user) {
@@ -83,20 +82,20 @@ void setup() {
   sensorB.attach(&port1);
   modem1.attach(&port1);
   modem2.attach(&port2);
-  const ebd::WireDeviceOps opsA = {&devWrite, &devRead, &sensorA};
-  const ebd::WireDeviceOps opsB = {&devWrite, &devRead, &sensorB};
-  ebd::bindWireDeviceOn(ebd::WireBus::kWire0, 0x50, opsA);
-  ebd::bindWireDeviceOn(ebd::WireBus::kWire1, 0x50, opsB);
-  ebd::bindUartDeviceOn(ebd::SerialPort::kSerial1, &uart1Tx);
-  ebd::bindUartDeviceOn(ebd::SerialPort::kSerial2, &uart2Tx);
-  ebd::bindTickDevice(&advanceDevices);
+  const ebhost::WireDeviceOps opsA = {&devWrite, &devRead, &sensorA};
+  const ebhost::WireDeviceOps opsB = {&devWrite, &devRead, &sensorB};
+  ebhost::bindWireDeviceOn(ebhost::WireBus::kWire0, 0x50, opsA);
+  ebhost::bindWireDeviceOn(ebhost::WireBus::kWire1, 0x50, opsB);
+  ebhost::bindUartDeviceOn(ebhost::SerialPort::kSerial1, &uart1Tx);
+  ebhost::bindUartDeviceOn(ebhost::SerialPort::kSerial2, &uart2Tx);
+  ebhost::bindTickDevice(&advanceDevices);
 
   sensorA.reset();
   sensorB.reset();
   modem1.reset();
   modem2.reset();
   // Give the two sensors different contents so a mix-up would show.
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   Wire.beginTransmission(0x50);
   Wire.write(0x01);
   Wire.write(0xA1);
@@ -116,14 +115,14 @@ void setup() {
   uint8_t reply2[2] = {0};
   Serial1.readBytes(reply1, sizeof(reply1));
   Serial2.readBytes(reply2, sizeof(reply2));
-  ebd::runEnd();
+  ebhost::runEnd();
 
   static char trace[2048];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values a=%02X b=%02X r1=%c%c r2=%c%c\n", appA, appB,
                 reply1[0], reply1[1], reply2[0], reply2[1]);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u diag=%u\n", s.events, s.diagCount);
   Serial.println("TEST done");
 }

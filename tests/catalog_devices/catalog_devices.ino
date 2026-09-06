@@ -4,7 +4,6 @@
 #include <EmbedBench.h>
 #include <HostUart.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <env_sensor_model.h>
@@ -16,20 +15,20 @@ static GpsModel gps;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t line, uint8_t level) override {
     if (line == EnvSensorModel::kLineDataReady) {
-      ebd::pinInject(ebd::Origin::kDev, 27, level);
+      ebhost::pinInject(ebhost::Origin::kDev, 27, level);
     }
   }
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
+    return ebhost::uartInject(ebhost::Origin::kDev, data, len);
   }
   bool requestWake(uint64_t whenUs) override {
-    return ebd::requestWake(whenUs);
+    return ebhost::requestWake(whenUs);
   }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -82,17 +81,17 @@ void setup() {
   pinMode(27, INPUT);
   sensor.attach(&draftPort);
   gps.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x76, ops);
-  ebd::bindUartDevice(&devUartTx);
-  ebd::setChannelHandler(&devChannel);
-  ebd::bindTickDevice(&advanceDevices);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x76, ops);
+  ebhost::bindUartDevice(&devUartTx);
+  ebhost::setChannelHandler(&devChannel);
+  ebhost::bindTickDevice(&advanceDevices);
   sensor.reset();
   gps.reset();
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   const uint8_t temp[3] = {0x7F, 0xE0, 0x00};
-  ebd::chanWrite(ebd::Origin::kDir, EnvSensorModel::kChannelTemp, temp, 3);
+  ebhost::chanWrite(ebhost::Origin::kDir, EnvSensorModel::kChannelTemp, temp, 3);
 
   // The application identifies the part, starts a measurement, and polls
   // the status register until the part says it is done.
@@ -123,17 +122,17 @@ void setup() {
 
   char text[64];
   sensor.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   gps.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[3072];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values chip=%02X polls=%u raw=%06X ready=%d sentence=%s\n",
                 appChipId, appPolls, appRaw, digitalRead(27), appSentence);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
   Serial.println("TEST done");

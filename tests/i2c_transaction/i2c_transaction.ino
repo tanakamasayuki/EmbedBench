@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <regmap_model.h>
@@ -15,7 +14,7 @@ static RegisterMapModel model;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
 };
@@ -40,7 +39,7 @@ static size_t appPlainLen = 0;
 
 static void runOnce(char* out, size_t cap) {
   model.reset();
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // Pointer write without STOP, then read: repeated start.
   Wire.beginTransmission(0x50);
@@ -59,9 +58,9 @@ static void runOnce(char* out, size_t cap) {
 
   char text[48];
   model.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -73,8 +72,8 @@ void setup() {
 
   Wire.begin(21, 22, 400000);
   model.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x50, ops);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x50, ops);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values rs_len=%u rs_val=%02X plain_len=%u\n",

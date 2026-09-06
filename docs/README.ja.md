@@ -26,6 +26,7 @@
 
 ## 設計記録（日本語のみ）
 
+- [RELEASE_SHAPE.ja.md](RELEASE_SHAPE.ja.md): 公開形の検討（revision 100へ向けて）。実測に基づく提案と未決事項
 - [DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md): 工程、承認ゲート、作業分割、完了条件
 - [EXPERIMENTS.ja.md](EXPERIMENTS.ja.md): hostで確認した数値、候補、未決事項の台帳
 - [EVENT_MATRIX.ja.md](EVENT_MATRIX.ja.md): 操作経路表（WP-A1）。全操作の記録点・応答担当・注入・診断の候補

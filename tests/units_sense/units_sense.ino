@@ -6,7 +6,6 @@
 #include <EmbedBench.h>
 #include <HostBus.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_imu_model.h>
@@ -24,14 +23,14 @@ static const uint8_t kAddrRtc = 0x51;
 class SensePort : public ebdev::HostPort {
  public:
   explicit SensePort(uint8_t linePin) : linePin_(linePin) {}
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t level) override {
-    ebd::pinInject(ebd::Origin::kDev, linePin_, level);
+    ebhost::pinInject(ebhost::Origin::kDev, linePin_, level);
   }
   bool serialOut(const uint8_t*, size_t) override { return false; }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 
@@ -106,20 +105,20 @@ void setup() {
 
   imu.attach(&imuPort);
   rtc.attach(&rtcPort);
-  const ebd::WireDeviceOps imuOps = {&imuWrite, &imuRead, nullptr};
-  const ebd::WireDeviceOps rtcOps = {&rtcWrite, &rtcRead, nullptr};
-  ebd::bindWireDevice(kAddrImu, imuOps);
-  ebd::bindWireDevice(kAddrRtc, rtcOps);
-  ebd::setChannelHandler(&routeChannel);
-  ebd::bindTickDevice(&advanceSense);
+  const ebhost::WireDeviceOps imuOps = {&imuWrite, &imuRead, nullptr};
+  const ebhost::WireDeviceOps rtcOps = {&rtcWrite, &rtcRead, nullptr};
+  ebhost::bindWireDevice(kAddrImu, imuOps);
+  ebhost::bindWireDevice(kAddrRtc, rtcOps);
+  ebhost::setChannelHandler(&routeChannel);
+  ebhost::bindTickDevice(&advanceSense);
   imu.reset();
   rtc.reset();
 
-  ebd::runBegin(10000);  // a 10 ms tick: the 2.5 ms sampling never lands on it
+  ebhost::runBegin(10000);  // a 10 ms tick: the 2.5 ms sampling never lands on it
 
   // The world presents a value, then the sketch starts the sensor.
   const uint8_t value[2] = {0x12, 0x34};
-  ebd::chanWrite(ebd::Origin::kDir, 0, value, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, value, 2);
   Wire.beginTransmission(kAddrImu);
   Wire.write(UnitImuModel::kRegControl);
   Wire.write(1);
@@ -183,13 +182,13 @@ void setup() {
 
   char text[64];
   imu.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   rtc.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[6144];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values count=%u flags=%u bytes=%u sample=%04X irq=%d\n",
                 firstCount, firstFlags, static_cast<unsigned>(firstBytes),
                 firstSample, irqAfterDrain);
@@ -197,7 +196,7 @@ void setup() {
   Serial.printf("values rtc_start=%u rtc_end=%u int=%d fired=%u past=%u\n",
                 rtcStart, rtcAtAlarm, rtcIntLevel, rtcFired, alarmPastStatus);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u folded=%u diag=%u\n", s.events,
                 s.dropped, s.folded, s.diagCount);
   Serial.println("TEST done");

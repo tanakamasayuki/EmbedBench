@@ -4,7 +4,6 @@
 // on the link that cannot even hold the header it becomes none at all.
 #include <Arduino.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_chunk_model.h>
@@ -31,22 +30,22 @@ static uint32_t busCapacityBits(uint8_t bus) {
 
 class SplitPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return false; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
   // The link's capacity, not the environment's: the interface asks per
   // bus precisely so these can differ.
   uint32_t maxFrameBits(uint8_t bus) override { return busCapacityBits(bus); }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -84,7 +83,7 @@ static void sendOn(uint8_t bus, const uint8_t* body, size_t len) {
   uint8_t request[1 + UnitChunkModel::kMaxMessage];
   request[0] = bus;
   memcpy(request + 1, body, len);
-  ebd::chanWrite(ebd::Origin::kDir, 0, request, len + 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, request, len + 1);
 }
 
 void setup() {
@@ -93,14 +92,14 @@ void setup() {
 
   sender.attach(&senderPort);
   receiver.attach(&receiverPort);
-  ebd::bindFrameDevice(&devFrame);
-  ebd::bindTickDevice(&advanceSender);
-  ebd::setFrameReceiver(&appFrameReceiver);
-  ebd::setChannelHandler(&routeChannel);
+  ebhost::bindFrameDevice(&devFrame);
+  ebhost::bindTickDevice(&advanceSender);
+  ebhost::setFrameReceiver(&appFrameReceiver);
+  ebhost::setChannelHandler(&routeChannel);
   sender.reset();
   receiver.reset();
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   uint8_t body[20];
   for (size_t i = 0; i < sizeof(body); ++i) {
@@ -129,20 +128,20 @@ void setup() {
 
   char text[80];
   sender.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   receiver.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[4096];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values wide=%u,%d small=%u,%d narrow=%u\n",
                 appFrames[kBusWide], wideSame ? 1 : 0, appFrames[kBusSmall],
                 smallSame ? 1 : 0, appFrames[kBusNarrow]);
   Serial.printf("values caps=%u,%u,%u\n", busCapacityBits(kBusNarrow),
                 busCapacityBits(kBusSmall), busCapacityBits(kBusWide));
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u folded=%u diag=%u\n", s.events,
                 s.dropped, s.folded, s.diagCount);
   Serial.println("TEST done");

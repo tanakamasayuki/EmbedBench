@@ -52,7 +52,7 @@ EmbedBenchは、この4つを引き受けます。時間は仮想なので `dela
 （[カタログ](DEVICE_CATALOG.ja.md)参照）。
 
 **環境**は両者を仲立ちし、起きたことを全部記録します。
-実装例が2つあります——ホストのArduinoコア向け（`src/embedbench_draft.*`）と、
+実装例が2つあります——ホストのArduinoコア向け（`src/embedbench_host.*`）と、
 純粋C++向け（`tests/common_env/nenv.*`）です。
 
 > **重要:** 固まっているのは**デバイス模型と環境の境界**（`src/embedbench_device.h`）
@@ -110,21 +110,13 @@ tests/myexperiment/
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <temp_model.h>          // カタログの模型
 
 static TempSensorModel sensor;
 
-// 1) 模型が外界へ働きかけるための口
-class MyPort : public ebdev::HostPort {
- public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
-  void lineOut(uint8_t, uint8_t level) override {
-    ebd::pinInject(ebd::Origin::kDev, 27, level);
-  }
-  bool serialOut(const uint8_t*, size_t) override { return false; }
-};
-static MyPort port;
+// 1) 模型が外界へ働きかけるための口。DevicePortは環境への配線を
+//    済ませてあるので、必要なのは「この模型のこの線はどのピンか」だけ。
+static ebhost::DevicePort port;
 
 // 2) 世界のchannelを模型へ届ける
 static bool onChannel(uint8_t ch, const uint8_t* d, size_t n, void*) {
@@ -146,18 +138,19 @@ void setup() {
   Serial.println("TEST start myexperiment");
   Wire.begin(21, 22, 400000);
 
+  port.mapLine(TempSensorModel::kLineDataReady, 27);  // この模型の線はpin 27
   sensor.attach(&port);
-  const ebd::WireDeviceOps ops = {&onWrite, &onRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);     // このアドレスはこの模型が担当
-  ebd::setChannelHandler(&onChannel);
+  const ebhost::WireDeviceOps ops = {&onWrite, &onRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);  // このアドレスはこの模型が担当
+  ebhost::setChannelHandler(&onChannel);
   sensor.reset();
 
-  ebd::runBegin(1000);                // 記録開始。tickは1,000 us
+  ebhost::runBegin(1000);                // 記録開始。tickは1,000 us
 
   // 世界がセンサーに温度を与える。channelはこのためのもので、
   // バスでもピンでもなく「テストが現実を動かす」口である。
   const uint8_t reading[2] = {0x00, 0xFA};
-  ebd::chanWrite(ebd::Origin::kDir, 0, reading, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, reading, 2);
 
   // --- ここから下が検証したいコード。実機向けのまま ---
   Wire.beginTransmission(0x48);
@@ -168,13 +161,13 @@ void setup() {
   const int lo = Wire.read();
   // ---------------------------------------------
 
-  ebd::runEnd();                      // 記録終了
+  ebhost::runEnd();                      // 記録終了
 
   static char trace[2048];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values temp=%02X%02X\n", hi, lo);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n",
                 s.events, s.dropped, s.diagCount);
   Serial.println("TEST done");
@@ -231,7 +224,7 @@ stats events=15 dropped=0 diag=6 outside=2 windows=1
 ## 6. よくあるつまずき
 
 **記録が空、`windows=0`。**
-`ebd::runBegin()` を呼んでいません。ホスト側のフックを入れるのが `runBegin` なので、
+`ebhost::runBegin()` を呼んでいません。ホスト側のフックを入れるのが `runBegin` なので、
 それより前のバス操作は環境から**見えてすらいません**。
 
 **`delay(500)` が一瞬で終わる。**
@@ -240,7 +233,7 @@ stats events=15 dropped=0 diag=6 outside=2 windows=1
 イベントの時刻が想定の1000倍なら、単位を間違えています。
 
 **`diag.unbound addr=XX` が出る。**
-そのアドレスに模型を割り当てていません。`ebd::bindWireDevice()` を確認してください。
+そのアドレスに模型を割り当てていません。`ebhost::bindWireDevice()` を確認してください。
 
 **デバイスの応答が想定より遅い。**
 模型が `requestWake()` を呼んでいない、または `HostPort` で

@@ -4,7 +4,6 @@
 // telemetry frame comes back through the receiver shim, all recorded.
 #include <Arduino.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "node_model.h"
@@ -15,15 +14,15 @@ static RemoteNodeModel node;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
 };
 
@@ -54,7 +53,7 @@ static void appFrameReceiver(uint8_t, uint16_t format, const uint8_t* data,
 
 static void appSendCommand(uint8_t address, uint8_t command) {
   const uint8_t frame[2] = {address, command};
-  ebd::frameTx(ebd::Origin::kApp, RemoteNodeModel::kBus, commandFormat, frame,
+  ebhost::frameTx(ebhost::Origin::kApp, RemoteNodeModel::kBus, commandFormat, frame,
                16);
 }
 // [adapter end]
@@ -73,13 +72,13 @@ static void runOnce(char* out, size_t cap) {
   telemetry[0] = 0;
   telemetry[1] = 0;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appScenario();
   char text[40];
   node.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[768];
@@ -91,18 +90,18 @@ void setup() {
   Serial.println("TEST start frame_port");
 
   node.attach(&draftPort);
-  ebd::bindFrameDevice(&devFrame);
-  ebd::setFrameReceiver(&appFrameReceiver);
-  ebd::bindTickDevice(&advanceDevice);
+  ebhost::bindFrameDevice(&devFrame);
+  ebhost::setFrameReceiver(&appFrameReceiver);
+  ebhost::bindTickDevice(&advanceDevice);
   // The application shim resolves the same names the model does.
-  commandFormat = ebd::registerFormat("acme.node.1", ebdev::schemaFingerprint("u8 addr,u8 cmd"));
-  telemetryFormat = ebd::registerFormat("acme.tele.1", ebdev::schemaFingerprint("u8 addr,u8 power"));
+  commandFormat = ebhost::registerFormat("acme.node.1", ebdev::schemaFingerprint("u8 addr,u8 cmd"));
+  telemetryFormat = ebhost::registerFormat("acme.tele.1", ebdev::schemaFingerprint("u8 addr,u8 power"));
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values got=%d telemetry=%02X%02X\n", gotTelemetry ? 1 : 0,
                 telemetry[0], telemetry[1]);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
 

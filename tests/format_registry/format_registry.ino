@@ -4,7 +4,6 @@
 // on the wrong logical bus is ignored, and a full registry diagnoses.
 #include <Arduino.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "named_node_model.h"
@@ -16,15 +15,15 @@ static uint16_t overflowId = 0xFFFF;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
 };
 
@@ -40,12 +39,12 @@ static void advanceDevice(uint64_t nowUs, void*) { node.advanceTo(nowUs); }
 static void onTick(uint32_t tick, void*) {
   if (tick == 2) {
     // Director probe: fill the registry, then overflow it once.
-    ebd::registerFormat("acme.xa.1", 0);
-    ebd::registerFormat("acme.xb.1", 0);
-    ebd::registerFormat("acme.xc.1", 0);
-    ebd::registerFormat("acme.xd.1", 0);
-    ebd::registerFormat("acme.xe.1", 0);
-    overflowId = ebd::registerFormat("acme.over.1", 0);
+    ebhost::registerFormat("acme.xa.1", 0);
+    ebhost::registerFormat("acme.xb.1", 0);
+    ebhost::registerFormat("acme.xc.1", 0);
+    ebhost::registerFormat("acme.xd.1", 0);
+    ebhost::registerFormat("acme.xe.1", 0);
+    overflowId = ebhost::registerFormat("acme.over.1", 0);
   }
 }
 
@@ -64,7 +63,7 @@ static void appFrameReceiver(uint8_t, uint16_t, const uint8_t* data,
 static void appSendFrame(uint8_t bus, uint16_t format, uint8_t b0,
                          uint8_t b1) {
   const uint8_t frame[2] = {b0, b1};
-  ebd::frameTx(ebd::Origin::kApp, bus, format, frame, 16);
+  ebhost::frameTx(ebhost::Origin::kApp, bus, format, frame, 16);
 }
 // [adapter end]
 
@@ -76,7 +75,7 @@ static void runOnce(char* out, size_t cap, uint16_t idCmd, uint16_t idVendor) {
   telemetry[1] = 0;
   overflowId = 0xFFFF;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appSendFrame(0, idCmd, 0x05, 0x08);     // foreign address
   appSendFrame(0, idCmd, 0x04, 0x08);     // ours: power on
   appSendFrame(0, idVendor, 0x04, 0x08);  // other protocol, same payload
@@ -84,9 +83,9 @@ static void runOnce(char* out, size_t cap, uint16_t idCmd, uint16_t idVendor) {
   delay(2);
   char text[40];
   node.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -98,17 +97,17 @@ void setup() {
   Serial.println("TEST start format_registry");
 
   node.attach(&draftPort);
-  ebd::bindFrameDevice(&devFrame);
-  ebd::setFrameReceiver(&appFrameReceiver);
-  ebd::bindTickDevice(&advanceDevice);
-  ebd::setTickHandler(&onTick);
+  ebhost::bindFrameDevice(&devFrame);
+  ebhost::setFrameReceiver(&appFrameReceiver);
+  ebhost::bindTickDevice(&advanceDevice);
+  ebhost::setTickHandler(&onTick);
 
   // The shim registers by name; re-registering the same name is
   // idempotent; an independent vendor name gets its own id.
-  const uint16_t idCmd = ebd::registerFormat("acme.node.1", 0x0001);
-  const uint16_t idTel = ebd::registerFormat("acme.tele.1", 0x0001);
-  const uint16_t idAgain = ebd::registerFormat("acme.node.1", 0x0001);
-  const uint16_t idVendor = ebd::registerFormat("vend.cal.1", 0x0002);
+  const uint16_t idCmd = ebhost::registerFormat("acme.node.1", 0x0001);
+  const uint16_t idTel = ebhost::registerFormat("acme.tele.1", 0x0001);
+  const uint16_t idAgain = ebhost::registerFormat("acme.node.1", 0x0001);
+  const uint16_t idVendor = ebhost::registerFormat("vend.cal.1", 0x0002);
 
   runOnce(run1, sizeof(run1), idCmd, idVendor);
   Serial.printf(
@@ -117,7 +116,7 @@ void setup() {
       idCmd, idTel, idAgain, idVendor, overflowId, gotTelemetry ? 1 : 0,
       telemetry[0], telemetry[1]);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
 

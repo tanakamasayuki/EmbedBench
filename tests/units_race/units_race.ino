@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <HostUart.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_ir_model.h>
@@ -39,16 +38,16 @@ static void setLine(size_t which, uint8_t level) {
   const uint8_t want = (asserted[0] || asserted[1]) ? 1 : 0;
   if (want == combinedLevel) return;
   combinedLevel = want;
-  ebd::pinInject(ebd::Origin::kDev, kPinAlarm, want);
+  ebhost::pinInject(ebhost::Origin::kDev, kPinAlarm, want);
 }
 
 class PirPort : public ebdev::HostPort {
  public:
   explicit PirPort(size_t which) : which_(which) {}
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t level) override { setLine(which_, level); }
   bool serialOut(const uint8_t*, size_t) override { return false; }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
 
  private:
   size_t which_;
@@ -56,21 +55,21 @@ class PirPort : public ebdev::HostPort {
 
 class BusPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
+    return ebhost::uartInject(ebhost::Origin::kDev, data, len);
   }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
-  bool requestWake(uint64_t whenUs) override { return ebd::requestWake(whenUs); }
+  bool requestWake(uint64_t whenUs) override { return ebhost::requestWake(whenUs); }
   bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
+    ebhost::deviceNote(text);
     return true;
   }
 };
@@ -124,22 +123,22 @@ static void runOnce(char* out, size_t cap) {
   naiveLevel = 0;
   combinedLevel = 0;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // Both sensors see motion, one a little after the other, so their hold
   // windows overlap: the early one releases at 2500 and the late one at
   // 3500, and the line must stay up throughout.
   const uint8_t motion[1] = {1};
-  ebd::chanWrite(ebd::Origin::kDir, 0, motion, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, motion, 1);
 
   // Three different kinds of effect, all arranged to land on 2500 us:
   // the early sensor's release, an IR repeat 2000 us after its press,
   // and a Modbus reply 1500 us of silence after its request.
   const uint8_t press[3] = {0x40, 0x12, 0x01};
   const uint8_t reg[3] = {0x00, 0xC0, 0xDE};
-  ebd::chanWrite(ebd::Origin::kDir, 3, reg, 3);
+  ebhost::chanWrite(ebhost::Origin::kDir, 3, reg, 3);
   delayMicroseconds(500);
-  ebd::chanWrite(ebd::Origin::kDir, 2, press, 3);  // repeat due at 2500
+  ebhost::chanWrite(ebhost::Origin::kDir, 2, press, 3);  // repeat due at 2500
   uint8_t request[8] = {UnitModbusModel::kAddress,
                         UnitModbusModel::kFuncReadHolding,
                         0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
@@ -148,7 +147,7 @@ static void runOnce(char* out, size_t cap) {
   request[7] = static_cast<uint8_t>(crc >> 8);
   delayMicroseconds(500);
   Serial1.write(request, sizeof(request));  // reply due at 2500
-  ebd::chanWrite(ebd::Origin::kDir, 1, motion, 1);  // releases at 3500
+  ebhost::chanWrite(ebhost::Origin::kDir, 1, motion, 1);  // releases at 3500
 
   delayMicroseconds(1400);
   lineAt2400 = digitalRead(kPinAlarm);
@@ -165,8 +164,8 @@ static void runOnce(char* out, size_t cap) {
   delayMicroseconds(1000);
   lineAt3600 = digitalRead(kPinAlarm);
 
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[4096];
@@ -183,13 +182,13 @@ void setup() {
   pirLate.attach(&latePort);
   ir.attach(&busPort);
   modbus.attach(&busPort);
-  ebd::setChannelHandler(&routeChannel);
-  ebd::bindTickDevice(&advanceAll);
-  ebd::bindUartDevice(&modbusTx);
-  ebd::setFrameReceiver(&appFrame);
+  ebhost::setChannelHandler(&routeChannel);
+  ebhost::bindTickDevice(&advanceAll);
+  ebhost::bindUartDevice(&modbusTx);
+  ebhost::setFrameReceiver(&appFrame);
 
   runOnce(run1, sizeof(run1));
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("values at2400=%d at2600=%d at3600=%d naive=%u\n", lineAt2400,
                 lineAt2600, lineAt3600, naiveAt2600);
   Serial.printf("values asked=%u took=%u\n", askedUs, tookUs);

@@ -27,7 +27,7 @@ The repository currently contains:
 - a valid Arduino library under `src/`, including the frozen device interface
   (`src/embedbench_device.h`, version 1 / revision 004) and two example
   environment implementations;
-- twenty-two shared device models under `tests/common_models/`, from a thermometer
+- twenty-two shared device models under `devices/`, from a thermometer
   to a Modbus slave, a UWB anchor and a part that misbehaves on demand;
 - 62 experiments (78 `pytest-embedded` tests) running on `lang-ship:host` 1.7.1.
 

@@ -1,23 +1,33 @@
-// EmbedBench draft core — EXPERIMENTAL CANDIDATE, NOT an approved API.
+// EmbedBench host environment — the Arduino-host side of the library.
 //
-// Integrates the winning candidates from the experiment ledger (X4/X7/X8
-// tick handling, X11 observer/responder split, X16 edge decision and
-// ctx=isr tagging, X20 request/response two-line events, X21 sink-recorded
-// device replies) into one core so multi-bus scenarios can be measured.
-// Gate A-F are deliberately deferred by the project owner: names, fields,
-// and behavior here are provisional and rework is expected. Nothing in
-// this header is a public contract.
+// This is one implementation of the environment that hosts device models:
+// it owns the virtual clock, the buses, the run window and the event
+// record, and it routes between an unmodified application sketch and the
+// models it talks to. A second implementation in plain C++ lives under
+// tests/common_env/, and a conformance kit (tests/conformance/) checks
+// that both reach the same verdict.
 //
-// Scope of this draft (v2): GPIO, interrupts, Wire (global instance), SPI,
-// Serial1, analog, a virtual clock with a fixed tick, a lifecycle-driven
-// run window, and event listeners. Wire1/Serial2 and multi-instance
-// binding are still out.
+// The portable boundary these models are written against is
+// embedbench_device.h, which is frozen; this header is not. It is the
+// host-specific half, and it may still gain and lose functions as the
+// library settles. What it will not do is change quietly: every change
+// is recorded in CHANGELOG.md.
+//
+// Scope: GPIO, interrupts, both Wire instances, SPI, Serial1/Serial2,
+// analog, a virtual clock with a fixed tick, a lifecycle-driven run
+// window, generic frames, and event listeners.
+//
+// Introspection used by the experiments themselves (record sizes,
+// capacities, internal counters) lives in embedbench_internals.h so that
+// what is here is what an application-side test needs.
 #pragma once
 
 #include <stddef.h>
 #include <stdint.h>
 
-namespace ebd {
+#include "embedbench_device.h"
+
+namespace ebhost {
 
 enum class Origin : uint8_t { kApp, kDir, kDev, kCore, kDiag };
 
@@ -124,7 +134,6 @@ void setFrameReceiver(FrameHandler handler, void* user = nullptr);
 // callback and takes effect for the events that follow.
 bool addListener(EventListener fn, void* user = nullptr);
 bool removeListener(EventListener fn);
-size_t listenerCapacity();
 
 void runBegin(uint32_t tickUs);
 void runEnd();
@@ -162,13 +171,6 @@ bool frameRx(Origin origin, uint8_t bus, uint16_t format,
 // a different schema is a conflict (0 plus a diagnostic); 0 also when the
 // registry is full. Names, not numbers, are the cross-library identity.
 uint16_t registerFormat(const char* name, uint32_t schema);
-// This environment's per-call frame capacity in bits (all buses). An
-// oversized frameTx/frameRx is rejected whole with a diagnostic event.
-uint32_t frameCapacityBits();
-// How many effects (interrupts, application frame deliveries) raised
-// while a device runs can be held for delivery after it returns; beyond
-// this an effect is diagnosed and dropped, never delivered re-entrantly.
-size_t deferralCapacity();
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
                size_t len);
 // Analog injection sinks: recorded, then applied to the host's held
@@ -182,16 +184,65 @@ void deviceNote(const char* text);
 // A device's wake request (HostPort::requestWake, revision 003). The wait
 // splitter stops at the requested time as well as at its tick boundaries,
 // so a latency that does not divide by the tick is still served when it is
-// due. Only the earliest outstanding request is kept.
+// due. Requests are held per moment, so devices waiting for the same
+// instant share one slot; a full table returns false rather than serving
+// that device late in silence.
 bool requestWake(uint64_t whenUs);
-uint64_t pendingWakeUs();
 void dumpf(const char* fmt, ...);
 
 uint64_t nowUs();
 Stats stats();
-size_t eventCount();
-size_t respLineCount();
-size_t eventBytes();
 size_t formatTrace(char* out, size_t cap);
 
-}  // namespace ebd
+// A HostPort wired to this environment, so a sketch does not have to
+// write one. Everything a device can ask for is routed here already; all
+// that is left is saying which pin or port each of the device's own
+// lines corresponds to, which is the part that genuinely differs.
+//
+// Measured against the experiments this replaces: 28 of them wrote a
+// port class by hand, 412 lines in total, of which 20 serialOut and 18
+// lineOut bodies were empty stubs. Forgetting requestWake in one of
+// those hand-written ports was a real bug, and its symptom (answers
+// rounded up to the tick) was hard to read back to its cause.
+//
+// A device that needs something unusual still subclasses HostPort
+// directly, or subclasses this and overrides the one method it needs.
+class DevicePort : public ebdev::HostPort {
+ public:
+  static const size_t kMaxLines = 8;
+
+  // The device's line `line` is this board pin. Without a mapping a
+  // lineOut is silently ignored, which is what an unconnected pin does.
+  bool mapLine(uint8_t line, uint8_t pin);
+  // The device's analog line `line` is this board pin, for analogOut and
+  // analogOutMilliVolts.
+  bool mapAnalog(uint8_t line, uint8_t pin);
+  // Which serial port this device's serialOut reaches. Serial1 by default.
+  void useSerial(SerialPort port);
+
+  uint64_t nowMicros() override;
+  void lineOut(uint8_t line, uint8_t level) override;
+  bool serialOut(const uint8_t* data, size_t len) override;
+  bool analogOut(uint8_t line, uint16_t raw) override;
+  bool analogOutMilliVolts(uint8_t line, uint32_t millivolts) override;
+  bool requestWake(uint64_t whenUs) override;
+  bool diagnose(const char* text) override;
+  bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
+                size_t bits) override;
+  uint16_t formatId(const char* name, uint32_t schema) override;
+  uint32_t maxFrameBits(uint8_t bus) override;
+
+ private:
+  struct Mapping {
+    uint8_t line;
+    uint8_t pin;
+    bool used;
+  };
+  int find(const Mapping* table, uint8_t line) const;
+
+  Mapping lines_[kMaxLines] = {};
+  Mapping analog_[kMaxLines] = {};
+  SerialPort serial_ = SerialPort::kSerial1;
+};
+
+}  // namespace ebhost

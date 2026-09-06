@@ -5,11 +5,11 @@
 // replies through the RX sink. Runs three times; traces must match.
 #include <Arduino.h>
 #include <EmbedBench.h>
+#include <embedbench_internals.h>
 #include <HostBus.h>
 #include <HostInterrupt.h>
 #include <HostUart.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 // --- Register-map temperature sensor model (as X18) -----------------------
@@ -61,17 +61,17 @@ static bool devChannel(uint8_t channel, const uint8_t* data, size_t len,
 static void devUartTx(const uint8_t* data, size_t len, void*) {
   if (len == 2 && data[0] == 'A' && data[1] == 'T') {
     const uint8_t ok[2] = {'O', 'K'};
-    ebd::uartInject(ebd::Origin::kDev, ok, sizeof(ok));
+    ebhost::uartInject(ebhost::Origin::kDev, ok, sizeof(ok));
   }
 }
 static void onTick(uint32_t tick, void*) {
   if (tick == 2) {
     const uint8_t raw300[2] = {0x01, 0x2C};
-    ebd::chanWrite(ebd::Origin::kDir, 0, raw300, 2);
+    ebhost::chanWrite(ebhost::Origin::kDir, 0, raw300, 2);
   }
 }
 static void onZeroWait(uint32_t count, void*) {
-  if (count == 3) ebd::pinInject(ebd::Origin::kDir, 27, HIGH);
+  if (count == 3) ebhost::pinInject(ebhost::Origin::kDir, 27, HIGH);
 }
 
 // --- Application: unmodified Arduino code ----------------------------------
@@ -131,11 +131,11 @@ static void runOnce(char* out, size_t cap) {
   while (Serial1.readTx(drain, sizeof(drain)) > 0) {
   }
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appScenario();
-  ebd::dumpf("temp=%04X cfg=%02X", sensor.tempRaw, sensor.config);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("temp=%04X cfg=%02X", sensor.tempRaw, sensor.config);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1600];
@@ -152,25 +152,25 @@ void setup() {
   pinMode(5, OUTPUT);
   pinMode(27, INPUT);
 
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);
-  ebd::bindUartDevice(&devUartTx);
-  ebd::setChannelHandler(&devChannel);
-  ebd::setTickHandler(&onTick);
-  ebd::setZeroWaitHandler(&onZeroWait);
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);
+  ebhost::bindUartDevice(&devUartTx);
+  ebhost::setChannelHandler(&devChannel);
+  ebhost::setTickHandler(&onTick);
+  ebhost::setZeroWaitHandler(&onZeroWait);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values t1=%u t2=%u spins=%u\n", appT1, appT2, appSpins);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf(
       "stats events=%u dropped=%u zero_waits=%u zero_in_dir=%u late_ticks=%u "
       "ticks=%u diag=%u\n",
       s.events, s.dropped, s.zeroWaits, s.zeroInDirector, s.lateTicks, s.ticks,
       s.diagCount);
   Serial.printf("metrics event_bytes=%u resp_lines=%u\n",
-                static_cast<unsigned>(ebd::eventBytes()),
-                static_cast<unsigned>(ebd::respLineCount()));
+                static_cast<unsigned>(ebhost::eventBytes()),
+                static_cast<unsigned>(ebhost::respLineCount()));
 
   runOnce(run2, sizeof(run2));
   runOnce(run3, sizeof(run3));

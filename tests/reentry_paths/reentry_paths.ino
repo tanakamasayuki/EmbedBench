@@ -5,10 +5,10 @@
 // interrupts inside one call than the environment can hold.
 #include <Arduino.h>
 #include <EmbedBench.h>
+#include <embedbench_internals.h>
 #include <HostBus.h>
 #include <HostInterrupt.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "paths_model.h"
@@ -20,19 +20,19 @@ static uint16_t commandFormat = 0;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t line, uint8_t level) override {
-    if (line == PathsModel::kLineIrq) ebd::pinInject(ebd::Origin::kDev, 27, level);
+    if (line == PathsModel::kLineIrq) ebhost::pinInject(ebhost::Origin::kDev, 27, level);
   }
   bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
-  uint32_t maxFrameBits(uint8_t) override { return ebd::frameCapacityBits(); }
+  uint32_t maxFrameBits(uint8_t) override { return ebhost::frameCapacityBits(); }
 };
 
 static DraftPort draftPort;
@@ -65,7 +65,7 @@ static void appFrameReceiver(uint8_t, uint16_t format, const uint8_t*, size_t,
                              void*) {
   if (format == statusFormat) {
     const uint8_t cmd[1] = {0x01};
-    ebd::frameTx(ebd::Origin::kApp, 0, commandFormat, cmd, 8);
+    ebhost::frameTx(ebhost::Origin::kApp, 0, commandFormat, cmd, 8);
   }
 }
 // [adapter end]
@@ -90,7 +90,7 @@ static void runOnce(char* out, size_t cap) {
   HostArduino::setPinValue(27, LOW);
   model.reset();
   irqCount = 0;
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   attachInterrupt(27, &onIrqRead, RISING);
   digitalWrite(4, HIGH);  // lineIn path: the device pulses IRQ inside lineIn
@@ -99,14 +99,14 @@ static void runOnce(char* out, size_t cap) {
   // Burst path: 5 pulses inside one read against a deferral capacity of 4.
   attachInterrupt(27, &onIrqCount, RISING);
   const uint8_t burst[1] = {5};
-  ebd::chanWrite(ebd::Origin::kDir, PathsModel::kChannelBurst, burst, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, PathsModel::kChannelBurst, burst, 1);
   readSensor();
 
   char text[48];
   model.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[4096];
@@ -119,22 +119,22 @@ void setup() {
   pinMode(4, OUTPUT);
   pinMode(27, INPUT);
   model.attach(&draftPort);
-  const ebd::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);
-  ebd::setPinWriteForward(&forwardPins);
-  ebd::bindFrameDevice(&devFrame);
-  ebd::setChannelHandler(&devChannel);
-  ebd::bindTickDevice(&advanceDevice);
-  ebd::setFrameReceiver(&appFrameReceiver);
-  statusFormat = ebd::registerFormat("acme.stat.1", ebdev::schemaFingerprint("u8 hi,u8 lo"));
-  commandFormat = ebd::registerFormat("acme.cmd.1", ebdev::schemaFingerprint("u8 cmd"));
+  const ebhost::WireDeviceOps ops = {&devWrite, &devRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);
+  ebhost::setPinWriteForward(&forwardPins);
+  ebhost::bindFrameDevice(&devFrame);
+  ebhost::setChannelHandler(&devChannel);
+  ebhost::bindTickDevice(&advanceDevice);
+  ebhost::setFrameReceiver(&appFrameReceiver);
+  statusFormat = ebhost::registerFormat("acme.stat.1", ebdev::schemaFingerprint("u8 hi,u8 lo"));
+  commandFormat = ebhost::registerFormat("acme.cmd.1", ebdev::schemaFingerprint("u8 cmd"));
 
   runOnce(run1, sizeof(run1));
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("values irq_count=%u deferred_isrs=%u deferred_frames=%u dropped=%u "
                 "device_depth=%u capacity=%u\n",
                 irqCount, s.deferredIsrs, s.deferredFrames, s.deferredDropped,
-                s.maxDeviceDepth, static_cast<unsigned>(ebd::deferralCapacity()));
+                s.maxDeviceDepth, static_cast<unsigned>(ebhost::deferralCapacity()));
   Serial.print(run1);
   runOnce(run2, sizeof(run2));
   Serial.printf("run2_same=%d\n", strcmp(run1, run2) == 0 ? 1 : 0);

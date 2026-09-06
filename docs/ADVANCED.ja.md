@@ -231,7 +231,7 @@ payloadを持たないフレームは、空フレームとして送れます。
 static void setLine(size_t which, uint8_t level) {
   asserted[which] = level != 0;
   const uint8_t want = (asserted[0] || asserted[1]) ? 1 : 0;  // ORで合成
-  if (want != current) { current = want; ebd::pinInject(...); }
+  if (want != current) { current = want; ebhost::pinInject(...); }
 }
 ```
 

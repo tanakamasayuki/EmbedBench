@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <HostUart.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <modem_model.h>
@@ -15,10 +14,10 @@ static AtModemModel modem;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
+    return ebhost::uartInject(ebhost::Origin::kDev, data, len);
   }
 };
 
@@ -39,14 +38,14 @@ static void runOnce(char* out, size_t cap) {
   }
   appReply[0] = appReply[1] = appReply[2] = 0xEE;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   Serial1.print("AT+B;");
   appGot = Serial1.readBytes(appReply, sizeof(appReply));
   char dump[40];
   modem.dump(dump, sizeof(dump));
-  ebd::dumpf("%s", dump);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", dump);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -58,7 +57,7 @@ void setup() {
   Serial1.begin(9600);
   Serial1.setTimeout(10);
   modem.attach(&draftPort);
-  ebd::bindUartDevice(&devUartTx);
+  ebhost::bindUartDevice(&devUartTx);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values got=%u bytes=%02X%02X%02X\n",

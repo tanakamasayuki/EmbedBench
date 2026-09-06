@@ -3,7 +3,7 @@
 // frame is rejected whole with a diagnostic — never silently truncated.
 #include <Arduino.h>
 #include <EmbedBench.h>
-#include <embedbench_draft.h>
+#include <embedbench_internals.h>
 #include <string.h>
 
 #include "bulk_model.h"
@@ -15,17 +15,17 @@ static uint32_t deviceFrameCalls = 0;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
-    return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
+    return ebhost::frameRx(ebhost::Origin::kDev, bus, format, data, bits);
   }
   uint16_t formatId(const char* name, uint32_t schema) override {
-    return ebd::registerFormat(name, schema);
+    return ebhost::registerFormat(name, schema);
   }
-  uint32_t maxFrameBits(uint8_t) override { return ebd::frameCapacityBits(); }
+  uint32_t maxFrameBits(uint8_t) override { return ebhost::frameCapacityBits(); }
 };
 
 static DraftPort draftPort;
@@ -46,28 +46,28 @@ static void runOnce(char* out, size_t cap) {
   model.reset();
   deviceFrameCalls = 0;
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   const uint8_t seed[1] = {0x10};
-  ebd::chanWrite(ebd::Origin::kDir, BulkSensorModel::kChannelSeed, seed, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, BulkSensorModel::kChannelSeed, seed, 1);
   const uint8_t go[1] = {0x01};
-  ebd::chanWrite(ebd::Origin::kDir, BulkSensorModel::kChannelShip, go, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, BulkSensorModel::kChannelShip, go, 1);
 
   // Device-side atomic frame that does not fit: not split, not sent,
   // counted by the model as unsent (channel 2 asks for a snapshot).
   const uint8_t snap[1] = {0x01};
-  ebd::chanWrite(ebd::Origin::kDir, BulkSensorModel::kChannelSnapshot, snap, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, BulkSensorModel::kChannelSnapshot, snap, 1);
 
   // Application shim violating the negotiated limit: rejected whole, the
   // device never sees it, and a diagnostic marks the spot.
   uint8_t oversize[16] = {0};
-  ebd::frameTx(ebd::Origin::kApp, 0, ebd::registerFormat("acme.bulk.1", 0x0101),
+  ebhost::frameTx(ebhost::Origin::kApp, 0, ebhost::registerFormat("acme.bulk.1", 0x0101),
                oversize, 128);
 
   char text[32];
   model.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -79,15 +79,15 @@ void setup() {
   Serial.println("TEST start capacity");
 
   model.attach(&draftPort);
-  ebd::setChannelHandler(&devChannel);
-  ebd::bindFrameDevice(&devFrame);
+  ebhost::setChannelHandler(&devChannel);
+  ebhost::bindFrameDevice(&devFrame);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values capacity=%u device_calls=%u\n",
-                static_cast<unsigned>(ebd::frameCapacityBits()),
+                static_cast<unsigned>(ebhost::frameCapacityBits()),
                 deviceFrameCalls);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
 

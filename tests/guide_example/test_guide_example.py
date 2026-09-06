@@ -42,9 +42,10 @@ def test_guide_matches_sketch():
     # comments, so check the code that matters is the same in both.
     ja = guide_block(DOCS / "GUIDE.ja.md", "cpp")
     for needle in ["static TempSensorModel sensor;",
-                   "ebd::bindWireDevice(0x48, ops);",
-                   "ebd::setChannelHandler(&onChannel);",
-                   "ebd::runBegin(1000);"]:
+                   "static ebhost::DevicePort port;",
+                   "port.mapLine(TempSensorModel::kLineDataReady, 27);",
+                   "ebhost::bindWireDevice(0x48, ops);",
+                   "ebhost::runBegin(1000);"]:
         assert needle in ja, f"GUIDE.ja.md lost: {needle}"
 
 

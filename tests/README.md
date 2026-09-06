@@ -58,7 +58,7 @@ Additional experiments:
 - `reject_paths/`: how host-rejected or dropped operations appear to the current hooks (for the completeness-scope decision).
 - `event_timing/`: ordering comparison of four event-completion policies under a re-entrant sink call from a response callback.
 - `uart_sink/`: X17 redone with device replies recorded through the core RX sink so device send times enter the log.
-- `core_draft/`: the integrated draft core (`src/embedbench_draft.*`) putting GPIO, an interrupt, I2C, UART, and time on one event list.
+- `core_draft/`: the integrated draft core (`src/embedbench_host.*`) putting GPIO, an interrupt, I2C, UART, and time on one event list.
 - `device_if/`: the device interface being fixed (`src/embedbench_device.h`): a pure-C++ g++-only build and the same unmodified sources running on the host core.
 - `spi_device/`: a composite device (SPI plus a DC input line, a busy output line, and time) on the same interface; lineIn was the only addition.
 - `frame_port/`: the generic frame path (format id plus pre-encoding logical bits) for protocols without a dedicated port.
@@ -99,4 +99,4 @@ Additional experiments:
 - `frame_split/`: frame links of differing per-bus capacity, and the splitting rule the format carries.
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
-- `common_models/`: reference models shared across experiments and environments — the interface fixtures (temperature sensor, AT modem, register map, conformance probe), two catalog devices (environmental sensor, GPS), and eight M5Stack Unit-shaped units (`unit_*`) covering GPIO, analog, I2C, and binary serial.
+- The device models the experiments share now live in [`devices/`](../devices/) at the repository root, as a second Arduino library. They are kept out of `src/` so their build cost falls only on sketches that use them.

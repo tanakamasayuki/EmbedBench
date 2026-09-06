@@ -6,7 +6,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <embedbench_device.h>
-#include <embedbench_draft.h>
 
 void setup() {
   Serial.begin(115200);
@@ -15,27 +14,27 @@ void setup() {
   const uint32_t layoutA = ebdev::schemaFingerprint("u8 addr,u8 cmd");
   const uint32_t layoutB = ebdev::schemaFingerprint("u8 cmd,u8 addr");
 
-  ebd::runBegin(1000);
-  const uint16_t a = ebd::registerFormat("acme.cmd.1", layoutA);
-  const uint16_t b = ebd::registerFormat("acme.cmd.1", layoutA);
-  const uint16_t c = ebd::registerFormat("acme.cmd.1", layoutB);  // conflict
-  const uint16_t d = ebd::registerFormat("acme.cmd.2", layoutB);  // new version
-  const uint16_t e = ebd::registerFormat("acme.cmd.longnam.12", layoutA);  // 19
-  const uint16_t f = ebd::registerFormat("acme.cmd.longnam.12", layoutA);
-  const uint16_t g = ebd::registerFormat("acme.cmd.longname.12", layoutA);  // 20
+  ebhost::runBegin(1000);
+  const uint16_t a = ebhost::registerFormat("acme.cmd.1", layoutA);
+  const uint16_t b = ebhost::registerFormat("acme.cmd.1", layoutA);
+  const uint16_t c = ebhost::registerFormat("acme.cmd.1", layoutB);  // conflict
+  const uint16_t d = ebhost::registerFormat("acme.cmd.2", layoutB);  // new version
+  const uint16_t e = ebhost::registerFormat("acme.cmd.longnam.12", layoutA);  // 19
+  const uint16_t f = ebhost::registerFormat("acme.cmd.longnam.12", layoutA);
+  const uint16_t g = ebhost::registerFormat("acme.cmd.longname.12", layoutA);  // 20
   const uint8_t byte[1] = {0x55};
-  const bool noFormat = ebd::frameTx(ebd::Origin::kApp, 0, 0, byte, 8);
-  const bool unknown = ebd::frameTx(ebd::Origin::kApp, 0, 7, byte, 8);
-  const bool okFrame = ebd::frameTx(ebd::Origin::kApp, 0, a, byte, 8);
-  ebd::runEnd();
+  const bool noFormat = ebhost::frameTx(ebhost::Origin::kApp, 0, 0, byte, 8);
+  const bool unknown = ebhost::frameTx(ebhost::Origin::kApp, 0, 7, byte, 8);
+  const bool okFrame = ebhost::frameTx(ebhost::Origin::kApp, 0, a, byte, 8);
+  ebhost::runEnd();
 
   static char trace[768];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values a=%u b=%u c=%u d=%u e=%u f=%u g=%u noformat=%d unknown=%d ok=%d\n",
                 a, b, c, d, e, f, g, noFormat ? 1 : 0, unknown ? 1 : 0,
                 okFrame ? 1 : 0);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u diag=%u\n", s.events, s.diagCount);
   Serial.println("TEST done");
 }

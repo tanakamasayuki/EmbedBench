@@ -6,7 +6,6 @@
 #include <HostBus.h>
 #include <HostUart.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <unit_angle_model.h>
@@ -24,48 +23,13 @@ static const uint8_t kPinLight = 36;
 static const uint8_t kPinDark = 34;
 
 // [adapter begin]
-class AnalogPort : public ebdev::HostPort {
- public:
-  AnalogPort(uint8_t analogPin, uint8_t digitalPin)
-      : analogPin_(analogPin), digitalPin_(digitalPin) {}
-  uint64_t nowMicros() override { return ebd::nowUs(); }
-  void lineOut(uint8_t, uint8_t level) override {
-    if (digitalPin_ != 0xFF) ebd::pinInject(ebd::Origin::kDev, digitalPin_, level);
-  }
-  bool serialOut(const uint8_t*, size_t) override { return false; }
-  bool analogOut(uint8_t, uint16_t raw) override {
-    ebd::analogInject(ebd::Origin::kDev, analogPin_, raw);
-    return true;
-  }
-  bool analogOutMilliVolts(uint8_t, uint32_t mv) override {
-    ebd::analogInjectMilliVolts(ebd::Origin::kDev, analogPin_, mv);
-    return true;
-  }
-
- private:
-  uint8_t analogPin_;
-  uint8_t digitalPin_;
-};
-
-class BusPort : public ebdev::HostPort {
- public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
-  void lineOut(uint8_t, uint8_t) override {}
-  bool serialOut(const uint8_t* data, size_t len) override {
-    return ebd::uartInject(ebd::Origin::kDev, data, len);
-  }
-  bool requestWake(uint64_t whenUs) override {
-    return ebd::requestWake(whenUs);
-  }
-  bool diagnose(const char* text) override {
-    ebd::deviceNote(text);
-    return true;
-  }
-};
-
-static AnalogPort anglePort(kPinAngle, 0xFF);
-static AnalogPort lightPort(kPinLight, kPinDark);
-static BusPort busPort;
+// Four devices, four ports, no port class written by hand: DevicePort
+// already routes to the environment, so only the line-to-pin mapping is
+// left. What used to be 38 lines here is now four declarations and the
+// mappings in setup().
+static ebhost::DevicePort anglePort;
+static ebhost::DevicePort lightPort;
+static ebhost::DevicePort busPort;
 
 static uint8_t encWrite(const uint8_t* data, size_t len, bool stop,
                         bool continued, void*) {
@@ -113,36 +77,39 @@ void setup() {
   Serial1.setTimeout(20);
   pinMode(kPinDark, INPUT);
 
+  anglePort.mapAnalog(0, kPinAngle);
+  lightPort.mapAnalog(0, kPinLight);
+  lightPort.mapLine(UnitLightModel::kLineDigital, kPinDark);
   angle.attach(&anglePort);
   light.attach(&lightPort);
   encoder.attach(&busPort);
   modbus.attach(&busPort);
-  const ebd::WireDeviceOps ops = {&encWrite, &encRead, nullptr};
-  ebd::bindWireDevice(0x40, ops);
-  ebd::bindUartDevice(&modbusTx);
-  ebd::setChannelHandler(&routeChannel);
-  ebd::bindTickDevice(&advanceUnits);
+  const ebhost::WireDeviceOps ops = {&encWrite, &encRead, nullptr};
+  ebhost::bindWireDevice(0x40, ops);
+  ebhost::bindUartDevice(&modbusTx);
+  ebhost::setChannelHandler(&routeChannel);
+  ebhost::bindTickDevice(&advanceUnits);
   angle.reset();
   light.reset();
   encoder.reset();
   modbus.reset();
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // Analog units: the knob is turned and the room goes dark.
   const uint8_t position[2] = {0x08, 0x00};  // 2048 of 4095
-  ebd::chanWrite(ebd::Origin::kDir, 0, position, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, position, 2);
   appAngleRaw = analogRead(kPinAngle);
   appAngleMv = analogReadMilliVolts(kPinAngle);
   const uint8_t dim[2] = {0x01, 0xF4};  // 500, below the 2000 threshold
-  ebd::chanWrite(ebd::Origin::kDir, 1, dim, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 1, dim, 2);
   appLight = analogRead(kPinLight);
   appDark = digitalRead(kPinDark);
 
   // I2C encoder: the knob turns three detents, the sketch reads the
   // counter and lights the LED.
   const uint8_t turn[1] = {0x03};
-  ebd::chanWrite(ebd::Origin::kDir, 2, turn, 1);
+  ebhost::chanWrite(ebhost::Origin::kDir, 2, turn, 1);
   Wire.beginTransmission(0x40);
   Wire.write(UnitEncoderModel::kRegCounter);
   Wire.endTransmission();
@@ -163,7 +130,7 @@ void setup() {
   // Modbus: read one holding register, then send a frame with a broken
   // checksum, which a real slave answers with silence.
   const uint8_t reg[3] = {0x00, 0xBE, 0xEF};
-  ebd::chanWrite(ebd::Origin::kDir, 3, reg, 3);
+  ebhost::chanWrite(ebhost::Origin::kDir, 3, reg, 3);
   uint8_t request[8] = {UnitModbusModel::kAddress,
                         UnitModbusModel::kFuncReadHolding,
                         0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
@@ -182,20 +149,20 @@ void setup() {
 
   char text[64];
   angle.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   encoder.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
+  ebhost::dumpf("%s", text);
   modbus.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
 
   static char trace[3072];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values angle=%u mv=%u light=%u dark=%d count=%d reg=%04X\n",
                 appAngleRaw, appAngleMv, appLight, appDark, appCount,
                 appRegister);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n", s.events, s.dropped,
                 s.diagCount);
   Serial.println("TEST done");

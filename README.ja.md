@@ -24,7 +24,7 @@ Arduinoライブラリです。公開APIと最終的な構成はまだ確定し�
 
 - Arduinoライブラリとしての `src/`。凍結済みデバイスIF
   （`src/embedbench_device.h`、version 1 / revision 004）と環境実装例2種を含む
-- `tests/common_models/` の共有デバイス模型22種。温度計からModbusスレーブ、
+- `devices/` の共有デバイス模型22種。温度計からModbusスレーブ、
   UWBアンカー、わざと壊れる部品まで
 - `lang-ship:host` 1.7.1 上で動く実験62件（`pytest-embedded` テスト78件）
 

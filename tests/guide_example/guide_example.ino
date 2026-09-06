@@ -3,21 +3,14 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <temp_model.h>          // a model from the catalog
 
 static TempSensorModel sensor;
 
-// 1) how the model reaches the outside world
-class MyPort : public ebdev::HostPort {
- public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
-  void lineOut(uint8_t, uint8_t level) override {
-    ebd::pinInject(ebd::Origin::kDev, 27, level);
-  }
-  bool serialOut(const uint8_t*, size_t) override { return false; }
-};
-static MyPort port;
+// 1) how the model reaches the outside world. DevicePort routes
+//    everything to the environment already; all it needs is which board
+//    pin each of the device's own lines corresponds to.
+static ebhost::DevicePort port;
 
 // 2) the world's channel reaches the model
 static bool onChannel(uint8_t ch, const uint8_t* d, size_t n, void*) {
@@ -39,18 +32,19 @@ void setup() {
   Serial.println("TEST start guide_example");
   Wire.begin(21, 22, 400000);
 
+  port.mapLine(TempSensorModel::kLineDataReady, 27);  // its line is pin 27
   sensor.attach(&port);
-  const ebd::WireDeviceOps ops = {&onWrite, &onRead, nullptr};
-  ebd::bindWireDevice(0x48, ops);     // this model answers at this address
-  ebd::setChannelHandler(&onChannel);
+  const ebhost::WireDeviceOps ops = {&onWrite, &onRead, nullptr};
+  ebhost::bindWireDevice(0x48, ops);  // this model answers at this address
+  ebhost::setChannelHandler(&onChannel);
   sensor.reset();
 
-  ebd::runBegin(1000);                // start recording, 1,000 us tick
+  ebhost::runBegin(1000);                // start recording, 1,000 us tick
 
   // The world puts a temperature on the sensor. This is what `channel`
   // is for: not a bus and not a pin, but the test moving reality.
   const uint8_t reading[2] = {0x00, 0xFA};
-  ebd::chanWrite(ebd::Origin::kDir, 0, reading, 2);
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, reading, 2);
 
   // --- everything below is the code under test, unchanged ---
   Wire.beginTransmission(0x48);
@@ -61,13 +55,13 @@ void setup() {
   const int lo = Wire.read();
   // ----------------------------------------------------------
 
-  ebd::runEnd();                      // stop recording
+  ebhost::runEnd();                      // stop recording
 
   static char trace[2048];
-  ebd::formatTrace(trace, sizeof(trace));
+  ebhost::formatTrace(trace, sizeof(trace));
   Serial.printf("values temp=%02X%02X\n", hi, lo);
   Serial.print(trace);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u\n",
                 s.events, s.dropped, s.diagCount);
   Serial.println("TEST done");

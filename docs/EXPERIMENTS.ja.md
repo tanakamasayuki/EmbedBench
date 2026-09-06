@@ -563,13 +563,13 @@ X17と同じAT会話を、dev応答をcoreのUART RX sinkで**記録してから
 
 ## X22. 統合draft coreの複数バス同時計測
 
-対象: `tests/core_draft/`、実装は `src/embedbench_draft.{h,cpp}`
+対象: `tests/core_draft/`、実装は `src/embedbench_host.{h,cpp}`
 
 **工程上の位置づけ:** 所有者の判断で、Gate承認を後置して「実装しながら数値を
 取り、最後に決定する」フェーズに入った（2026-09-03）。各実験の最優秀候補
 （X4/X7/X8のtick処理、X11の観測者/応答者分離、X16のedge判定と`ctx=isr`、
 X20勝者の要求/応答2行分割、X21のsink記録）を1つのdraft coreに統合し、
-`src/embedbench_draft.{h,cpp}` に**未承認・手戻り前提のdraft**として隔離した。
+`src/embedbench_host.{h,cpp}` に**未承認・手戻り前提のdraft**として隔離した。
 計画7項の「Gate未承認の型をsrc/へ追加しない」の例外であり、公開APIの確定ではない。
 
 シナリオ（アプリは無改造のArduinoコード）: I2Cでconfig書込み →
@@ -632,13 +632,13 @@ lifecycle連動のrun window、listener多重化、バッファ満杯時の診�
 ## X23. ポータブルなデバイスIF（固定対象の中心）
 
 対象: `tests/device_if/`、IF本体は `src/embedbench_device.h`
-（参照模型はX29で `tests/common_models/` へ移し、複数環境から同一ソースを共有する形にした）
+（参照模型はX29で `devices/` へ移し、複数環境から同一ソースを共有する形にした）
 
 **工程上の位置づけ:** 所有者の判断（2026-09-03）で、**確実に固める対象を
 「デバイス模型とのIF」に絞った**。デバイスIFは純粋なC++11でプラットホーム差が
 なく他環境へポータブル。その上の環境側（host hookの所有、時計、記録の実装）は
 環境ごとに差が出るため、**プラットホーム別の実装例**という扱いにする。
-`src/embedbench_draft.*` はhost-arduino-core向け実装例の位置づけになった。
+`src/embedbench_host.*` はhost-arduino-core向け実装例の位置づけになった。
 
 IFの形（`embedbench_device.h`、58行）: デバイス = 決定的状態機械。
 入力はbus ops（`i2cWrite`/`i2cRead`/`spiTransfer`/`serialIn`）、注入
@@ -900,7 +900,7 @@ transaction境界という自然な区切りが集約の開始・終了を決め
 
 ## X29. 環境実装例#2 — 純粋C++の最小記録環境で同一模型を駆動
 
-対象: `tests/native_env/`（環境実装例、`.ino`なし）、模型は `tests/common_models/`
+対象: `tests/native_env/`（環境実装例、`.ino`なし）、模型は `devices/`
 （手戻り記録: 2026-09-04の契約改訂で`I2cTransfer`・schema照合・padding検査・
 channel診断を追加し、環境#2は290行→328行。host側adapterは32行→36行）
 
@@ -912,7 +912,7 @@ channel診断を追加し、環境#2は290行→328行。host側adapterは32行�
 一切includeしない（テストが機械検査）。
 
 模型はX23の温度センサとATモデムを**そのまま**使う。共有のため両模型を
-`tests/common_models/`（Arduinoライブラリ形式）へ移し、host側は`sketch.yaml`の
+`devices/`（Arduinoライブラリ形式）へ移し、host側は`sketch.yaml`の
 `libraries: dir`、ネイティブ側は`-I`で同一ファイルを参照する（手戻り記録:
 X23の配置変更、2026-09-04）。
 
@@ -1275,7 +1275,7 @@ X38が正常系だけを通していたため、契約の残り半分——「�
 
 ## X43. 環境の準拠キット（デバイス側からの契約検証）
 
-対象: `tests/conformance/`、probeは `tests/common_models/src/conformance_probe.*`
+対象: `tests/conformance/`、probeは `devices/src/conformance_probe.*`
 
 凍結後の最初の実装課題。「環境側は実装例」という整理には、**環境が契約を
 満たしているかを判定する共通の物差し**が要る。IFだけに依存する probe 模型を書き、
@@ -1321,7 +1321,7 @@ host環境が不合格になった。契約が**許可**しているだけの挙
 
 ## X44. 実装例の整備 — Analog・run window・listener（draft core v2）
 
-対象: `tests/core_draft2/`、実装は `src/embedbench_draft.{h,cpp}`
+対象: `tests/core_draft2/`、実装は `src/embedbench_host.{h,cpp}`
 
 凍結後に残っていた実装例側の3項目を入れた。IFは触っていない。
 
@@ -1508,7 +1508,7 @@ EmbedBench経由」という規則の、具体的な形が決まったことに�
 
 ## X50. カタログの実デバイス模型（revision 002〜004 の実運用）
 
-対象: `tests/catalog_devices/`、模型は `tests/common_models/src/env_sensor_model.*`
+対象: `tests/catalog_devices/`、模型は `devices/src/env_sensor_model.*`
 と `gps_model.*`
 
 「revision 002〜004 を使う模型を実運用で増やし、次に足りない経路を探す」の実施。
@@ -1560,7 +1560,7 @@ status pollingが1回につき2イベント（req/resp）を出すため。X10�
 
 ## X51. Unit系デバイスの実装例を一通り揃える
 
-対象: `tests/units_gpio/`、`tests/units_bus/`、模型8種は `tests/common_models/src/unit_*`
+対象: `tests/units_gpio/`、`tests/units_bus/`、模型8種は `devices/src/unit_*`
 
 所有者の要望「M5StackのUnit系のGPIO・アナログ・UART・I2Cで実装例を増やす」に
 沿って、バスの種類ごとに代表的な形を書いた（SPIはUnitではなくBASE側であり、
@@ -1605,7 +1605,7 @@ status pollingが1回につき2イベント（req/resp）を出すため。X10�
 
 ## X52. frame経路のUnit類型と、そこで見つかった環境の契約違反
 
-対象: `tests/units_radio/`、模型は `tests/common_models/src/unit_{ir,lora,uwb}_model`
+対象: `tests/units_radio/`、模型は `devices/src/unit_{ir,lora,uwb}_model`
 
 X51で残っていたframe経路の類型を書いた。3本の論理リンク（bus 0/1/2）が
 同時に生きている構成。
@@ -1645,7 +1645,7 @@ X51で残っていたframe経路の類型を書いた。3本の論理リンク�
 
 **判断: 凍結IFの変更ではなく環境実装例の不具合。** 修正はwakeを
 「モーメントごとの固定スロット表」（8枠、同時刻は共有、満杯は `false` +
-`diag.wake_full`）にするだけで済み、`embedbench_draft.cpp` と
+`diag.wake_full`）にするだけで済み、`embedbench_host.cpp` と
 `tests/common_env/nenv.cpp` の両方へ入れた。修正後は要求どおりになる。
 
 ```text
@@ -1684,7 +1684,7 @@ IFの変更ではなく環境の不具合が1件見つかったのが、この�
 
 ## X53. 固定容量が尽きたときの方針（イベントバッファ・wakeスロット）
 
-対象: `tests/capacity_policy/`、実装は `src/embedbench_draft.{h,cpp}`
+対象: `tests/capacity_policy/`、実装は `src/embedbench_host.{h,cpp}`
 
 X50とX52で開いたままだった容量方針2件をまとめて決めた。問いは「いくつなら
 足りるか」ではない（固定容量はいつか必ず埋まる）。**埋まったときテストに
@@ -1750,7 +1750,7 @@ last 210 000000 main diag trace.truncated lost=147
 
 ## X54. 毎回値が違う連続転送の記録粒度（畳み込み第2段）
 
-対象: `tests/capacity_policy/`、実装は `src/embedbench_draft.cpp`
+対象: `tests/capacity_policy/`、実装は `src/embedbench_host.cpp`
 
 X53で残った唯一の類型。`bulk_spi` の200回burstは**毎バイト値が違う**ため
 完全一致の周期が存在せず、切詰めへ退避するしかなかった（`lost=147`）。
@@ -1808,7 +1808,7 @@ CRCは位置ごとに全コピーを通して取るため、値の変化は印�
 
 ## X55. 自走するデバイス（FIFOを持つIMU、自分の時刻を持つRTC）
 
-対象: `tests/units_sense/`、模型は `tests/common_models/src/unit_{imu,rtc}_model`
+対象: `tests/units_sense/`、模型は `devices/src/unit_{imu,rtc}_model`
 
 カタログに無かった形として「**アプリが訊いていなくても動き続ける**デバイス」を
 狙った。凍結IFの不足を探すのが目的。
@@ -1851,7 +1851,7 @@ format id解決で既に使っている定石と同じ形だったので、契�
 
 ## X56. bus別のframe容量と、分割規則の置き場所
 
-対象: `tests/frame_split/`、模型は `tests/common_models/src/unit_chunk_model`
+対象: `tests/frame_split/`、模型は `devices/src/unit_chunk_model`
 
 [SCOPE](DEVICE_IF_SCOPE.ja.md)5節の残り1件。凍結IFは容量を
 **busごと**に問う（`maxFrameBits(uint8_t bus)`）一方で、超過フレームは
@@ -1901,7 +1901,7 @@ format `m5.chunk.1` は `[seq, more, payload...]`。
 
 ## X57. 順序に鍵がかかったプロトコルと、2本のバスに載る1つの模型
 
-対象: `tests/units_mixed/`、模型は `tests/common_models/src/unit_{flash,codec}_model`
+対象: `tests/units_mixed/`、模型は `devices/src/unit_{flash,codec}_model`
 
 カタログに無かった**構造的な**形を2つ。
 
@@ -1955,7 +1955,7 @@ overrideして環境が2回bindすれば済む——それが実際に成り立�
 
 ## X58. 異常系と、電源断を越えて残るもの
 
-対象: `tests/units_fault/`、模型は `tests/common_models/src/unit_faulty_model`
+対象: `tests/units_fault/`、模型は `devices/src/unit_faulty_model`
 と `unit_flash_model`
 
 カタログの他は全部「正しく答える」模型だった。実機のベンチでは**狙って

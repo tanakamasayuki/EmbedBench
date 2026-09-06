@@ -4,9 +4,9 @@
 // time releases it. Exchanges are logical byte streams by project stance.
 #include <Arduino.h>
 #include <EmbedBench.h>
+#include <embedbench_internals.h>
 #include <HostBus.h>
 #include <SPI.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include "display_model.h"
@@ -17,11 +17,11 @@ static SpiDisplayModel display;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t line, uint8_t level) override {
     // The display's busy line is wired to pin 26 here.
     const uint8_t pin = line == SpiDisplayModel::kLineBusy ? 26 : 0xFF;
-    if (pin != 0xFF) ebd::pinInject(ebd::Origin::kDev, pin, level);
+    if (pin != 0xFF) ebhost::pinInject(ebhost::Origin::kDev, pin, level);
   }
   bool serialOut(const uint8_t*, size_t) override { return true; }
 };
@@ -67,13 +67,13 @@ static void runOnce(char* out, size_t cap) {
   HostArduino::setPinValue(4, LOW);
   HostArduino::setPinValue(26, LOW);
 
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
   appScenario();
   char text[48];
   display.dump(text, sizeof(text));
-  ebd::dumpf("%s", text);
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::dumpf("%s", text);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -89,18 +89,18 @@ void setup() {
   pinMode(26, INPUT);
 
   display.attach(&draftPort);
-  ebd::bindSpiDevice(&devTransfer);
-  ebd::setPinWriteForward(&forwardPins);
-  ebd::bindTickDevice(&advanceDevice);
+  ebhost::bindSpiDevice(&devTransfer);
+  ebhost::setPinWriteForward(&forwardPins);
+  ebhost::bindTickDevice(&advanceDevice);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values ack=%02X s1=%02X s2=%02X busy_reads=%u\n", appAck,
                 appSum1, appSum2, appBusyReads);
   Serial.print(run1);
-  const ebd::Stats s = ebd::stats();
+  const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u resp_lines=%u diag=%u\n",
                 s.events, s.dropped,
-                static_cast<unsigned>(ebd::respLineCount()), s.diagCount);
+                static_cast<unsigned>(ebhost::respLineCount()), s.diagCount);
 
   runOnce(run2, sizeof(run2));
   runOnce(run3, sizeof(run3));

@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <Wire.h>
-#include <embedbench_draft.h>
 #include <string.h>
 
 #include <regmap_model.h>
@@ -16,7 +15,7 @@ static RegisterMapModel deviceB;
 // [adapter begin]
 class DraftPort : public ebdev::HostPort {
  public:
-  uint64_t nowMicros() override { return ebd::nowUs(); }
+  uint64_t nowMicros() override { return ebhost::nowUs(); }
   void lineOut(uint8_t, uint8_t) override {}
   bool serialOut(const uint8_t*, size_t) override { return true; }
 };
@@ -47,7 +46,7 @@ static void pointerWrite(uint8_t address, bool stop) {
 static void runOnce(char* out, size_t cap) {
   deviceA.reset();
   deviceB.reset();
-  ebd::runBegin(1000);
+  ebhost::runBegin(1000);
 
   // A leaves the bus open, B closes it with STOP, then A is read: no
   // repeated start for A any more.
@@ -63,8 +62,8 @@ static void runOnce(char* out, size_t cap) {
                                   static_cast<size_t>(1), true);
   while (Wire.available()) Wire.read();
 
-  ebd::runEnd();
-  ebd::formatTrace(out, cap);
+  ebhost::runEnd();
+  ebhost::formatTrace(out, cap);
 }
 
 static char run1[1024];
@@ -76,10 +75,10 @@ void setup() {
   Wire.begin(21, 22, 400000);
   deviceA.attach(&draftPort);
   deviceB.attach(&draftPort);
-  const ebd::WireDeviceOps opsA = {&devWrite, &devRead, &deviceA};
-  const ebd::WireDeviceOps opsB = {&devWrite, &devRead, &deviceB};
-  ebd::bindWireDevice(0x50, opsA);
-  ebd::bindWireDevice(0x51, opsB);
+  const ebhost::WireDeviceOps opsA = {&devWrite, &devRead, &deviceA};
+  const ebhost::WireDeviceOps opsB = {&devWrite, &devRead, &deviceB};
+  ebhost::bindWireDevice(0x50, opsA);
+  ebhost::bindWireDevice(0x51, opsB);
 
   runOnce(run1, sizeof(run1));
   Serial.printf("values broken_len=%u proper_len=%u\n",

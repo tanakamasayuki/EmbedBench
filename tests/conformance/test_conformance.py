@@ -5,7 +5,7 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 SRC = HERE.parent.parent / "src"
-MODELS = HERE.parent / "common_models" / "src"
+MODELS = HERE.parent.parent / "devices" / "src"
 ENV = HERE.parent / "common_env"
 
 # checks() is a bitmask of the contracts the probe managed to verify. The
