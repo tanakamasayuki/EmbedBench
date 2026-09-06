@@ -1506,6 +1506,58 @@ IFの規則「1 Deviceは各専用busを最大1つ、複合はadapterが子Devic
 （計画4.2の「走行中・走行後のconst検分は直接呼べる。証拠に残す場合だけ
 EmbedBench経由」という規則の、具体的な形が決まったことになる）。
 
+## X50. カタログの実デバイス模型（revision 002〜004 の実運用）
+
+対象: `tests/catalog_devices/`、模型は `tests/common_models/src/env_sensor_model.*`
+と `gps_model.*`
+
+「revision 002〜004 を使う模型を実運用で増やし、次に足りない経路を探す」の実施。
+実在の部品に近い2種を[カタログ](DEVICE_CATALOG.ja.md)へ追加した。
+
+**環境センサー（BME280相当）:** I2Cのregister map、chip ID、`0xF4`への書込みで
+強制測定、**7.5 ms**の測定時間（tickの倍数でない）、status register、DRDY線。
+読み出しはrepeated startを要求する。未定義registerの読み出しは戻り値で拒否
+できないため `diagnose` で言う。
+
+**GPS受信機:** 行指向のserial。`START`で自走を開始し、**自分の周期**で
+`$GPGGA,...*CS\r\n` を送出（`requestWake`を毎回張り直す一発方式）、未知コマンドと
+長すぎるコマンドは `diagnose`。checksumは本物と同じ規則で計算する。
+
+host環境（無改造のArduinoコード）での動作:
+
+```text
+02-05  chip ID を repeated start で読む → 0x60
+06     0xF4 へ 0x25 を書いて強制測定を開始
+08-39  status を1 msごとにpolling（8回）— すべて 0x08（測定中）
+40 007500 tick dev gpio.inject pin=27 0->1   ← 7,500us ちょうどでDRDY
+44 008500 status が 0x00（完了）
+48 008500 温度 3 byte を読む → FE0000
+49 008500 main app uart.tx START\n
+50 010500 tick dev dev.tx $GPGGA,10,1*66\r\n
+```
+
+| 確認 | 結果 |
+| --- | --- |
+| 測定時間 | **7,500us ちょうど**（`requestWake`。tick境界の8,000usに丸められない） |
+| アプリのpolling | 8回で完了を検出（実機と同じ書き方のまま） |
+| 未定義registerの通知 | `diagnose` 1件（`bad_reg=1`） |
+| 周期送信 | GPSが自分の周期で2文送出。環境は何もしていない |
+| ネイティブとの一致 | 同一模型が環境実装例#2でも同じ値を返す |
+
+**発見1（修正済み）: 行指向プロトコルのログが読めなかった。** `START\n` が
+`len=6 crc=F7` と表示されていた。`\r`や`\n`を含むpayloadは「印字不可」と判定され
+一括要約へ落ちるためで、**実プロトコルの大半が該当する**。両環境の`bytesLabel`を
+「印字可能文字＋改行類はescapeして表示、それ以外だけ要約」に変え、
+`uart.tx START\n` / `dev.tx $GPGGA,10,1*66\r\n` と読めるようにした。
+
+**発見2（仕様どおり）: 64件のイベントバッファが溢れた**（`dropped=4`）。
+status pollingが1回につき2イベント（req/resp）を出すため。X10の設計どおり
+欠落は数えられ、黙って消えてはいない。実デバイスのpollingは記録が嵩むという
+実測値として残す。
+
+**IFに足りない経路は見つからなかった。** 2種とも凍結IF（revision 004）だけで
+書けており、追加要求は出ていない。
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X44〜X46でIF外の課題も片付いた）

@@ -82,5 +82,6 @@ def test_native_env():
     # guard; X38-X40), +6 for the receive-capacity knob the shortfall test
     # needs (X41), +10 for CRC-8 bulk summaries (X46), +37 for the
     # approved interface revisions 002-004: analog output lines, wake
-    # requests (which the clock now stops at), and device notes (X47).
-    assert sizes == {"env": 422}
+    # requests (which the clock now stops at), and device notes (X47),
+    # +17 for keeping line-based payloads readable in the log (X50).
+    assert sizes == {"env": 439}

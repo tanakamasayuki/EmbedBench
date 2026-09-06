@@ -269,19 +269,39 @@ void payloadLabel(const uint8_t* data, size_t bytes, char* out, size_t cap) {
   }
 }
 
-// Serial bytes print as text when every byte is printable ASCII, and as a
-// binary payload label otherwise, so NUL or high bytes never cut a line.
+// Serial bytes print as text when every byte is printable ASCII or one
+// of the line-ending characters real protocols are full of, which are
+// escaped so the line stays one line. Anything else (a NUL, a high byte)
+// falls back to the binary payload label, so no byte value can cut a
+// record short.
 void bytesLabel(const uint8_t* data, size_t len, char* out, size_t cap) {
-  bool printable = len > 0;
-  for (size_t i = 0; i < len && printable; ++i) {
-    if (data[i] < 0x20 || data[i] > 0x7E) printable = false;
+  bool renderable = len > 0;
+  size_t needed = 0;
+  for (size_t i = 0; i < len && renderable; ++i) {
+    const uint8_t b = data[i];
+    if (b >= 0x20 && b <= 0x7E) {
+      needed += 1;
+    } else if (b == '\r' || b == '\n' || b == '\t') {
+      needed += 2;  // written as \r, \n, \t
+    } else {
+      renderable = false;
+    }
   }
-  if (printable) {
-    snprintf(out, cap, "%.*s", static_cast<int>(len),
-             reinterpret_cast<const char*>(data));
-  } else {
+  if (!renderable || needed + 1 > cap) {
     payloadLabel(data, len, out, cap);
+    return;
   }
+  size_t pos = 0;
+  for (size_t i = 0; i < len; ++i) {
+    const uint8_t b = data[i];
+    if (b >= 0x20 && b <= 0x7E) {
+      out[pos++] = static_cast<char>(b);
+    } else {
+      out[pos++] = '\\';
+      out[pos++] = b == '\r' ? 'r' : (b == '\n' ? 'n' : 't');
+    }
+  }
+  out[pos] = '\0';
 }
 
 WireDeviceSlot* findWireDevice(uint8_t bus, uint16_t address) {
