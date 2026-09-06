@@ -87,5 +87,7 @@ Additional experiments:
 - `multi_bus/`: both instances of each bus at once: different devices at one address on Wire and Wire1, repeated start tracked per bus.
 - `dump_route/`: how an inspection becomes evidence, compared across a text dump, a channel read, and the model's own API.
 - `catalog_devices/`: two realistic catalog models (an environmental sensor and a GPS) driven in both environments.
+- `units_gpio/`: four GPIO-shaped units (button, PIR, relay, ultrasonic), where the range measurement is the width of a pulse.
+- `units_bus/`: two analog units (angle, light), an I2C encoder, and a Modbus RTU slave framed by silence.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
-- `common_models/`: reference models (temperature sensor, AT modem, register map, conformance probe) shared across experiments and environments.
+- `common_models/`: reference models shared across experiments and environments — the interface fixtures (temperature sensor, AT modem, register map, conformance probe), two catalog devices (environmental sensor, GPS), and eight M5Stack Unit-shaped units (`unit_*`) covering GPIO, analog, I2C, and binary serial.

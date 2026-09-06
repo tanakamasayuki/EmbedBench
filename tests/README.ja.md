@@ -85,5 +85,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `multi_bus/`: Wire/Wire1・Serial1/Serial2の2系統同時。同一アドレスの別デバイスとbus単位のrepeated start
 - `dump_route/`: 検分を証拠に残す経路の比較（テキストdump・channel・模型API直接）
 - `catalog_devices/`: 実デバイス相当の模型2種（環境センサー・GPS）を両環境で駆動
+- `units_gpio/`: GPIO系Unit 4種（ボタン・PIR・リレー・超音波）。測距はパルス幅で表現
+- `units_bus/`: アナログ2種（角度・光）、I2Cエンコーダ、Modbus RTU（沈黙framing）
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
-- `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム、register-map、準拠probe）
+- `common_models/`: 実験間・環境間で共有する参照模型。IF検証用（温度センサ、ATモデム、register-map、準拠probe）、カタログ機器2種（環境センサー、GPS）、M5StackのUnit系8種（`unit_*`。GPIO・アナログ・I2C・バイナリserial）

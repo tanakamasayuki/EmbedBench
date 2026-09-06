@@ -52,12 +52,22 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `acme.stat.1` / `acme.cmd.1` | u8 hi,u8 lo / u8 cmd | `reentry_paths/` |
 | `acme.probe.1` | u8 probe | 準拠probe |
 
-実デバイス相当の模型（frame経路を使わないもの）:
+実デバイス相当の模型。M5StackのUnit系に代表される形を、バスの種類ごとに
+一通り揃えてある（SPIはUnitではなくBASE側の周辺機器なので `spi_device/` の
+表示器模型が受け持つ）。
 
-| 模型 | 使う経路 | 特徴 |
-| --- | --- | --- |
-| `env_sensor_model` | I2C（repeated start必須）、`lineOut`、`requestWake`、`diagnose`、channel | 7.5 msの測定時間、status register、未定義registerの通知 |
-| `gps_model` | serial（行指向）、`requestWake`、`diagnose`、channel | 自走する周期送信、本物と同じchecksum、コマンド拒否 |
+| 模型 | 相当するUnit | 使う経路 | その形でしか出ない特徴 |
+| --- | --- | --- | --- |
+| `unit_button_model` | BUTTON | `lineOut`、channel | バスを持たない最小の形。押下でlowへ引く |
+| `unit_pir_model` | PIR | `lineOut`、`requestWake`、channel | 動きが止まった後も保持時間だけ線が上がったまま |
+| `unit_relay_model` | RELAY | `lineIn`、`diagnose`、channel | アプリが線を駆動する向き。接点が落ち着く前の再切替を通知 |
+| `unit_sonic_model` | Ultrasonic I/O | `lineIn`、`lineOut`、`requestWake`、`diagnose`、channel | **測距がパルス幅**。環境が要求どおりの時刻に端を置けるかが出る |
+| `unit_angle_model` | ANGLE | `analogOut`、`analogOutMilliVolts`、channel | 生の数値とmVの両方を提示（換算は環境が持たない） |
+| `unit_light_model` | LIGHT | `analogOut`、`lineOut`、channel | 1つの物理量から**アナログと閾値デジタルの2出力** |
+| `unit_encoder_model` | ENCODER | I2C（plain read可）、`diagnose`、channel | 符号つきcounter、アプリからの書込み（LED・ゼロ復帰） |
+| `unit_modbus_model` | RS485 | serial（**バイナリ**）、`requestWake`、`diagnose`、channel | 終端文字でなく**沈黙で区切るframing**、CRC16、不正フレームは無応答 |
+| `env_sensor_model` | ENV系 | I2C（repeated start必須）、`lineOut`、`requestWake`、`diagnose`、channel | 7.5 msの測定時間、status register、未定義registerの通知 |
+| `gps_model` | GPS | serial（行指向）、`requestWake`、`diagnose`、channel | 自走する周期送信、本物と同じchecksum、コマンド拒否 |
 
 ## 3. 新しい模型を追加する手順
 

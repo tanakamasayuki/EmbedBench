@@ -1558,6 +1558,51 @@ status pollingが1回につき2イベント（req/resp）を出すため。X10�
 **IFに足りない経路は見つからなかった。** 2種とも凍結IF（revision 004）だけで
 書けており、追加要求は出ていない。
 
+## X51. Unit系デバイスの実装例を一通り揃える
+
+対象: `tests/units_gpio/`、`tests/units_bus/`、模型8種は `tests/common_models/src/unit_*`
+
+所有者の要望「M5StackのUnit系のGPIO・アナログ・UART・I2Cで実装例を増やす」に
+沿って、バスの種類ごとに代表的な形を書いた（SPIはUnitではなくBASE側であり、
+既に `spi_device/` が受け持つとの判断）。一覧は[カタログ](DEVICE_CATALOG.ja.md)。
+
+**GPIO系（`units_gpio/`）:** ボタン（押下でlowへ）、PIR（動き終了後も2,500usの
+保持）、リレー（アプリが線を駆動、接点が落ち着く前の再切替を通知）、超音波
+（トリガ→450us→**測距に比例した幅のechoパルス**）。
+
+```text
+03 000000 main dev gpio.inject pin=26 1->0 match=1   ← 押下、割り込みが走る
+12 002500 tick dev gpio.inject pin=25 1->0 match=0   ← PIRの保持切れ（tick境界でない）
+16 003500 main dev dev.note switched before contacts settled
+25 003950 tick dev gpio.inject pin=22 0->1           ← echo開始（trigger+450us）
+```
+
+アプリが測ったecho幅は **600us ちょうど**（100mm × 6us/mm）。
+
+**アナログ・I2C・バイナリserial（`units_bus/`）:** 角度（生値2048とmV 1650の
+両方を提示）、光（明るさのアナログ出力と閾値デジタル出力の2系統）、
+エンコーダ（符号つきcounter、plain readで応答、LED書込み）、Modbus RTU
+（**沈黙で区切るframing**、CRC16、不正CRCは無応答）。
+
+```text
+02 000000 main dev analog.inject pin=35 val=2048     ← 装置が自分で提示
+03 000000 main dev analog.inject.mv pin=35 mv=1650
+17 000000 main dev i2c.rd.resp len=2 data=0300       ← little endianの符号つき値
+22 001500 tick dev dev.tx len=7 crc=D8               ← 沈黙1500us後に応答
+31 003000 tick dev dev.note frame dropped: bad crc   ← 不正フレームは無応答
+```
+
+**事実:**
+
+- 8種すべてが凍結IF（revision 004）だけで書けた。**追加要求は出ていない**
+- 承認いただいた3経路が実際に効いている: `analogOut`（角度・光）、
+  `requestWake`（PIRの保持、超音波のパルス幅、Modbusのframing）、
+  `diagnose`（リレーのchatter、CRC不正、未対応function）
+- 特に**超音波は測距が時間そのもの**なので、環境がデバイスの要求した時刻に
+  端を置けなければ距離が狂う。requestWakeが無ければtick粒度に丸められていた
+- Modbusは終端文字を持たないため、`requestWake`が**framingそのもの**になる。
+  行指向のGPSとは別の形として揃えた意味がここに出た
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X44〜X46でIF外の課題も片付いた）
