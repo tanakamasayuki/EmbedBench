@@ -295,6 +295,6 @@ happened eight times, and the last was at 007000.
 | Splitting for per-bus capacity | `unit_chunk_model` |
 | Breaking on purpose | `unit_faulty_model` |
 
-All twenty-two are listed in the [catalog](DEVICE_CATALOG.ja.md)
-(Japanese). The reasoning and measurements behind every decision are in
+They are all listed in the [catalog](DEVICE_CATALOG.ja.md) (Japanese),
+and counted in [FACTS.md](FACTS.md). The reasoning and measurements behind every decision are in
 the [experiment ledger](EXPERIMENTS.ja.md) (Japanese), X0 through X60.

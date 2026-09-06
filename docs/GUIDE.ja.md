@@ -47,9 +47,9 @@ EmbedBenchは、この4つを引き受けます。時間は仮想なので `dela
 `Wire.beginTransmission()` も `digitalRead()` も `delay()` も、
 実機向けに書いたそのままが動きます。
 
-**デバイス模型**は、繋がっている部品の振る舞いです。
-`tests/common_models/` に22種の実例があります
-（[カタログ](DEVICE_CATALOG.ja.md)参照）。
+**デバイス模型**は、繋がっている部品の振る舞いです。実例は
+[`devices/`](../devices/) にあります（一覧は[カタログ](DEVICE_CATALOG.ja.md)、
+数は[FACTS](FACTS.ja.md)）。
 
 **環境**は両者を仲立ちし、起きたことを全部記録します。
 実装例が2つあります——ホストのArduinoコア向け（`src/embedbench_host.*`）と、
@@ -246,5 +246,5 @@ stats events=15 dropped=0 diag=6 outside=2 windows=1
 
 - [上級ガイド](ADVANCED.ja.md): 自分でデバイス模型を書く
 - [デバイスカタログ](DEVICE_CATALOG.ja.md): 24種の模型の一覧と選び方
-- [tests/README.ja.md](../tests/README.ja.md): 62実験の索引
+- [tests/README.ja.md](../tests/README.ja.md): 実験の索引
 - [実験台帳](EXPERIMENTS.ja.md): なぜこの設計なのかの根拠（実測つき）

@@ -406,11 +406,22 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 
 ## 8. 当面やらないこと
 
+**この節は外部から現行方針として参照される。** 実際に済んだ項目を残しておくと
+誤った引用を招くので、済んだものは取り消し線で残し、いつ・どこで済んだかを書く。
+
 - 実機テストと実機用設定
 - FreeRTOS task/queue/semaphore/task notificationと`esp_timer`の仮想化
 - ESP32など別環境への移植
-- 公開API名の確定
-- 標準デバイスカタログの大量追加
+  - **補足**: これはEmbedBench自身の移植をしないという意味であって、
+    他所が凍結IFに対して環境実装を書くことを妨げるものではない。
+    それはIFが設計どおり働いている状態であり、
+    [SCOPE](DEVICE_IF_SCOPE.ja.md) 3.3節の「越える要望は実機テストへ振り分ける」
+    の受け皿にあたる
+- ~~公開API名の確定~~ → **2026-09-06 実施**。`ebd::` → `ebhost::`、
+  `embedbench_draft.*` → `embedbench_host.*`、入口を `EmbedBench.h` 1つに、
+  模型を `devices/` へ分離。根拠と経緯は [RELEASE_SHAPE](RELEASE_SHAPE.ja.md)
+- ~~標準デバイスカタログの大量追加~~ → **2026-09-06 実施**（X51〜X61）。
+  模型23種。凍結IFの不足を探す目的で意図的に増やした
 - GUIや波形ビューア
 - サイクル精度・電気特性の再現
 - ログ形式を先に固定してからイベントを合わせること
@@ -418,7 +429,15 @@ timestampだけでは同値が発生するため、ログの識別子にはし�
 
 ## 9. 現在地
 
-現在の`src/EmbedBench.h`はversion以外の公開APIを持たない。既存の`smoke/`、
+> **2026-09-06 時点の注記。** 以下は台帳X22頃までの記述で、そこから先の経緯は
+> [EXPERIMENTS](EXPERIMENTS.ja.md)（X23〜X61）にある。現在の数値は
+> [FACTS](FACTS.ja.md)（テストで固定）を参照。
+> 特に**`src/EmbedBench.h` は既に唯一の入口であり、下の記述とは逆になっている**。
+> また本文書と台帳の過去の記述に出てくるファイル名・名前空間は、
+> 2026-09-06の改名（`embedbench_draft` → `embedbench_host`、`ebd::` → `ebhost::`）を
+> 遡って反映してあるので、当時の綴りとは異なる。
+
+かつての`src/EmbedBench.h`はversion以外の公開APIを持たなかった。既存の`smoke/`、
 `clock/`、`lifecycle/`、`ports/`、`tick_split/`、`hook_slots/`はhost core 1.7.0の
 性質を確認する準備計測であり、Gate A以降の仕様決定ではない。
 

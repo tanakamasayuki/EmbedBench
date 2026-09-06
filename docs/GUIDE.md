@@ -51,9 +51,10 @@ The **application** is the code you want to verify. It is **not
 rewritten**. `Wire.beginTransmission()`, `digitalRead()` and `delay()`
 all work exactly as written for the real board.
 
-A **device model** is the behaviour of a part that is connected. There
-are twenty-two worked examples in `tests/common_models/` (see the
-[catalog](DEVICE_CATALOG.ja.md), Japanese).
+A **device model** is the behaviour of a part that is connected. The
+worked examples live in [`devices/`](../devices/) (see the
+[catalog](DEVICE_CATALOG.ja.md), Japanese; counts are in
+[FACTS.md](FACTS.md)).
 
 The **environment** sits between them and records everything. There are
 two example implementations — one for the host Arduino core
@@ -257,6 +258,6 @@ override it. Without it, answers are rounded up to the next tick.
 - [Advanced guide](ADVANCED.md): writing your own device models.
 - [Device catalog](DEVICE_CATALOG.ja.md) (Japanese): the twenty-four
   models and how to pick one.
-- [tests/README.md](../tests/README.md): an index of the 62 experiments.
+- [tests/README.md](../tests/README.md): an index of the experiments.
 - [Experiment ledger](EXPERIMENTS.ja.md) (Japanese): why the design is
   what it is, with measurements.

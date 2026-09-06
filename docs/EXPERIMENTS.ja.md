@@ -7,6 +7,12 @@
 実験が通ったことを仕様の承認とはみなさない。以後の順序と承認条件は
 [DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md)に従う。
 
+> **命名についての注記（2026-09-06）。** 本台帳の過去の記述に出てくる
+> ファイル名と名前空間は、同日の改名（`embedbench_draft` → `embedbench_host`、
+> `ebd::` → `ebhost::`、`tests/common_models/` → `devices/`）を遡って
+> 反映してある。当時の綴りとは異なるが、追う人が現在のコードに辿り着けるほうを
+> 優先した。改名の根拠は [RELEASE_SHAPE](RELEASE_SHAPE.ja.md)。
+
 ## 記録の読み方
 
 - **事実**: host-arduino-coreの実行結果。EmbedBenchの仕様ではない
