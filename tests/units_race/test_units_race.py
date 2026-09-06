@@ -11,10 +11,11 @@ def test_units_race(dut):
     # first sensor to let go would have pulled the line out from under
     # the one still asserting.
     dut.expect("values at2400=1 at2600=1 at3600=0 naive=0", timeout=10)
-    # A known limitation, measured rather than left to be discovered: a
-    # delayMicroseconds spanning a wake comes back early, because it is
-    # the one waiter in the core that does not loop to its deadline.
-    dut.expect("values asked=200 took=100", timeout=10)
+    # A one-shot wait spanning a wake lasts exactly as long as it asked
+    # for: the wake is served at 2500 and the slice carries on to 2600
+    # (X59). Only the core's own looping slices come back early, and they
+    # re-enter, so nothing is lost there.
+    dut.expect("values asked=200 took=200", timeout=10)
 
     # One sensor asserting is one transition on the shared line; the
     # second one asserting adds nothing, and neither does the first one
@@ -29,8 +30,9 @@ def test_units_race(dut):
                "empty", timeout=10)
     dut.expect("10 002500 tick dev dev.tx len=7 crc=AC", timeout=10)
     # The early sensor's release also fell on 2500 and produced no event
-    # at all, because the combined line did not change.
-    dut.expect("11 002500 main app gpio.read pin=26 val=1", timeout=10)
+    # at all, because the combined line did not change. The read that
+    # follows is at 2600, the full length of the wait that spanned it.
+    dut.expect("11 002600 main app gpio.read pin=26 val=1", timeout=10)
     # Only when the late sensor lets go does the line fall.
     dut.expect("12 003500 tick dev gpio.inject pin=26 1->0 match=0",
                timeout=10)

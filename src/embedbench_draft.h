@@ -50,6 +50,16 @@ struct Stats {
   uint32_t deferredDropped = 0; // effects beyond the deferral capacity
   uint32_t maxDeviceDepth = 0;  // 1 means no device was ever re-entered
   uint32_t folded = 0;          // events kept as a repeat count, not a slot
+  // Direct sink calls made outside a run window (chanWrite, pinInject and
+  // the rest). Counted for the life of the program, not per window.
+  uint32_t outsideWindow = 0;
+  // How many run windows have been opened. Bus and pin traffic outside a
+  // window is not merely unrecorded but invisible — the host hooks are
+  // installed by runBegin, so before it the environment is not connected
+  // to anything. `windows == 0` is therefore the only evidence that a
+  // runBegin was forgotten, and an empty trace with it means "never
+  // started", not "nothing happened" (X60).
+  uint32_t windows = 0;
 };
 
 // I2C device callbacks receive the transaction context the master issued:

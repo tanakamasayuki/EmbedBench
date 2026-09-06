@@ -24,6 +24,8 @@ constexpr size_t kMaxWireDevices = 4;
 constexpr size_t kMaxFormats = 8;
 constexpr uint32_t kMaxFrameBits = 64;
 constexpr size_t kDeferralCapacity = 4;
+// The slice length the host core's waiting loops use (HostRuntime.h).
+constexpr uint32_t kCoreLoopSliceUs = 1000;
 constexpr size_t kMaxListeners = 4;
 
 struct ListenerSlot {
@@ -62,6 +64,10 @@ struct State {
   uint32_t nextSeq = 1;
   uint32_t dropped = 0;
   uint32_t folded = 0;
+  // Deliberately not cleared by runBegin: the point is to survive the
+  // window that was missing when the effect happened (X60).
+  uint32_t outsideWindow = 0;
+  uint32_t windows = 0;
   bool foldExhausted = false;  // a full buffer with no cycle left to fold
   bool truncated = false;      // the standing notice occupies the last slot
   uint32_t diagCount = 0;
@@ -374,7 +380,12 @@ void markTruncated(uint32_t seq) {
 
 uint32_t vrecord(Origin origin, uint32_t link, const char* fmt, va_list ap) {
   const uint32_t seq = st().nextSeq++;
-  if (!st().running) return seq;
+  if (!st().running) {
+    // Outside a run window: nothing is recorded, but the fact that
+    // something happened is, so a forgotten runBegin is visible.
+    ++st().outsideWindow;
+    return seq;
+  }
   if (st().count >= kCapacity) {
     // Once the buffer is full and no cycle remains, it can never change
     // again, so the search is not repeated for every later event.
@@ -638,6 +649,18 @@ void onWait(uint32_t us, void*) {
     st().vnow = target;
     return;
   }
+  // Whether this caller will come back for the rest of its wait. The
+  // core's waiting loops (delay, and Stream's timedRead) advance in
+  // slices of exactly this length and re-enter until their own deadline,
+  // so returning early from one of those costs nothing. Every other
+  // length is a one-shot delayMicroseconds, which is called once and
+  // never again — cutting that short would simply lose time (X59).
+  //
+  // The residual hole is delayMicroseconds(1000), which is
+  // indistinguishable from a loop slice and can still come back up to one
+  // wake early. Distinguishing it needs something the core does not
+  // offer.
+  const bool loops = us == kCoreLoopSliceUs;
   const uint64_t target = st().vnow + us;
   for (;;) {
     // The next stop is a tick boundary, or a device's requested wake when
@@ -652,6 +675,20 @@ void onWait(uint32_t us, void*) {
     }
     if (next > target) break;
     st().vnow = next;
+    if (isWake && !loops) {
+      // A one-shot wait must last exactly as long as it asked for, so
+      // the wake is served here and the slice carries on to its target.
+      retireWakesUpTo(st().vnow);
+      ++st().dirDepth;
+      if (st().tickDevice) {
+        enterDevice();
+        st().tickDevice(st().vnow, st().tickDeviceUser);
+        leaveDevice();
+        deliverDeferred();
+      }
+      --st().dirDepth;
+      continue;
+    }
     if (isWake) {
       retireWakesUpTo(st().vnow);
       ++st().dirDepth;
@@ -667,12 +704,6 @@ void onWait(uint32_t us, void*) {
       // lets the application see the device's answer at the moment it was
       // produced instead of at the end of the slice it fell in.
       //
-      // Known limitation (X59): delayMicroseconds is the one waiter in
-      // the core that does NOT loop to a deadline, so a delayMicroseconds
-      // spanning a wake comes back early — 100 us for a 200 us wait in
-      // tests/units_race. Removing this return fixes that and breaks four
-      // experiments that depend on seeing a device's answer at the moment
-      // it was produced, so the trade is deliberate, not an oversight.
       return;
     }
     st().nextTick += st().tickUs;
@@ -1141,6 +1172,7 @@ void runBegin(uint32_t tickUs) {
   for (size_t i = 0; i < State::kWakeSlots; ++i) st().wakeAtUs[i] = 0;
   st().droppedWakes = 0;
   st().running = true;
+  ++st().windows;
 
   HostArduino::setPinWriteHook(&onPinWrite);
   HostArduino::setPinReadHook(&onPinRead);
@@ -1452,6 +1484,8 @@ Stats stats() {
   s.events = static_cast<uint32_t>(st().count);
   s.dropped = st().dropped;
   s.folded = st().folded;
+  s.outsideWindow = st().outsideWindow;
+  s.windows = st().windows;
   s.zeroWaits = st().zeroWaits;
   s.zeroInDirector = st().zeroInDirector;
   s.lateTicks = st().lateTicks;

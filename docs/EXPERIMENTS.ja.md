@@ -2044,33 +2044,91 @@ run2_same=1 run3_same=1
 なおPIRの解放は同じ2,500 usに起きているが、合成後の線が変わらないため
 **イベントを生まない**。
 
-**発見（既知の制限として記録）: `delayMicroseconds` は wake を跨ぐと早く戻る。**
-
-```text
-values asked=200 took=100
-```
+**発見と修正: `delayMicroseconds` が wake を跨ぐと早く戻っていた（`took=100`）。**
 
 原因は、待ちスライスを wake で早期returnする仕組み（X41）。ホストコアの
 待ち手のうち `delay()` と `timedRead()` は締切までループするので早期returnは
 無害だが、**`delayMicroseconds()` だけは1回しか呼ばない**ため切り詰められる。
 
-早期returnを外して測ったところ、**4実験が壊れた**
-（`catalog_devices`・`units_bus`・`if_rev1`・`units_sense`）。
-デバイスの答えを「出た瞬間に」アプリが見られることに依存しているためで、
-早期returnは効いている仕組みである。よって**外さない**。
-意図的な取引であることを `embedbench_draft.cpp` の当該箇所にも明記した。
+まず早期returnを外して測った。**4実験が壊れた**
+（`catalog_devices`・`units_bus`・`if_rev1`・`units_sense`）が、
+壊れ方は1点だけだった。
 
-**未決として残す:** 両立させる直し方（ループする呼び手だけ早期returnする、
-または未消化分を次の観測前に精算する）は、時計の意味に関わるので
-別途設計が要る。現状は「wakeを跨ぐ `delayMicroseconds` は最大1 wake分
-早く戻る」を制限として明示する。
+```text
+22 001500 tick dev dev.tx len=7 crc=D8   ← デバイスの応答時刻は正しいまま
+23 002000 main app uart.rx 0x11          ← アプリが読む時刻が1 ms境界へずれる
+```
+
+デバイス側の時刻は影響を受けず、**アプリの観測時刻だけ**がpolling粒度へ動く。
+
+**修正: 早期returnを「ホストコアのループ用スライス長」に限定した。**
+`delay()` と `timedRead()` は必ず 1,000 us 刻みで呼び直すので早期returnは
+無害、それ以外の長さは呼び直されない一発の `delayMicroseconds` なので
+**目標まで進めてから返す**（wakeはその途中で正しい時刻に配送する）。
+
+```text
+values asked=200 took=200
+11 002600 main app gpio.read pin=26 val=1   ← 要求どおりの時刻
+```
+
+4実験は元のまま通り、`delayMicroseconds` も正確になった。
+残る穴は `delayMicroseconds(1000)` だけで、ループ用スライスと区別が
+つかない。区別にはホストコアが提供していない情報が要るため、
+コードに明記して残す。
 
 **IFは変更なし。**
+
+## X60. わざと間違って使う — 誤用は必ず証拠を残すか
+
+対象: `tests/units_misuse/`
+
+他の実験は全部ライブラリを**正しく**使っている。この実験だけは
+わざと間違って使う。**誤用に対して黙って失敗する検証ライブラリは、
+ライブラリが無いより悪い**からである。
+
+| 誤用 | 残る証拠 |
+| --- | --- |
+| 誰も割り当てていないアドレスへ書く | `diag.unbound addr=77` + status=2 |
+| 同じアドレスから読む | `diag.unbound` + len=0 |
+| 誰も扱わないchannelへ書く | `diag.chan_reject chan=9` |
+| デバイス未割り当てでSPI転送 | `diag.unbound spi` |
+| 未登録のformat idでフレーム送信 | `diag.frame_unknown_format` + 戻り値false |
+| 長すぎるformat名 | `diag.fmt_name_long len=25` + 戻り値0 |
+| **registerを選ばずに読む** | **無し**（下記） |
+
+**発見1: `runBegin` の前は「記録されない」のではなく「見えない」。**
+
+ホストのフックを入れるのが `runBegin` なので、その前のバスやピンの操作は
+環境に**接続すらされていない**。カウンタを足しても捕まえられない。
+つまり `runBegin` を忘れると、空のトレースだけが残り理由が分からない。
+
+対策として `stats().windows`（開いた実行窓の数）を追加した。
+**`windows == 0` と空のトレースの組み合わせが「始まっていない」の証拠**になり、
+「何も起きなかった」と区別がつく。あわせて `outsideWindow` も追加し、
+窓の外で直接呼ばれたsink（`chanWrite` など。これは常に見える）を数える。
+
+```text
+values before=2 windows0=0 outside=1,2 unbound=2,0
+stats events=15 dropped=0 diag=6 outside=2 windows=1
+```
+
+**発見2: 唯一、証拠を残せない誤用がある。**
+
+```text
+08 000000 main dev i2c.rd.resp len=2 data=0100 re=7
+```
+
+registerを選ばずに読むと、バスは正常で部品も答える。
+`stale=0100` は**直前に設定されていたregister**の値である。
+アプリが「間違った質問」をしたことは、どんなstatus codeでも報告できない。
+捕まえられるのは**値そのものへのassertion**だけであり、
+これが「エラーが無いことではなく値を検査せよ」という主張の根拠になる。
+
+**IFは変更なし。** 追加したのは環境実装例の統計2つだけ。
 
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）
 
-1. `delayMicroseconds` が wake を跨ぐと早く戻る件の両立する直し方（X59の未決）
-2. カタログの更なる拡張で凍結IFの不足を探し続ける
-   （X51〜X59で9回連続、追加要求は出ていない）
+1. カタログの更なる拡張で凍結IFの不足を探し続ける
+   （X51〜X60で10回連続、追加要求は出ていない）

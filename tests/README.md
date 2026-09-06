@@ -91,6 +91,7 @@ Additional experiments:
 - `units_bus/`: two analog units (angle, light), an I2C encoder, and a Modbus RTU slave framed by silence.
 - `units_radio/`: three frame-path units (IR, LoRa, and three UWB anchors), which need several outstanding wakes held at once.
 - `units_sense/`: two self-driven units (an IMU with a FIFO and an RTC with a wall clock), covering dropped samples and the conversion between seconds and microseconds.
+- `units_misuse/`: driving the library wrong on purpose, checking every mistake leaves evidence.
 - `units_race/`: two parts sharing one signal line, and the ordering of effects that land on the same microsecond.
 - `units_fault/`: failure paths (no answer, refusal, a short read, an intermittent fault) and what a non-volatile part keeps across a power cycle.
 - `units_mixed/`: a SPI flash whose protocol is locked by sequence, and a codec that is one model on two buses at once.
