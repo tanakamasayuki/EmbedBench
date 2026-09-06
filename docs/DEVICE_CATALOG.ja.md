@@ -74,6 +74,8 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_imu_model` | IMU | I2C、`lineOut`、`requestWake`、`diagnose`、channel | **自走サンプリング**、深さ16のFIFO、**読み出し長がデバイス状態次第**、遅刻すると取りこぼす |
 | `unit_rtc_model` | RTC | I2C、`lineOut`、`requestWake`、`diagnose` | カタログで唯一**自分の時刻の単位（秒）を持つ**。アラームは時刻指定 |
 | `unit_chunk_model` | （汎用中継） | frame、`requestWake`、`diagnose`、channel | **bus別容量に応じた分割規則**の実例。載らないリンクは通知して拒否 |
+| `unit_flash_model` | （BASE周辺） | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **順序で意味が変わる**。write-enable無しの書き込みを通知して捨てる |
+| `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
 
 ## 3. 新しい模型を追加する手順
 

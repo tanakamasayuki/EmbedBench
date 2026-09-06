@@ -1899,9 +1899,63 @@ format `m5.chunk.1` は `[seq, more, payload...]`。
 
 **IFは変更なし。** SCOPE 5節の未決はこれで**全て解消**した。
 
+## X57. 順序に鍵がかかったプロトコルと、2本のバスに載る1つの模型
+
+対象: `tests/units_mixed/`、模型は `tests/common_models/src/unit_{flash,codec}_model`
+
+カタログに無かった**構造的な**形を2つ。
+
+**SPI flash（順序で意味が変わる）:** 同じバイトが、直前に何が来たかで
+別の意味になる。そして**write-enableの無いプログラムは捨てられる**——
+実機は無言で捨てるので、これはまさに実機のベンチでは見えない不具合であり、
+模型は通知する。chip selectはバス操作ではなく線で、I2CのSTOPと同じく
+**コマンドを区切る**。線を戻した時点でコマンドが確定する。
+
+```text
+17 000000 main dev dev.note program without write-enable
+27 000000 main app spi.req mosi=06          ← WREN
+34 000000 main dev spi.resp miso=02 re=33   ← status: write-enabled
+37 000000 main app spi.req mosi=02          ← page program
+80 ... dump flash we=0 busy=0 progs=1 no=1 m0=BE m1=EF
+```
+
+`sr0=00 sr_wren=02 sr_busy=01 no_wren=FF after=BE`。
+順序を守らなかった書き込みはFFのまま、守った書き込みはBEになる。
+
+**audio codec（1つの模型が2本のバスに載る）:** 設定はI2C、サンプルはSPI、
+しかし**1つの部品**である。凍結IFは元から `i2cWrite`/`i2cRead` と
+`spiTransfer` を同じ `Device` のメソッドとして持つので、模型が両方を
+overrideして環境が2回bindすれば済む——それが実際に成り立つかの確認。
+
+```text
+62 004000 main dev spi.resp miso=80 re=61        ← 全音量
+64 004000 main app i2c.req addr=1A data=0040     ← 制御バスで1/4へ
+68 004000 main dev spi.resp miso=20 re=67        ← 同じ入力が別の出力に
+70 004000 main app i2c.req addr=1A data=0101     ← ミュート
+74 004000 main dev spi.resp miso=00 re=73
+79 004000 main dev i2c.rd.resp len=1 data=03     ← 制御バスがデータバスの件数を答える
+```
+
+**成り立った。** 2本のバスの操作が1つの状態を共有し、
+制御バスに書いた内容がデータバスの応答を変え、
+制御バスの読み出しがデータバスの仕事を報告する。IFの変更は不要。
+
+**模型側で見つけた誤りが1件:** プログラム保留中にアプリがstatusを
+読みに来る（=chip selectが再び下がる）と、コマンド開始処理が
+ステージングを消してしまい書き込みが失われていた。実機どおり
+**プログラム開始時にページバッファを確定する**形へ直した。
+実機でも「busy中にstatusをpollする」のは定石なので、
+模型の作りが甘かっただけで、IFにも環境にも問題は無い。
+
+**副産物:** 1バイトずつのSPIは記録が嵩むため、この実験は
+64スロットを埋めてX53/X54の畳み込みが働く（`folded=22 dropped=0`）。
+末尾のdumpまで残っており、方針が実際に効いていることの追加の実例になった。
+
+**凍結IF（revision 004）だけで両方書けた。追加要求は出ていない。**
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）
 
 1. カタログの更なる拡張で凍結IFの不足を探し続ける
-   （X51〜X56で6回連続、追加要求は出ていない）
+   （X51〜X57で7回連続、追加要求は出ていない）
