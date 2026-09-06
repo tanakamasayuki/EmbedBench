@@ -82,5 +82,7 @@ Additional experiments:
 - `core_draft2/`: draft core v2 (analog, the lifecycle-driven run window, event listeners).
 - `log_formats/`: parse time, file size, and diff readability of the three line formats (WP-B2 remainder).
 - `bulk_checksum/`: what a bulk summary must carry: byte sum versus CRC-8 detection rates.
+- `if_gaps/`: the three missing paths measured against the workarounds they replace (the evidence for revision 1).
+- `if_rev1/`: the revision-1 additions (analogOut, requestWake, diagnose) end to end on the host environment.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - `common_models/`: reference models (temperature sensor, AT modem, register map, conformance probe) shared across experiments and environments.

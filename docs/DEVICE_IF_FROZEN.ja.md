@@ -13,11 +13,11 @@
 
 | 区分 | 面 |
 | --- | --- |
-| 版数 | `kDeviceInterfaceVersion`（= 1） |
+| 版数 | `kDeviceInterfaceVersion`（= 1）、`kDeviceInterfaceRevision`（= 1） |
 | 定数 | `kFormatNameMaxLength`（19）、`kChannelUnsupported` |
 | 型 | `I2cStatus`（0〜4）、`I2cTransfer{stop, continued}` |
 | helper | `frameBytes`、`framePaddingClean`、`schemaFingerprint` |
-| `HostPort` | `nowMicros` / `lineOut` / `serialOut` / `frameOut` / `formatId` / `maxFrameBits` |
+| `HostPort` | `nowMicros` / `lineOut` / `serialOut` / `frameOut` / `formatId` / `maxFrameBits` / （rev1）`analogOut` / `analogOutMilliVolts` / `requestWake` / `diagnose` |
 | `Device` | `reset` / `attach` / `i2cWrite` / `i2cRead` / `spiTransfer` / `serialIn` / `lineIn` / `frameIn` / `channelWrite` / `channelRead` / `advanceTo` / `dump` |
 
 契約（ヘッダ本文が正）: 再入禁止（効果あり8経路）、effect-free 3経路、時間、
@@ -59,6 +59,36 @@ schema指紋、サイズのネゴ、`serialOut`の全量/診断つき部分配�
 
 設計上の問題を隠した回避策は、意図的な版上げより高くつく。凍結は変更の
 ハードルであって、禁止ではない。
+
+## 3.5 revision 1 — 追加した3経路（メンテナー提案、2026-09-06）
+
+メンテナーの提起「アナログなど足りていないIFは追加した方がよいのでは」を受け、
+3節の手順どおり**回避策と比較した実測**（`tests/if_gaps/`、X47）を取ってから
+追加した。いずれも既定実装つきの新しい仮想関数で、version 1 のまま
+（ソース互換・挙動互換）。`kDeviceInterfaceRevision` を 1 とした。
+
+| 追加 | 何が無いと困るか | 実測（回避策 → 追加後） |
+| --- | --- | --- |
+| `HostPort::analogOut(line, raw)` / `analogOutMilliVolts` | センサーが提示する電圧をデバイス自身が出せない。回避策は進行役が毎回 `channelRead` で値を吸い出して注入すること | アプリが読む値 0 →（進行役1手）→ 1234 / **進行役0手で1234**。更新1回につき環境側の手数が1→0 |
+| `HostPort::requestWake(whenUs)` | 環境のtick境界でしかデバイスが進まないので、tickで割り切れない遅延が遅配される | 1,500us遅延・tick 1,000usで応答が **2,000us（500us遅い）→ 1,500us（定刻）** |
+| `HostPort::diagnose(text)` | 戻り値のない経路（serial等）でデバイスが気づいたプロトコル違反を言う手段がない。回避策は模型内で数えて`dump`で後から見せること | ログに残る件数 0 → **1（発生時点・順序どおり）** |
+
+追加の設計上の性質:
+
+- すべて既定が「この環境は経路を持たない」を意味する（`false` を返す）。
+  revision 0 に対して書かれた模型・環境はそのまま動く
+- `analogOut` の raw と mV は分離（host coreと同じ理由: 換算にはattenuation
+  とVrefの模型が必要で、環境は持たない）
+- `requestWake` は「その時刻までに進める」要求であって命令ではない。環境は
+  要求より頻繁に進めてよく、受け付けない環境は `false` を返す
+- `diagnose` は**効果ではなく注釈**。世界を変える用途に使ってはならない
+
+両環境（draft core、環境実装例#2）へ実装し、同一の結果になることを確認した
+（`tests/if_rev1/`、`tests/if_gaps/` の共有環境ケース）。
+
+**メンテナーへの確認事項:** 上記3点をrevision 1として確定してよいか。特に
+`diagnose` は「無いと困る」度合いが他の2つより弱く（回避策は`dump`で成立する）、
+外す判断もあり得る。
 
 ## 4. 凍結の対象外（IFの外）
 

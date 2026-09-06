@@ -89,6 +89,15 @@ namespace ebdev {
 // change rules above). Environments and devices may assert on it.
 constexpr uint16_t kDeviceInterfaceVersion = 1;
 
+// Revision within version 1: a three-digit counter of approved additions,
+// bumped by every one of them rather than saved up. 1 reads as 0.0.1 and
+// 100 is the release mark, so the number is meant to move often; a device
+// or environment can ask for the revision it needs.
+//
+// Only the maintainer approves a bump. Measure the gap first (the way
+// tests/if_gaps does), bring the numbers, and wait for the answer.
+constexpr uint16_t kDeviceInterfaceRevision = 1;
+
 // I2C write status as Arduino's Wire::endTransmission() reports it. A
 // device's i2cWrite() must return one of these five values; anything
 // else is a contract violation an environment may diagnose.

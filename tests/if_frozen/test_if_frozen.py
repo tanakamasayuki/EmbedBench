@@ -13,6 +13,7 @@ HEADER = SRC / "embedbench_device.h"
 # rules in the header; editing or removing one is a version 2 decision.
 FROZEN_SURFACE = [
     "constexpr uint16_t kDeviceInterfaceVersion = 1;",
+    "constexpr uint16_t kDeviceInterfaceRevision = 1;",
     "constexpr size_t kFormatNameMaxLength = 19;",
     "constexpr size_t kChannelUnsupported = static_cast<size_t>(-1);",
     "enum I2cStatus : uint8_t {",
@@ -102,3 +103,4 @@ def test_header_declares_the_freeze():
     text = HEADER.read_text()
     assert "FROZEN — interface version 1" in text
     assert re.search(r"kDeviceInterfaceVersion = 1;", text)
+    assert re.search(r"kDeviceInterfaceRevision = 1;", text)

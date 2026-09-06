@@ -49,6 +49,7 @@ class Env : public ebdev::HostPort {
   // test can drive serialOut into its capacity-shortfall branch.
   void setRxCapacity(size_t bytes);
 
+
   // --- Director --------------------------------------------------------------
   void chanWrite(uint8_t channel, const uint8_t* data, size_t len);
   void dump(ebdev::Device* device);
@@ -102,6 +103,7 @@ class Env : public ebdev::HostPort {
 
   I2cSlot i2c_[2] = {{false, 0, nullptr}, {false, 0, nullptr}};
   uint16_t openAddress_ = 0xFFFF;  // bus-level: last transfer without STOP
+
   ebdev::Device* serialDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;
   ebdev::Device* ticking_[4] = {nullptr, nullptr, nullptr, nullptr};
