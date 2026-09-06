@@ -77,6 +77,17 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_flash_model` | （BASE周辺） | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **順序で意味が変わる**。write-enable無しの書き込みを通知して捨てる |
 | `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
 | `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
+| `unit_sdcard_model` | SD/TFカード | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **ブロックデバイス**（512バイト×8）。FATは載せない——それはアプリの仕事 |
+
+### ファイルシステムはデバイス側に無い
+
+SDカードが提供するのは番号のついたブロックだけで、FATを組み立てるのは
+検証対象のライブラリである。だから模型はブロックデバイスとして書き、
+プリセット（`devices/src/sd_images.h`）に**本物のFAT12イメージ**を持たせて、
+アプリが本当に解析できるかを検査する。自前のイメージは
+`loadBlocks()` でそのまま流し込める。プリセットの生成器は
+`devices/tools/make_sd_images.py` で、構築したイメージを
+ドライバと同じ手順で解析し直してからCソースを出す。
 
 ### `reset()` は「新品」ではなく「電源投入」
 

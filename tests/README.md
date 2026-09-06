@@ -92,6 +92,7 @@ Additional experiments:
 - `units_radio/`: three frame-path units (IR, LoRa, and three UWB anchors), which need several outstanding wakes held at once.
 - `units_sense/`: two self-driven units (an IMU with a FIFO and an RTC with a wall clock), covering dropped samples and the conversion between seconds and microseconds.
 - `guide_example/`: the getting-started guide's example itself; it fails if the guide and the code drift apart.
+- `units_sdcard/`: an application reading a real FAT12 volume off a block device, with three preset images.
 - `units_misuse/`: driving the library wrong on purpose, checking every mistake leaves evidence.
 - `units_race/`: two parts sharing one signal line, and the ordering of effects that land on the same microsecond.
 - `units_fault/`: failure paths (no answer, refusal, a short read, an intermittent fault) and what a non-volatile part keeps across a power cycle.
