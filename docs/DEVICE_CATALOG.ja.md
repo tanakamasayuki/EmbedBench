@@ -71,6 +71,8 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_ir_model` | IR | frame（bus 0）、`requestWake`、channel | アドレス無しのbroadcast、**payloadを持たない空フレーム**の繰り返し符号 |
 | `unit_lora_model` | LoRa | frame（bus 1）、`lineOut`、`requestWake`、`diagnose`、channel | **空中時間がpayload長に比例**、送信中は落とす、RSSIはpayloadの外 |
 | `unit_uwb_model` | UWB | frame（bus 2）、`requestWake`、`diagnose`、channel | **同一模型を複数実体**で1リンクに載せ順番に応答、**12ビット**のbit-packed poll |
+| `unit_imu_model` | IMU | I2C、`lineOut`、`requestWake`、`diagnose`、channel | **自走サンプリング**、深さ16のFIFO、**読み出し長がデバイス状態次第**、遅刻すると取りこぼす |
+| `unit_rtc_model` | RTC | I2C、`lineOut`、`requestWake`、`diagnose` | カタログで唯一**自分の時刻の単位（秒）を持つ**。アラームは時刻指定 |
 
 ## 3. 新しい模型を追加する手順
 

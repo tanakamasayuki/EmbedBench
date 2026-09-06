@@ -90,6 +90,7 @@ Additional experiments:
 - `units_gpio/`: four GPIO-shaped units (button, PIR, relay, ultrasonic), where the range measurement is the width of a pulse.
 - `units_bus/`: two analog units (angle, light), an I2C encoder, and a Modbus RTU slave framed by silence.
 - `units_radio/`: three frame-path units (IR, LoRa, and three UWB anchors), which need several outstanding wakes held at once.
+- `units_sense/`: two self-driven units (an IMU with a FIFO and an RTC with a wall clock), covering dropped samples and the conversion between seconds and microseconds.
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - `common_models/`: reference models shared across experiments and environments — the interface fixtures (temperature sensor, AT modem, register map, conformance probe), two catalog devices (environmental sensor, GPS), and eight M5Stack Unit-shaped units (`unit_*`) covering GPIO, analog, I2C, and binary serial.
