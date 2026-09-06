@@ -3,18 +3,24 @@
 
 #include <stdio.h>
 
+UnitFlashModel::UnitFlashModel() {
+  for (size_t i = 0; i < kSize; ++i) memory_[i] = 0xFF;
+}
+
 void UnitFlashModel::reset() {
+  // A power cycle: the command state machine, the write-enable latch and
+  // any program in flight are gone, but the array is not. Dropping a
+  // program that had not finished is the contract's "drop every pending
+  // due time" and is what a real interrupted write does.
   phase_ = kIdle;
   selected_ = false;
   command_ = 0;
   address_ = 0;
   writeEnabled_ = false;
   busy_ = false;
+  pending_ = kNothing;
   doneUs_ = 0;
-  for (size_t i = 0; i < kSize; ++i) {
-    memory_[i] = 0xFF;  // erased
-    staging_[i] = 0;
-  }
+  for (size_t i = 0; i < kSize; ++i) staging_[i] = 0;
   stagedLen_ = 0;
   for (size_t i = 0; i < kSize; ++i) page_[i] = 0;
   pageLen_ = 0;
@@ -24,7 +30,21 @@ void UnitFlashModel::reset() {
 }
 
 void UnitFlashModel::finishCommand() {
-  if (command_ == kCmdPageProgram && stagedLen_ > 0) {
+  if (command_ == kCmdChipErase) {
+    if (!writeEnabled_) {
+      ++refused_;
+      if (port() != nullptr) port()->diagnose("erase without write-enable");
+    } else if (busy_) {
+      ++refused_;
+      if (port() != nullptr) port()->diagnose("erase while busy");
+    } else {
+      busy_ = true;
+      pending_ = kErasePending;
+      writeEnabled_ = false;
+      doneUs_ = (port() != nullptr ? port()->nowMicros() : 0) + kEraseUs;
+      if (port() != nullptr) port()->requestWake(doneUs_);
+    }
+  } else if (command_ == kCmdPageProgram && stagedLen_ > 0) {
     if (!writeEnabled_) {
       // A real part drops this without a word. Saying so is the whole
       // point of running the part in a test instead of on a bench.
@@ -35,6 +55,7 @@ void UnitFlashModel::finishCommand() {
       if (port() != nullptr) port()->diagnose("program while busy");
     } else {
       busy_ = true;
+      pending_ = kProgramPending;
       writeEnabled_ = false;  // one program per enable
       doneUs_ = (port() != nullptr ? port()->nowMicros() : 0) + kProgramUs;
       if (port() != nullptr) port()->requestWake(doneUs_);
@@ -75,6 +96,8 @@ uint8_t UnitFlashModel::spiTransfer(uint8_t mosi) {
       if (command_ == kCmdWriteEnable) {
         writeEnabled_ = true;
         phase_ = kIdle;
+      } else if (command_ == kCmdChipErase) {
+        phase_ = kIdle;  // no address, no data: the line release commits it
       } else if (command_ == kCmdStatus) {
         phase_ = kData;
       } else {
@@ -111,10 +134,15 @@ uint8_t UnitFlashModel::spiTransfer(uint8_t mosi) {
 void UnitFlashModel::advanceTo(uint64_t nowUs) {
   if (!busy_ || nowUs < doneUs_) return;
   busy_ = false;
-  for (size_t i = 0; i < pageLen_ && pageAddress_ + i < kSize; ++i) {
-    memory_[pageAddress_ + i] = page_[i];
+  if (pending_ == kErasePending) {
+    for (size_t i = 0; i < kSize; ++i) memory_[i] = 0xFF;
+  } else {
+    for (size_t i = 0; i < pageLen_ && pageAddress_ + i < kSize; ++i) {
+      memory_[pageAddress_ + i] = page_[i];
+    }
   }
   ++programs_;
+  pending_ = kNothing;
   pageLen_ = 0;
 }
 

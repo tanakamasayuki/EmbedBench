@@ -18,10 +18,18 @@ class UnitFlashModel : public ebdev::Device {
   static const uint8_t kCmdPageProgram = 0x02;
   static const uint8_t kCmdRead = 0x03;
   static const uint8_t kCmdStatus = 0x05;
+  static const uint8_t kCmdChipErase = 0xC7;
   static const uint8_t kStatusBusy = 0x01;
   static const uint8_t kStatusWriteEnabled = 0x02;
   static const size_t kSize = 64;
   static const uint64_t kProgramUs = 3000;
+  static const uint64_t kEraseUs = 8000;
+
+  // A part fresh out of the packet is erased. reset() is a power cycle,
+  // not a new part: what was programmed survives it, because that is
+  // what "power-on state" means for something non-volatile. Blanking it
+  // again takes a chip erase, the same as on the bench.
+  UnitFlashModel();
 
   void reset() override;
   void lineIn(uint8_t line, uint8_t level) override;
@@ -32,6 +40,7 @@ class UnitFlashModel : public ebdev::Device {
 
  private:
   enum Phase { kIdle, kCommand, kAddress, kData };
+  enum Pending { kNothing, kProgramPending, kErasePending };
 
   void finishCommand();
 
@@ -41,6 +50,7 @@ class UnitFlashModel : public ebdev::Device {
   uint8_t address_ = 0;
   bool writeEnabled_ = false;
   bool busy_ = false;
+  Pending pending_ = kNothing;
   uint64_t doneUs_ = 0;
   uint8_t memory_[kSize] = {0};
   uint8_t staging_[kSize] = {0};

@@ -91,6 +91,7 @@ Additional experiments:
 - `units_bus/`: two analog units (angle, light), an I2C encoder, and a Modbus RTU slave framed by silence.
 - `units_radio/`: three frame-path units (IR, LoRa, and three UWB anchors), which need several outstanding wakes held at once.
 - `units_sense/`: two self-driven units (an IMU with a FIFO and an RTC with a wall clock), covering dropped samples and the conversion between seconds and microseconds.
+- `units_fault/`: failure paths (no answer, refusal, a short read, an intermittent fault) and what a non-volatile part keeps across a power cycle.
 - `units_mixed/`: a SPI flash whose protocol is locked by sequence, and a codec that is one model on two buses at once.
 - `frame_split/`: frame links of differing per-bus capacity, and the splitting rule the format carries.
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.

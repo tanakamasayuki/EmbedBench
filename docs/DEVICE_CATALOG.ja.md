@@ -76,6 +76,16 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_chunk_model` | （汎用中継） | frame、`requestWake`、`diagnose`、channel | **bus別容量に応じた分割規則**の実例。載らないリンクは通知して拒否 |
 | `unit_flash_model` | （BASE周辺） | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **順序で意味が変わる**。write-enable無しの書き込みを通知して捨てる |
 | `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
+| `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
+
+### `reset()` は「新品」ではなく「電源投入」
+
+凍結IFの `reset()` は「電源投入状態へ戻し、保留中の時刻を全て捨てる」。
+揮発性の模型では「まっさらな新品」と同じになるので差が出ないが、
+**不揮発な部品では書いた内容は残る**（X58）。`unit_flash_model` が実例で、
+`reset()` は配列に触れず、新品状態（全て0xFF）は構築時に作り、
+消去はchip eraseコマンドでのみ起きる。不揮発の状態を持つ模型を書くときは
+この区別を守ること。進行中の書き込みは `reset()` で落とす（契約どおり）。
 
 ## 3. 新しい模型を追加する手順
 
