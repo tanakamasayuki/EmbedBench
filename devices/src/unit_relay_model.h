@@ -11,7 +11,9 @@ class UnitRelayModel : public ebdev::Device {
  public:
   static const uint8_t kLineControl = 0;    // input: driven by the sketch
   static const uint8_t kChannelState = 0;   // world: reads the contact
-  static const uint64_t kSettleUs = 5000;   // minimum interval between flips
+  // Contact bounce on a small relay settles within a few milliseconds.
+  // Physical.
+  static const uint64_t kSettleUs = 5000;
 
   void reset() override;
   void lineIn(uint8_t line, uint8_t level) override;

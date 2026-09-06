@@ -38,7 +38,9 @@ class UnitSdCardModel : public ebdev::Device {
   static const uint8_t kTokenStart = 0xFE;
   static const uint8_t kDataAccepted = 0x05;
 
-  static const uint64_t kWriteUs = 4000;  // the card is busy this long
+  // A single-block program is typically a few milliseconds (the spec
+  // allows far longer worst cases). Physical for the typical case.
+  static const uint64_t kWriteUs = 4000;
 
   // world: [block, fill] — put a known pattern in a block so a test can
   // tell what the application read.

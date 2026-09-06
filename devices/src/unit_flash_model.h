@@ -22,7 +22,12 @@ class UnitFlashModel : public ebdev::Device {
   static const uint8_t kStatusBusy = 0x01;
   static const uint8_t kStatusWriteEnabled = 0x02;
   static const size_t kSize = 64;
+  // A page program on a serial flash is typically under a millisecond
+  // and a few at worst. Physical.
   static const uint64_t kProgramUs = 3000;
+  // COMPRESSED, heavily: a real chip erase takes seconds to tens of
+  // seconds. 8,000 us keeps 'erase is much slower than program' as the
+  // only property a test should rely on.
   static const uint64_t kEraseUs = 8000;
 
   // A part fresh out of the packet is erased. reset() is a power cycle,

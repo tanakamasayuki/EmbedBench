@@ -19,6 +19,9 @@ class UnitIrModel : public ebdev::Device {
   // world: [address, command, repeats]
   static const uint8_t kChannelPress = 0;
   static const uint8_t kChannelLastRx = 1;  // read back: [address, command]
+  // COMPRESSED. NEC repeats about every 108 ms; 2,000 us keeps the
+  // shape (a code, then repeats while held) at a length a trace can
+  // show. Do not read a timing conclusion out of this number.
   static const uint64_t kRepeatPeriodUs = 2000;
 
   void reset() override;

@@ -14,8 +14,11 @@ class UnitSonicModel : public ebdev::Device {
   static const uint8_t kChannelRange = 0;  // world: distance in millimetres
   // The part waits this long after the trigger before the echo starts,
   // and the echo lasts 5.8 us per millimetre (sound there and back).
+  // An HC-SR04 sends its burst about 450 us after the trigger. Physical.
   static const uint64_t kStartDelayUs = 450;
-  static const uint64_t kUsPerMm = 6;  // rounded, so the arithmetic is exact
+  // Sound covers 1 mm round trip in about 5.8 us; rounded to 6 so the
+  // arithmetic in a test is exact. Physical to within the rounding.
+  static const uint64_t kUsPerMm = 6;
 
   void reset() override;
   void lineIn(uint8_t line, uint8_t level) override;

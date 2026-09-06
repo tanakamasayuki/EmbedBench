@@ -22,6 +22,9 @@ class UnitLoraModel : public ebdev::Device {
   // world: [rssi as a negative magnitude, snr, payload...]
   static const uint8_t kChannelDownlink = 0;
   static const uint8_t kChannelStatus = 1;  // read: [rssi, snr, busy]
+  // COMPRESSED, and simplified: real air time depends on spreading
+  // factor and bandwidth, and at typical settings is milliseconds per
+  // byte. What matters here is that it grows with the payload.
   static const uint64_t kAirTimePerByteUs = 1000;
   static const size_t kMaxPayloadBytes = 4;  // the radio's own limit
 

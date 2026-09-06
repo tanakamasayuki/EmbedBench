@@ -113,6 +113,48 @@ def test_native_portability():
     }
 
 
+def test_timing_constants_state_their_basis():
+    """Every model's timing constant has to say what it is worth in reality.
+
+    The models are read as if they were the parts they stand for, and most
+    of their timings are the real ones. Six are deliberately compressed,
+    because a PIR that holds for a minute or a chip erase that takes
+    twenty seconds would make a virtual-clock test spend that long and
+    produce a trace to match. That is a fine trade, but only while it is
+    written down: a number nobody can trace back to a real device is a
+    number someone will eventually draw a timing conclusion from.
+    """
+    import re
+    models = sorted(MODELS.glob("*.h"))
+    assert models, "no model headers found"
+    pattern = re.compile(
+        r"((?:^\s*//.*\n)*)^\s*static const uint64_t (k\w+Us|kUsPer\w+) = ",
+        re.M)
+    compressed = []
+    missing = []
+    for path in models:
+        for comment, name in pattern.findall(path.read_text()):
+            text = comment.lower()
+            if "physical" in text or "compressed" in text or "synthetic" in text \
+                    or "test fixture" in text:
+                if "compressed" in text:
+                    compressed.append(f"{path.name}:{name}")
+            else:
+                missing.append(f"{path.name}:{name}")
+    assert not missing, (
+        "these timing constants do not say whether they are physical or "
+        f"deliberately compressed: {missing}")
+    # Pinned so that compressing another one is a deliberate act.
+    assert sorted(compressed) == [
+        "gps_model.h:kDefaultPeriodUs",
+        "unit_flash_model.h:kEraseUs",
+        "unit_ir_model.h:kRepeatPeriodUs",
+        "unit_lora_model.h:kAirTimePerByteUs",
+        "unit_modbus_model.h:kFrameGapUs",
+        "unit_pir_model.h:kHoldUs",
+    ], compressed
+
+
 def test_device_if(dut):
     dut.expect("TEST start device_if", timeout=10)
     dut.expect("values t1=300 spins=3 reply=OK elapsed=1000", timeout=10)

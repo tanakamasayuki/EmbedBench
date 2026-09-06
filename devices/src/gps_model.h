@@ -11,6 +11,9 @@ class GpsModel : public ebdev::Device {
  public:
   // Commands end with '\n', the way a line-based protocol does.
   static const char kTerminator = '\n';
+  // COMPRESSED. Receivers usually emit at 1 Hz; 2,000 us keeps the
+  // self-driven periodic send without a test waiting seconds per
+  // sentence.
   static const uint64_t kDefaultPeriodUs = 2000;
   static const uint8_t kChannelFix = 0;  // the world sets the fix quality
 

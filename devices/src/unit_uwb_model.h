@@ -20,8 +20,11 @@ class UnitUwbModel : public ebdev::Device {
  public:
   static const uint8_t kBus = 2;
   static const uint8_t kChannelDistance = 0;  // world: [mm hi, mm lo]
+  // Two-way ranging turnaround is a few hundred microseconds. Physical.
   static const uint64_t kBaseLatencyUs = 500;
-  static const uint64_t kSlotUs = 300;  // per-anchor TDMA slot
+  // A TDMA slot wide enough to separate anchors' replies. Physical in
+  // magnitude; the exact width is this model's choice.
+  static const uint64_t kSlotUs = 300;
 
   explicit UnitUwbModel(uint8_t anchorId) : anchorId_(anchorId) {}
 

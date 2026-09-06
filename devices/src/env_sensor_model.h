@@ -20,7 +20,10 @@ class EnvSensorModel : public ebdev::Device {
 
   static const uint8_t kLineDataReady = 0;  // output line
   static const uint8_t kChannelTemp = 0;    // the world sets the temperature
-  static const uint64_t kMeasureUs = 7500;  // deliberately not a tick
+  // A BME280 at standard oversampling takes about 8 ms; 7,500 is that,
+  // and deliberately not a multiple of any tick this project uses.
+  // Physical.
+  static const uint64_t kMeasureUs = 7500;
 
   void reset() override;
 

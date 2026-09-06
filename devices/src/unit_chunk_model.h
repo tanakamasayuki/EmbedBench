@@ -30,7 +30,10 @@ class UnitChunkModel : public ebdev::Device {
   static const uint8_t kChannelSend = 0;
   static const uint8_t kChannelAssembled = 1;  // read back what arrived
 
-  static const uint64_t kFrameGapUs = 500;  // time on the link per chunk
+  // Synthetic: this model has no real counterpart, and the gap exists
+  // to make the point that a link with a per-frame limit has a
+  // per-frame cost.
+  static const uint64_t kFrameGapUs = 500;
 
   void reset() override;
   void frameIn(uint8_t bus, uint16_t format, const uint8_t* data,

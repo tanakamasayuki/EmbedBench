@@ -19,6 +19,8 @@
 
 ## 利用者向けガイド（英語・日本語）
 
+- [FACTS.ja.md](FACTS.ja.md) / [FACTS.md](FACTS.md): **現状の数値。外部文書はここを引用する。**
+  テストで固定されているので古くならない
 - [GUIDE.ja.md](GUIDE.ja.md) / [GUIDE.md](GUIDE.md): **入門ガイド。まずこれ。**
   何のためのものか、3つの登場人物、記録の読み方、最初のテストの書き方
 - [ADVANCED.ja.md](ADVANCED.ja.md) / [ADVANCED.md](ADVANCED.md): **上級ガイド。**

@@ -11,7 +11,10 @@ class UnitPirModel : public ebdev::Device {
  public:
   static const uint8_t kLineSignal = 0;    // output: high while triggered
   static const uint8_t kChannelMotion = 0; // world: 1 = motion seen
-  static const uint64_t kHoldUs = 2500;    // not a round number of ticks
+  // COMPRESSED. A real PIR unit holds for seconds to minutes; 2,500 us
+  // keeps the behaviour (a hold that outlasts the motion) without a
+  // test spending minutes of virtual time and a trace to match.
+  static const uint64_t kHoldUs = 2500;
 
   void reset() override;
   bool channelWrite(uint8_t channel, const uint8_t* data, size_t len) override;

@@ -14,6 +14,9 @@ class UnitModbusModel : public ebdev::Device {
   static const uint8_t kChannelRegister = 0;  // world: [index, hi, lo]
   // A request is complete once it has been quiet for this long, the way
   // RTU framing works on a real line.
+  // COMPRESSED. RTU frames on silence of 3.5 character times, which is
+  // about 4 ms at 9600 baud. 1,500 us keeps framing-by-silence as the
+  // mechanism without the wait dominating the trace.
   static const uint64_t kFrameGapUs = 1500;
 
   void reset() override;

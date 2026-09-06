@@ -24,7 +24,9 @@ class UnitImuModel : public ebdev::Device {
   static const uint8_t kChannelValue = 0;  // world: [hi, lo] of the next sample
   static const size_t kFifoDepth = 16;
   static const size_t kWatermark = 8;
-  static const uint64_t kSampleUs = 2500;  // 400 Hz: never on a 10 ms tick
+  // 400 Hz, an ordinary output data rate for this class of part, and
+  // never on a 10 ms tick. Physical.
+  static const uint64_t kSampleUs = 2500;
 
   void reset() override;
   uint8_t i2cWrite(const uint8_t* data, size_t len,

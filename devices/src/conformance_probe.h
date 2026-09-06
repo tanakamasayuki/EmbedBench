@@ -61,6 +61,8 @@ class ConformanceProbe : public ebdev::Device {
   // offers those paths.
   static const uint8_t kLineAnalog = 0;
   static const uint16_t kAnalogValue = 4321;
+  // Test fixture, not a device: the value only has to be shorter than a
+  // tick so the wake lands off the boundary.
   static const uint64_t kWakeAheadUs = 500;
 
   void reset() override;

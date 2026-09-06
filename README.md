@@ -16,6 +16,8 @@ hardware.
 
 - **[Getting started](docs/GUIDE.md)** — what it is for, how to read a trace,
   how to write your first test.
+- **[Current state, in numbers](docs/FACTS.md)** — figures other documents can
+  cite, kept true by a test.
 - **[Advanced guide](docs/ADVANCED.md)** — writing device models, the
   contracts they must keep, and the traps found while building the examples.
 
