@@ -14,6 +14,11 @@
 //     accepted, padding rules hold
 //   - formats: the same name and schema resolve to the same nonzero id,
 //     an over-long name is refused
+//   - revisions 002-004, when the environment routes them at all: an
+//     analog line it accepts holds the value, a wake it accepts arrives
+//     no later than asked, and a note it accepts is taken. An
+//     environment that routes none of them is still conforming — the
+//     defaults say "not here" — so these are reported, not required
 //
 // Anything it cannot see from the device side (log shape, event ordering,
 // diagnostics) stays the environment's own business.
@@ -36,16 +41,27 @@ class ConformanceProbe : public ebdev::Device {
     kCheckFrameOversizeRefused = 1u << 6,
     kCheckFormatStable = 1u << 7,
     kCheckFormatNameLimit = 1u << 8,
+    // Revisions 002-004: observed when offered, never required.
+    kCheckAnalogRouted = 1u << 9,
+    kCheckWakeHonored = 1u << 10,
+    kCheckNoteRouted = 1u << 11,
   };
-  static const uint32_t kAllChecks = (1u << 9) - 1;
+  static const uint32_t kAllChecks = (1u << 12) - 1;
   // The contract ALLOWS advanceTo to repeat a time but does not require
   // it, so a repeat is observed when it happens and never demanded. Its
   // semantics (no double firing) are pinned separately in tests/contracts.
-  static const uint32_t kRequiredChecks = kAllChecks & ~kCheckTimeRepeat;
+  static const uint32_t kRequiredChecks =
+      kAllChecks & ~(kCheckTimeRepeat | kCheckAnalogRouted |
+                     kCheckWakeHonored | kCheckNoteRouted);
 
   // Channel 0 asks the probe to exercise the port-side checks (frames and
   // formats) at a moment the environment chooses.
   static const uint8_t kChannelProbePort = 0;
+  // Analog line and wake offset the probe uses when the environment
+  // offers those paths.
+  static const uint8_t kLineAnalog = 0;
+  static const uint16_t kAnalogValue = 4321;
+  static const uint64_t kWakeAheadUs = 500;
 
   void reset() override;
 
@@ -73,6 +89,8 @@ class ConformanceProbe : public ebdev::Device {
   void probePort();
 
   bool inCall_ = false;
+  bool wakeAsked_ = false;
+  uint64_t wakeDueUs_ = 0;
   bool timeSeen_ = false;
   uint64_t lastAdvance_ = 0;
   uint8_t copy_[8] = {0};

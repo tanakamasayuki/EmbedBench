@@ -22,6 +22,17 @@ class DraftPort : public ebdev::HostPort {
   bool serialOut(const uint8_t* data, size_t len) override {
     return ebd::uartInject(ebd::Origin::kDev, data, len);
   }
+  bool analogOut(uint8_t, uint16_t raw) override {
+    ebd::analogInject(ebd::Origin::kDev, 8, raw);
+    return true;
+  }
+  bool requestWake(uint64_t whenUs) override {
+    return ebd::requestWake(whenUs);
+  }
+  bool diagnose(const char* text) override {
+    ebd::deviceNote(text);
+    return true;
+  }
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override {
     return ebd::frameRx(ebd::Origin::kDev, bus, format, data, bits);
@@ -74,6 +85,7 @@ static void runScenario() {
   const uint8_t go[1] = {0x01};
   ebd::chanWrite(ebd::Origin::kDir, ConformanceProbe::kChannelProbePort, go,
                  sizeof(go));
+  delay(1);  // let the wake the probe asked for arrive
 
   ebd::runEnd();
 }

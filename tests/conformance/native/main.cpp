@@ -77,6 +77,9 @@ int main() {
   env.delayMicros(1000);
   const uint8_t go[1] = {0x01};
   env.chanWrite(ConformanceProbe::kChannelProbePort, go, sizeof(go));
+  // Let the wake the probe asked for arrive, so an environment that
+  // accepted the request is judged on whether it kept it.
+  env.delayMicros(1000);
 
   char text[48];
   probe.dump(text, sizeof(text));

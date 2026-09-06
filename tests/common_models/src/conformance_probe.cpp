@@ -5,6 +5,8 @@
 
 void ConformanceProbe::reset() {
   inCall_ = false;
+  wakeAsked_ = false;
+  wakeDueUs_ = 0;
   timeSeen_ = false;
   lastAdvance_ = 0;
   copyLen_ = 0;
@@ -101,6 +103,15 @@ bool ConformanceProbe::channelWrite(uint8_t channel, const uint8_t* data,
 
 void ConformanceProbe::advanceTo(uint64_t nowUs) {
   enter(nullptr, 0);
+  // A wake the environment accepted must not arrive later than asked.
+  if (wakeAsked_ && nowUs >= wakeDueUs_) {
+    wakeAsked_ = false;
+    if (nowUs == wakeDueUs_) {
+      checks_ |= kCheckWakeHonored;
+    } else {
+      ++violations_;  // accepted the request, then served it late
+    }
+  }
   if (!timeSeen_) {
     timeSeen_ = true;
   } else if (nowUs > lastAdvance_) {
@@ -114,10 +125,24 @@ void ConformanceProbe::advanceTo(uint64_t nowUs) {
   leave();
 }
 
-// The port-side checks: what the environment answers for frames and
-// format names. Run from a channel write so the environment picks when.
+// The port-side checks: what the environment answers for frames, format
+// names, and the revision 002-004 paths. Run from a channel write so the
+// environment picks when.
 void ConformanceProbe::probePort() {
   if (port() == nullptr) return;
+
+  // Revisions 002-004 are optional: a false answer means "not routed
+  // here" and is not a violation. What must hold is that an environment
+  // saying yes then behaves.
+  if (port()->analogOut(kLineAnalog, kAnalogValue)) {
+    checks_ |= kCheckAnalogRouted;
+  }
+  if (port()->diagnose("conformance probe")) {
+    checks_ |= kCheckNoteRouted;
+  }
+  wakeDueUs_ = port()->nowMicros() + kWakeAheadUs;
+  wakeAsked_ = port()->requestWake(wakeDueUs_);
+  if (!wakeAsked_) wakeDueUs_ = 0;
 
   const uint32_t schema = ebdev::schemaFingerprint("u8 probe");
   const uint16_t first = port()->formatId("acme.probe.1", schema);

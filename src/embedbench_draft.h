@@ -75,10 +75,20 @@ using FrameHandler = void (*)(uint8_t bus, uint16_t format,
 // (X9's observer/responder split).
 using EventListener = void (*)(const Event& event, void* user);
 
+// Which instance of a bus a binding refers to. The host core exposes two
+// of each; a device owns one endpoint on one of them (interface rule),
+// and composite hardware is composed from several devices.
+enum class WireBus : uint8_t { kWire0 = 0, kWire1 = 1 };
+enum class SerialPort : uint8_t { kSerial1 = 1, kSerial2 = 2 };
+
 // Bindings persist across runs; runBegin/runEnd own the host hooks and
 // the trace for one run window.
 bool bindWireDevice(uint16_t address, const WireDeviceOps& ops);
+bool bindWireDeviceOn(WireBus bus, uint16_t address,
+                      const WireDeviceOps& ops);
 void bindUartDevice(UartTxHandler handler, void* user = nullptr);
+void bindUartDeviceOn(SerialPort port, UartTxHandler handler,
+                      void* user = nullptr);
 void bindSpiDevice(SpiTransferFn handler, void* user = nullptr);
 void setChannelHandler(ChannelHandler handler, void* user = nullptr);
 void setTickHandler(TickHandler handler, void* user = nullptr);
@@ -119,6 +129,8 @@ void pinInject(Origin origin, uint8_t pin, uint8_t level);
 // otherwise hex / length+checksum). Returns whether every byte was
 // accepted; a full receive queue is diagnosed and the remainder dropped.
 bool uartInject(Origin origin, const uint8_t* data, size_t len);
+bool uartInjectOn(Origin origin, SerialPort port, const uint8_t* data,
+                  size_t len);
 // Logical frames (format id + pre-encoding bits): frameTx carries an
 // application frame to the bound device, frameRx carries a device frame
 // to the application-side receiver. Both record first.

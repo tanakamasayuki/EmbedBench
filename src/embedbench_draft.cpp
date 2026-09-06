@@ -20,7 +20,7 @@ namespace ebd {
 namespace {
 
 constexpr size_t kCapacity = 64;
-constexpr size_t kMaxWireDevices = 2;
+constexpr size_t kMaxWireDevices = 4;
 constexpr size_t kMaxFormats = 8;
 constexpr uint32_t kMaxFrameBits = 64;
 constexpr size_t kDeferralCapacity = 4;
@@ -50,6 +50,7 @@ struct FormatSlot {
 
 struct WireDeviceSlot {
   bool used = false;
+  uint8_t bus = 0;  // which TwoWire instance this endpoint sits on
   uint16_t address = 0;
   WireDeviceOps ops = {nullptr, nullptr, nullptr};
 };
@@ -81,6 +82,8 @@ struct State {
   WireDeviceSlot wireDevices[kMaxWireDevices];
   UartTxHandler uartHandler = nullptr;
   void* uartUser = nullptr;
+  UartTxHandler uart2Handler = nullptr;
+  void* uart2User = nullptr;
   ChannelHandler channelHandler = nullptr;
   void* channelUser = nullptr;
   SpiTransferFn spiHandler = nullptr;
@@ -111,9 +114,11 @@ struct State {
   uint32_t deferredFrames = 0;
   uint32_t deferredDropped = 0;
 
-  // I2C is one bus: the address whose last transfer ended without STOP,
-  // or 0xFFFF. Any transfer to another address closes the sequence.
-  uint16_t i2cOpenAddress = 0xFFFF;
+  // Repeated start is per bus: for each TwoWire instance, the address
+  // whose last transfer ended without STOP, or 0xFFFF. A transfer to
+  // another address on that bus closes the sequence; the other bus is
+  // unaffected.
+  uint16_t i2cOpenAddress[2] = {0xFFFF, 0xFFFF};
 
   TickDeviceFn tickDevice = nullptr;
   void* tickDeviceUser = nullptr;
@@ -279,9 +284,10 @@ void bytesLabel(const uint8_t* data, size_t len, char* out, size_t cap) {
   }
 }
 
-WireDeviceSlot* findWireDevice(uint16_t address) {
+WireDeviceSlot* findWireDevice(uint8_t bus, uint16_t address) {
   for (size_t i = 0; i < kMaxWireDevices; ++i) {
-    if (st().wireDevices[i].used && st().wireDevices[i].address == address) {
+    if (st().wireDevices[i].used && st().wireDevices[i].bus == bus &&
+        st().wireDevices[i].address == address) {
       return &st().wireDevices[i];
     }
   }
@@ -471,14 +477,18 @@ void onInterruptEvent(HostArduino::InterruptEvent event,
 
 // --- Wire hooks: request/response two-line events (X20 winner) ----------
 
-uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
-                    bool stop, void*) {
+uint8_t onWireWriteOn(uint8_t bus, uint8_t address, const uint8_t* data,
+                      size_t len, bool stop) {
   char hex[12];
+  char busTag[8] = {0};
+  if (bus != 0) snprintf(busTag, sizeof(busTag), " bus=%u", bus);
   hexOf(data, len, hex, sizeof(hex));
-  WireDeviceSlot* dev = findWireDevice(address);
-  const bool continued = dev != nullptr && st().i2cOpenAddress == address;
-  const uint32_t req = recordf(Origin::kApp, 0, "i2c.req addr=%02X data=%s stop=%u%s",
-                               address, hex, stop ? 1 : 0, continued ? " rs" : "");
+  WireDeviceSlot* dev = findWireDevice(bus, address);
+  const bool continued = dev != nullptr && st().i2cOpenAddress[bus] == address;
+  const uint32_t req = recordf(Origin::kApp, 0,
+                               "i2c.req addr=%02X%s data=%s stop=%u%s", address,
+                               busTag, hex, stop ? 1 : 0,
+                               continued ? " rs" : "");
   uint8_t status = 2;  // address NACK when no responder is bound (X11)
   if (dev != nullptr) {
     enterDevice();
@@ -493,19 +503,32 @@ uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
     ++st().diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
   }
-  st().i2cOpenAddress = stop ? 0xFFFF : address;
+  st().i2cOpenAddress[bus] = stop ? 0xFFFF : address;
   recordf(Origin::kDev, req, "i2c.resp status=%u", status);
   deliverDeferred();
   return status;
 }
 
-size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
-                  void*) {
-  WireDeviceSlot* dev = findWireDevice(address);
-  const bool continued = dev != nullptr && st().i2cOpenAddress == address;
-  const uint32_t req = recordf(Origin::kApp, 0, "i2c.rd.req addr=%02X req=%u stop=%u%s",
-                               address, static_cast<unsigned>(len), stop ? 1 : 0,
-                               continued ? " rs" : "");
+uint8_t onWireWrite(uint8_t address, const uint8_t* data, size_t len,
+                    bool stop, void*) {
+  return onWireWriteOn(0, address, data, len, stop);
+}
+
+uint8_t onWire1Write(uint8_t address, const uint8_t* data, size_t len,
+                     bool stop, void*) {
+  return onWireWriteOn(1, address, data, len, stop);
+}
+
+size_t onWireReadOn(uint8_t bus, uint8_t address, uint8_t* data, size_t len,
+                    bool stop) {
+  char busTag[8] = {0};
+  if (bus != 0) snprintf(busTag, sizeof(busTag), " bus=%u", bus);
+  WireDeviceSlot* dev = findWireDevice(bus, address);
+  const bool continued = dev != nullptr && st().i2cOpenAddress[bus] == address;
+  const uint32_t req = recordf(Origin::kApp, 0,
+                               "i2c.rd.req addr=%02X%s req=%u stop=%u%s",
+                               address, busTag, static_cast<unsigned>(len),
+                               stop ? 1 : 0, continued ? " rs" : "");
   size_t count = 0;
   if (dev != nullptr) {
     enterDevice();
@@ -523,13 +546,23 @@ size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
     ++st().diagCount;
     recordf(Origin::kDiag, req, "diag.unbound addr=%02X", address);
   }
-  st().i2cOpenAddress = stop ? 0xFFFF : address;
+  st().i2cOpenAddress[bus] = stop ? 0xFFFF : address;
   char hex[12];
   hexOf(data, count, hex, sizeof(hex));
   recordf(Origin::kDev, req, "i2c.rd.resp len=%u data=%s",
           static_cast<unsigned>(count), hex);
   deliverDeferred();
   return count;
+}
+
+size_t onWireRead(uint8_t address, uint8_t* data, size_t len, bool stop,
+                  void*) {
+  return onWireReadOn(0, address, data, len, stop);
+}
+
+size_t onWire1Read(uint8_t address, uint8_t* data, size_t len, bool stop,
+                   void*) {
+  return onWireReadOn(1, address, data, len, stop);
 }
 
 // --- SPI hooks: request/response pair per byte outside a transaction; a
@@ -662,16 +695,23 @@ void onAnalogWrite(HostArduino::AnalogWriteEvent event,
 
 // --- UART hook: device replies go through the RX sink (X21) --------------
 
-void onUartActivity(HostUart::ActivityEvent event, HostUart&,
+void onUartActivity(HostUart::ActivityEvent event, HostUart& uart,
                     const uint8_t* data, size_t len, void*) {
+  // Two device-facing ports exist; the instance says which one spoke, and
+  // only the second is tagged so single-port traces stay as they were.
+  const bool second = uart.uartNum() == 2;
+  char portTag[8] = {0};
+  if (second) snprintf(portTag, sizeof(portTag), " port=2");
+  UartTxHandler handler = second ? st().uart2Handler : st().uartHandler;
+  void* handlerUser = second ? st().uart2User : st().uartUser;
   switch (event) {
     case HostUart::kUartTx: {
       char text[24];
       bytesLabel(data, len, text, sizeof(text));
-      recordf(Origin::kApp, 0, "uart.tx %s", text);
-      if (st().uartHandler) {
+      recordf(Origin::kApp, 0, "uart.tx%s %s", portTag, text);
+      if (handler) {
         enterDevice();
-        st().uartHandler(data, len, st().uartUser);
+        handler(data, len, handlerUser);
         leaveDevice();
         deliverDeferred();
       }
@@ -679,22 +719,22 @@ void onUartActivity(HostUart::ActivityEvent event, HostUart&,
     }
     case HostUart::kUartRx:
       if (data[0] >= 0x20 && data[0] <= 0x7E) {
-        recordf(Origin::kApp, 0, "uart.rx %c", data[0]);
+        recordf(Origin::kApp, 0, "uart.rx%s %c", portTag, data[0]);
       } else {
-        recordf(Origin::kApp, 0, "uart.rx 0x%02X", data[0]);
+        recordf(Origin::kApp, 0, "uart.rx%s 0x%02X", portTag, data[0]);
       }
       break;
     case HostUart::kUartBegin:
-      recordf(Origin::kApp, 0, "uart.begin");
+      recordf(Origin::kApp, 0, "uart.begin%s", portTag);
       break;
     case HostUart::kUartEnd:
-      recordf(Origin::kApp, 0, "uart.end");
+      recordf(Origin::kApp, 0, "uart.end%s", portTag);
       break;
     case HostUart::kUartConfig:
-      recordf(Origin::kApp, 0, "uart.config");
+      recordf(Origin::kApp, 0, "uart.config%s", portTag);
       break;
     case HostUart::kUartRxDiscard:
-      recordf(Origin::kApp, 0, "uart.rx_discard len=%u",
+      recordf(Origin::kApp, 0, "uart.rx_discard%s len=%u", portTag,
               static_cast<unsigned>(len));
       break;
   }
@@ -704,14 +744,17 @@ void onUartActivity(HostUart::ActivityEvent event, HostUart&,
 
 // --- Public draft API -----------------------------------------------------
 
-bool bindWireDevice(uint16_t address, const WireDeviceOps& ops) {
-  if (findWireDevice(address) != nullptr) {
+bool bindWireDeviceOn(WireBus bus, uint16_t address,
+                      const WireDeviceOps& ops) {
+  const uint8_t busNum = static_cast<uint8_t>(bus);
+  if (findWireDevice(busNum, address) != nullptr) {
     ++st().diagCount;
     return false;
   }
   for (size_t i = 0; i < kMaxWireDevices; ++i) {
     if (!st().wireDevices[i].used) {
       st().wireDevices[i].used = true;
+      st().wireDevices[i].bus = busNum;
       st().wireDevices[i].address = address;
       st().wireDevices[i].ops = ops;
       return true;
@@ -721,9 +764,22 @@ bool bindWireDevice(uint16_t address, const WireDeviceOps& ops) {
   return false;
 }
 
+bool bindWireDevice(uint16_t address, const WireDeviceOps& ops) {
+  return bindWireDeviceOn(WireBus::kWire0, address, ops);
+}
+
+void bindUartDeviceOn(SerialPort port, UartTxHandler handler, void* user) {
+  if (port == SerialPort::kSerial2) {
+    st().uart2Handler = handler;
+    st().uart2User = user;
+  } else {
+    st().uartHandler = handler;
+    st().uartUser = user;
+  }
+}
+
 void bindUartDevice(UartTxHandler handler, void* user) {
-  st().uartHandler = handler;
-  st().uartUser = user;
+  bindUartDeviceOn(SerialPort::kSerial1, handler, user);
 }
 
 void setChannelHandler(ChannelHandler handler, void* user) {
@@ -820,7 +876,8 @@ void runBegin(uint32_t tickUs) {
   st().deferredIsrs = 0;
   st().deferredFrames = 0;
   st().deferredDropped = 0;
-  st().i2cOpenAddress = 0xFFFF;
+  st().i2cOpenAddress[0] = 0xFFFF;
+  st().i2cOpenAddress[1] = 0xFFFF;
   st().wakeAtUs = 0;
   st().running = true;
 
@@ -830,6 +887,8 @@ void runBegin(uint32_t tickUs) {
   HostArduino::setInterruptHook(&onInterruptEvent);
   Wire.setWriteHook(&onWireWrite);
   Wire.setReadHook(&onWireRead);
+  Wire1.setWriteHook(&onWire1Write);
+  Wire1.setReadHook(&onWire1Read);
   HostArduino::setAnalogReadHook(&onAnalogRead);
   HostArduino::setAnalogMilliVoltsHook(&onAnalogMilliVolts);
   HostArduino::setAnalogReadConfigHook(&onAnalogReadConfig);
@@ -837,6 +896,7 @@ void runBegin(uint32_t tickUs) {
   SPI.setTransferHook(&onSpiTransfer);
   SPI.setTransactionHook(&onSpiTransaction);
   Serial1.setActivityHook(&onUartActivity);
+  Serial2.setActivityHook(&onUartActivity);
   HostArduino::setClockHooks(&onNow, &onWait);
 }
 
@@ -844,7 +904,9 @@ void runEnd() {
   st().running = false;
   HostArduino::clearClockHooks();
   Serial1.clearActivityHook();
+  Serial2.clearActivityHook();
   Wire.clearHooks();
+  Wire1.clearHooks();
   SPI.clearHooks();
   HostArduino::clearInterruptHook();
   HostArduino::clearAnalogHooks();
@@ -901,11 +963,16 @@ void pinInject(Origin origin, uint8_t pin, uint8_t level) {
   HostArduino::triggerInterrupt(pin);
 }
 
-bool uartInject(Origin origin, const uint8_t* data, size_t len) {
+bool uartInjectOn(Origin origin, SerialPort port, const uint8_t* data,
+                  size_t len) {
+  const bool second = port == SerialPort::kSerial2;
   char text[24];
+  char portTag[8] = {0};
+  if (second) snprintf(portTag, sizeof(portTag), " port=2");
   bytesLabel(data, len, text, sizeof(text));
-  recordf(origin, 0, "dev.tx %s", text);
-  const size_t accepted = Serial1.pushRx(data, len);
+  recordf(origin, 0, "dev.tx%s %s", portTag, text);
+  const size_t accepted =
+      second ? Serial2.pushRx(data, len) : Serial1.pushRx(data, len);
   if (accepted < len) {
     ++st().diagCount;
     recordf(Origin::kDiag, 0, "diag.uart_rx_full accepted=%u len=%u",
@@ -913,6 +980,10 @@ bool uartInject(Origin origin, const uint8_t* data, size_t len) {
     return false;
   }
   return true;
+}
+
+bool uartInject(Origin origin, const uint8_t* data, size_t len) {
+  return uartInjectOn(origin, SerialPort::kSerial1, data, len);
 }
 
 void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,

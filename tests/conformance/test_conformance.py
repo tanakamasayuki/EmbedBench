@@ -9,10 +9,11 @@ MODELS = HERE.parent / "common_models" / "src"
 ENV = HERE.parent / "common_env"
 
 # checks() is a bitmask of the contracts the probe managed to verify. The
-# required set is every bit except "advanceTo repeated a time", which the
-# contract allows but does not demand — neither environment repeats one in
-# this scenario, so both report 1FB and still conform.
-OBSERVED_CHECKS = "1FB"
+# required set leaves out "advanceTo repeated a time" (allowed, not
+# demanded) and the revision 002-004 paths (optional: an environment that
+# routes none of them still conforms). Both environments here route all
+# three, so both reach FFB — every bit except the time repeat.
+OBSERVED_CHECKS = "FFB"
 
 
 def test_native_conformance():

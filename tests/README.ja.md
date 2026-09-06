@@ -82,5 +82,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `bulk_checksum/`: 集約サマリのchecksum種別（byte和とCRC-8の検出率比較）
 - `if_gaps/`: 凍結IFに足りない3経路を回避策と比較した測定（revision 002〜004の根拠）
 - `if_rev1/`: revision 002〜004（analogOut・requestWake・diagnose）のhost環境での通し
+- `multi_bus/`: Wire/Wire1・Serial1/Serial2の2系統同時。同一アドレスの別デバイスとbus単位のrepeated start
+- `dump_route/`: 検分を証拠に残す経路の比較（テキストdump・channel・模型API直接）
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム、register-map、準拠probe）
