@@ -128,8 +128,15 @@ struct State {
   uint32_t rejectedListeners = 0;
   bool dispatching = false;
 
-  // A device's outstanding wake request, or 0 when there is none.
-  uint64_t wakeAtUs = 0;
+  static const size_t kWakeSlots = 8;
+
+  // Outstanding wake requests, 0 in a free slot. One slot is not enough:
+  // several devices share one environment and each may be waiting for a
+  // different moment, so keeping only the earliest serves the others late
+  // — which the interface forbids ("may advance more often than asked,
+  // never less"). Found by the three-anchor UWB model (X52).
+  uint64_t wakeAtUs[kWakeSlots] = {0};
+  uint32_t droppedWakes = 0;
 
   // Lifecycle-driven run window.
   bool windowArmed = false;
@@ -381,6 +388,27 @@ void fireTick() {
   --st().dirDepth;
 }
 
+// The earliest outstanding wake strictly after `after`, or 0 for none.
+static uint64_t nextWakeAfter(uint64_t after) {
+  uint64_t best = 0;
+  for (size_t i = 0; i < State::kWakeSlots; ++i) {
+    const uint64_t w = st().wakeAtUs[i];
+    if (w == 0 || w <= after) continue;
+    if (best == 0 || w < best) best = w;
+  }
+  return best;
+}
+
+// Every request due at or before `when` has been served by the advance
+// that just happened, so its slot is free again.
+static void retireWakesUpTo(uint64_t when) {
+  for (size_t i = 0; i < State::kWakeSlots; ++i) {
+    if (st().wakeAtUs[i] != 0 && st().wakeAtUs[i] <= when) {
+      st().wakeAtUs[i] = 0;
+    }
+  }
+}
+
 void onWait(uint32_t us, void*) {
   if (us == 0) {
     // The only external-processing opportunity of a busy-waiting sketch
@@ -415,15 +443,15 @@ void onWait(uint32_t us, void*) {
     // still served at the moment it is due.
     uint64_t next = st().nextTick;
     bool isWake = false;
-    if (st().wakeAtUs != 0 && st().wakeAtUs > st().vnow &&
-        st().wakeAtUs < next) {
-      next = st().wakeAtUs;
+    const uint64_t wake = nextWakeAfter(st().vnow);
+    if (wake != 0 && wake < next) {
+      next = wake;
       isWake = true;
     }
     if (next > target) break;
     st().vnow = next;
     if (isWake) {
-      st().wakeAtUs = 0;
+      retireWakesUpTo(st().vnow);
       ++st().dirDepth;
       if (st().tickDevice) {
         enterDevice();
@@ -439,7 +467,7 @@ void onWait(uint32_t us, void*) {
       return;
     }
     st().nextTick += st().tickUs;
-    if (st().wakeAtUs != 0 && st().wakeAtUs <= st().vnow) st().wakeAtUs = 0;
+    retireWakesUpTo(st().vnow);
     fireTick();
     while (st().pendingTicks > 0) {
       --st().pendingTicks;
@@ -898,7 +926,8 @@ void runBegin(uint32_t tickUs) {
   st().deferredDropped = 0;
   st().i2cOpenAddress[0] = 0xFFFF;
   st().i2cOpenAddress[1] = 0xFFFF;
-  st().wakeAtUs = 0;
+  for (size_t i = 0; i < State::kWakeSlots; ++i) st().wakeAtUs[i] = 0;
+  st().droppedWakes = 0;
   st().running = true;
 
   HostArduino::setPinWriteHook(&onPinWrite);
@@ -1171,13 +1200,29 @@ void deviceNote(const char* text) {
 }
 
 bool requestWake(uint64_t whenUs) {
-  // Keep the earliest outstanding request: an environment may always
-  // advance more often than asked, never less.
-  if (st().wakeAtUs == 0 || whenUs < st().wakeAtUs) st().wakeAtUs = whenUs;
-  return true;
+  // A time already past asks for the next possible advance, which the
+  // boundary loop reaches anyway: nothing needs to be held.
+  if (whenUs <= st().vnow) return true;
+  // Requests are held per moment, not per device, so several devices
+  // waiting for the same instant share one slot.
+  for (size_t i = 0; i < State::kWakeSlots; ++i) {
+    if (st().wakeAtUs[i] == whenUs) return true;
+  }
+  for (size_t i = 0; i < State::kWakeSlots; ++i) {
+    if (st().wakeAtUs[i] == 0) {
+      st().wakeAtUs[i] = whenUs;
+      return true;
+    }
+  }
+  // Full: say so rather than serve this device late in silence. The
+  // interface's false means "keep working from the boundaries you get".
+  ++st().droppedWakes;
+  recordf(Origin::kDiag, 0, "diag.wake_full pending=%u",
+          static_cast<unsigned>(State::kWakeSlots));
+  return false;
 }
 
-uint64_t pendingWakeUs() { return st().wakeAtUs; }
+uint64_t pendingWakeUs() { return nextWakeAfter(st().vnow); }
 
 void dumpf(const char* fmt, ...) {
   char text[50];  // fills the 56-byte event text after the "dump " prefix

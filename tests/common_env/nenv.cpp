@@ -93,7 +93,7 @@ void Env::reset() {
   rxHead_ = 0;
   rxCount_ = 0;
   openAddress_ = 0xFFFF;
-  wakeAtUs_ = 0;
+  for (size_t i = 0; i < kWakeSlots; ++i) wakeAtUs_[i] = 0;
   for (size_t i = 0; i < 4; ++i) analog_[i] = 0;
 }
 
@@ -178,18 +178,15 @@ void Env::advance(uint32_t us) {
     // when it is due rather than at the boundary after it.
     uint64_t next = nextTickUs_;
     bool isWake = false;
-    if (wakeAtUs_ != 0 && wakeAtUs_ > nowUs_ && wakeAtUs_ < next) {
-      next = wakeAtUs_;
+    const uint64_t wake = nextWakeAfter(nowUs_);
+    if (wake != 0 && wake < next) {
+      next = wake;
       isWake = true;
     }
     if (next > target) break;
     nowUs_ = next;
-    if (isWake) {
-      wakeAtUs_ = 0;
-    } else {
-      nextTickUs_ += kTickUs;
-      if (wakeAtUs_ != 0 && wakeAtUs_ <= nowUs_) wakeAtUs_ = 0;
-    }
+    if (!isWake) nextTickUs_ += kTickUs;
+    retireWakesUpTo(nowUs_);
     inTick_ = true;
     for (size_t i = 0; i < tickingCount_; ++i) ticking_[i]->advanceTo(nowUs_);
     inTick_ = false;
@@ -410,9 +407,38 @@ uint16_t Env::analogValue(uint8_t line) const {
 // A wake request (revision 003): the clock stops there as well as at its
 // tick boundaries, so a latency that does not divide by the tick is still
 // served when it is due. The earliest outstanding request wins.
+uint64_t Env::nextWakeAfter(uint64_t after) const {
+  uint64_t best = 0;
+  for (size_t i = 0; i < kWakeSlots; ++i) {
+    const uint64_t w = wakeAtUs_[i];
+    if (w == 0 || w <= after) continue;
+    if (best == 0 || w < best) best = w;
+  }
+  return best;
+}
+
+void Env::retireWakesUpTo(uint64_t when) {
+  for (size_t i = 0; i < kWakeSlots; ++i) {
+    if (wakeAtUs_[i] != 0 && wakeAtUs_[i] <= when) wakeAtUs_[i] = 0;
+  }
+}
+
 bool Env::requestWake(uint64_t whenUs) {
-  if (wakeAtUs_ == 0 || whenUs < wakeAtUs_) wakeAtUs_ = whenUs;
-  return true;
+  // A time already past asks for the next possible advance, which the
+  // boundary loop reaches anyway.
+  if (whenUs <= nowUs_) return true;
+  for (size_t i = 0; i < kWakeSlots; ++i) {
+    if (wakeAtUs_[i] == whenUs) return true;
+  }
+  for (size_t i = 0; i < kWakeSlots; ++i) {
+    if (wakeAtUs_[i] == 0) {
+      wakeAtUs_[i] = whenUs;
+      return true;
+    }
+  }
+  record("diag", 0, "diag.wake_full pending=%u",
+         static_cast<unsigned>(kWakeSlots));
+  return false;
 }
 
 // Device commentary (revision 004), in order among the events.

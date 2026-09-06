@@ -68,6 +68,9 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_modbus_model` | RS485 | serial（**バイナリ**）、`requestWake`、`diagnose`、channel | 終端文字でなく**沈黙で区切るframing**、CRC16、不正フレームは無応答 |
 | `env_sensor_model` | ENV系 | I2C（repeated start必須）、`lineOut`、`requestWake`、`diagnose`、channel | 7.5 msの測定時間、status register、未定義registerの通知 |
 | `gps_model` | GPS | serial（行指向）、`requestWake`、`diagnose`、channel | 自走する周期送信、本物と同じchecksum、コマンド拒否 |
+| `unit_ir_model` | IR | frame（bus 0）、`requestWake`、channel | アドレス無しのbroadcast、**payloadを持たない空フレーム**の繰り返し符号 |
+| `unit_lora_model` | LoRa | frame（bus 1）、`lineOut`、`requestWake`、`diagnose`、channel | **空中時間がpayload長に比例**、送信中は落とす、RSSIはpayloadの外 |
+| `unit_uwb_model` | UWB | frame（bus 2）、`requestWake`、`diagnose`、channel | **同一模型を複数実体**で1リンクに載せ順番に応答、**12ビット**のbit-packed poll |
 
 ## 3. 新しい模型を追加する手順
 

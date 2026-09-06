@@ -110,7 +110,14 @@ class Env : public ebdev::HostPort {
   I2cSlot i2c_[2] = {{false, 0, nullptr}, {false, 0, nullptr}};
   uint16_t openAddress_ = 0xFFFF;  // bus-level: last transfer without STOP
   uint16_t analog_[4] = {0, 0, 0, 0};
-  uint64_t wakeAtUs_ = 0;
+  // One slot per requested moment, not per device: several devices can
+  // be waiting for different instants at once, and keeping only the
+  // earliest would serve the rest late (see the same fix in the draft
+  // environment). 0 marks a free slot.
+  static const size_t kWakeSlots = 8;
+  uint64_t wakeAtUs_[kWakeSlots] = {0};
+  uint64_t nextWakeAfter(uint64_t after) const;
+  void retireWakesUpTo(uint64_t when);
 
   ebdev::Device* serialDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;
