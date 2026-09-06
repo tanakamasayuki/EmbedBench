@@ -29,6 +29,11 @@ struct Event {
   uint8_t ctx = 0;  // 0 = main, 1 = tick (director), 2 = isr
   Origin origin = Origin::kApp;
   uint32_t link = 0;  // request seq for response events, 0 otherwise
+  // A repeating cycle is folded into its first copy when the buffer would
+  // otherwise overflow, so `repeats` is 1 for an ordinary event and
+  // lastTimeUs is when the last copy happened (X53).
+  uint32_t repeats = 1;
+  uint64_t lastTimeUs = 0;
   char text[56] = {0};
 };
 
@@ -44,6 +49,7 @@ struct Stats {
   uint32_t deferredFrames = 0;  // application frame deliveries held back
   uint32_t deferredDropped = 0; // effects beyond the deferral capacity
   uint32_t maxDeviceDepth = 0;  // 1 means no device was ever re-entered
+  uint32_t folded = 0;          // events kept as a repeat count, not a slot
 };
 
 // I2C device callbacks receive the transaction context the master issued:

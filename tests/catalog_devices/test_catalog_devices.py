@@ -55,6 +55,14 @@ def test_host_catalog(dut):
     dut.expect("05 000000 main dev i2c.rd.resp len=1 data=60 re=4", timeout=10)
     dut.expect("06 000000 main app i2c.req addr=76 data=F425 stop=1",
                timeout=10)
+    # The status poll repeats the same four lines eight times. Rather
+    # than spend 32 slots on them and lose the end of the run (which is
+    # what happened before X53), the round is kept once with a count and
+    # the moment the last copy happened.
+    dut.expect("08 000000 main app i2c.req addr=76 data=F3 stop=0 x8..007000",
+               timeout=10)
+    dut.expect("11 000000 main dev i2c.rd.resp len=1 data=08 re=10 "
+               "x8..007000", timeout=10)
     # The measurement finishes at 7500 us, the time the part states —
     # not rounded up to the environment's next 1000 us boundary.
     dut.expect("40 007500 tick dev gpio.inject pin=27 0->1 match=0",
@@ -68,7 +76,13 @@ def test_host_catalog(dut):
     dut.expect(re.escape(r"49 008500 main app uart.tx START\n"), timeout=10)
     dut.expect(re.escape(r"50 010500 tick dev dev.tx $GPGGA,10,1*66\r\n"),
                timeout=10)
-    # The trace buffer is finite: the polling loop filled it, and the
-    # overflow is counted rather than hidden.
-    dut.expect("stats events=64 dropped=4 diag=0", timeout=10)
+    # The conclusion of the run survives, which is the point: the sensor
+    # and GPS dumps are the lines a test asserts on, and before X53 they
+    # were the ones the polling loop pushed out of the buffer.
+    dut.expect("67 010500 main dir dump env raw=7FE000 latched=7FE000 "
+               "meas=1 bad_reg=0", timeout=10)
+    dut.expect("68 010500 main dir dump gps run=1 fix=1 sent=1 rejected=0",
+               timeout=10)
+    # Nothing is lost now: the whole run fits once the repeats are folded.
+    dut.expect("stats events=38 dropped=0 diag=0", timeout=10)
     dut.expect("TEST done", timeout=10)

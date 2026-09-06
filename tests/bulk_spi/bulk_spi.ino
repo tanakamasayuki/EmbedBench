@@ -65,6 +65,14 @@ void setup() {
   }
   head[pos] = '\0';
   Serial.print(head);
+  // Per-byte bursts have no repeating cycle to fold, so this is the one
+  // scenario that still has to cut the trace. The last line says so
+  // rather than letting it end without explanation.
+  const char* tail = run1;
+  for (const char* q = run1; *q != '\0'; ++q) {
+    if (*q == '\n' && *(q + 1) != '\0') tail = q + 1;
+  }
+  Serial.printf("last %s", tail);
 
   runOnce(run2, sizeof(run2));
   Serial.printf("run2_same=%d\n", strcmp(run1, run2) == 0 ? 1 : 0);

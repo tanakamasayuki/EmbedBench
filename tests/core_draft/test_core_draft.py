@@ -35,7 +35,12 @@ def test_core_draft(dut):
         "ticks=2 diag=0",
         timeout=10)
     # 80 = 72 at X22 plus the text field widened 44 -> 56 for bus-qualified
-    # frame lines with format names (X26).
-    dut.expect("metrics event_bytes=80 resp_lines=5", timeout=10)
+    # frame lines with format names (X26). 96 = 80 plus the repeat count
+    # and last-copy time every record now carries so that a full buffer
+    # can fold a repeating cycle instead of discarding events (X53). That
+    # is 20% more memory per slot buying back everything a polling loop
+    # used to lose; at the 64-slot default the buffer goes 5,120 -> 6,144
+    # bytes.
+    dut.expect("metrics event_bytes=96 resp_lines=5", timeout=10)
     dut.expect("run2_same=1 run3_same=1", timeout=10)
     dut.expect("TEST done", timeout=10)

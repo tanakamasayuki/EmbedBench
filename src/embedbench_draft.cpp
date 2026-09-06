@@ -61,6 +61,9 @@ struct State {
   size_t count = 0;
   uint32_t nextSeq = 1;
   uint32_t dropped = 0;
+  uint32_t folded = 0;
+  bool foldExhausted = false;  // a full buffer with no cycle left to fold
+  bool truncated = false;      // the standing notice occupies the last slot
   uint32_t diagCount = 0;
   bool running = false;
 
@@ -188,15 +191,98 @@ const char* originName(Origin origin) {
   }
 }
 
+// Fold a repeating cycle already in the buffer into its first copy, so a
+// poll loop costs one cycle plus a count instead of a slot per round.
+// The shortest cycle is tried first, so one round of a four-line poll
+// folds as one round rather than as a pair of rounds; a shorter width
+// only matches when those lines really do repeat, so there is nothing to
+// mistake. Returns whether any room was made. A run that never fills the
+// buffer never reaches this, so traces that already fit are untouched
+// (X53).
+bool foldCycle() {
+  const size_t kMaxWidth = 8;
+  for (size_t width = 1; width <= kMaxWidth; ++width) {
+    if (st().count < width * 2) continue;
+    for (size_t start = 0; start + width * 2 <= st().count; ++start) {
+      bool same = true;
+      for (size_t k = 0; k < width && same; ++k) {
+        if (strcmp(st().buf[start + k].text,
+                   st().buf[start + width + k].text) != 0) {
+          same = false;
+        }
+      }
+      if (!same) continue;
+      size_t copies = 2;
+      for (;;) {
+        const size_t next = start + width * copies;
+        if (next + width > st().count) break;
+        bool more = true;
+        for (size_t k = 0; k < width && more; ++k) {
+          if (strcmp(st().buf[start + k].text,
+                     st().buf[next + k].text) != 0) {
+            more = false;
+          }
+        }
+        if (!more) break;
+        ++copies;
+      }
+      const size_t removed = width * (copies - 1);
+      const uint64_t lastTime = st().buf[start + width * copies - 1].timeUs;
+      for (size_t k = 0; k < width; ++k) {
+        st().buf[start + k].repeats += static_cast<uint32_t>(copies - 1);
+        st().buf[start + k].lastTimeUs = lastTime;
+      }
+      for (size_t k = start + width; k + removed < st().count; ++k) {
+        st().buf[k] = st().buf[k + removed];
+      }
+      st().count -= removed;
+      st().folded += static_cast<uint32_t>(removed);
+      return true;
+    }
+  }
+  return false;
+}
+
+// The last slot becomes a standing notice once nothing can be folded, so
+// the trace itself says it was cut instead of ending without explanation.
+void markTruncated(uint32_t seq) {
+  Event& mark = st().buf[kCapacity - 1];
+  mark.seq = seq;
+  mark.timeUs = st().vnow;
+  mark.lastTimeUs = st().vnow;
+  mark.repeats = 1;
+  mark.ctx = currentCtx();
+  mark.origin = Origin::kDiag;
+  mark.link = 0;
+  snprintf(mark.text, sizeof(mark.text), "trace.truncated lost=%u",
+           st().dropped);
+}
+
 uint32_t vrecord(Origin origin, uint32_t link, const char* fmt, va_list ap) {
   const uint32_t seq = st().nextSeq++;
-  if (!st().running || st().count >= kCapacity) {
-    if (st().running) ++st().dropped;
-    return seq;
+  if (!st().running) return seq;
+  if (st().count >= kCapacity) {
+    // Once the buffer is full and no cycle remains, it can never change
+    // again, so the search is not repeated for every later event.
+    if (!st().foldExhausted && foldCycle()) {
+      // Room was made; fall through and store.
+    } else {
+      if (!st().foldExhausted) {
+        st().foldExhausted = true;
+        // The notice takes a real event's slot: count that one too.
+        ++st().dropped;
+        st().truncated = true;
+      }
+      ++st().dropped;
+      markTruncated(seq);
+      return seq;
+    }
   }
   Event& e = st().buf[st().count++];
   e.seq = seq;
   e.timeUs = st().vnow;
+  e.lastTimeUs = st().vnow;
+  e.repeats = 1;
   e.ctx = currentCtx();
   e.origin = origin;
   e.link = link;
@@ -903,6 +989,9 @@ void runBegin(uint32_t tickUs) {
   st().count = 0;
   st().nextSeq = 1;
   st().dropped = 0;
+  st().folded = 0;
+  st().foldExhausted = false;
+  st().truncated = false;
   st().diagCount = 0;
   st().tickUs = tickUs;
   st().vnow = 0;
@@ -1239,6 +1328,7 @@ Stats stats() {
   Stats s;
   s.events = static_cast<uint32_t>(st().count);
   s.dropped = st().dropped;
+  s.folded = st().folded;
   s.zeroWaits = st().zeroWaits;
   s.zeroInDirector = st().zeroInDirector;
   s.lateTicks = st().lateTicks;
@@ -1272,6 +1362,12 @@ size_t formatTrace(char* out, size_t cap) {
                     originName(e.origin), e.text);
     if (e.link != 0 && pos < cap) {
       pos += snprintf(out + pos, cap - pos, " re=%u", e.link);
+    }
+    // A folded line says how many times it happened and when it stopped,
+    // so the round it collapsed is still readable.
+    if (e.repeats > 1 && pos < cap) {
+      pos += snprintf(out + pos, cap - pos, " x%u..%06llu", e.repeats,
+                      static_cast<unsigned long long>(e.lastTimeUs));
     }
     if (pos < cap) pos += snprintf(out + pos, cap - pos, "\n");
   }
