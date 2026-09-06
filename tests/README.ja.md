@@ -89,6 +89,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `units_bus/`: アナログ2種（角度・光）、I2Cエンコーダ、Modbus RTU（沈黙framing）
 - `units_radio/`: frame経路のUnit 3種（IR・LoRa・UWBアンカー3台）。複数wakeの同時保持を要求する
 - `units_sense/`: 自走するUnit 2種（FIFO付きIMU・RTC）。取りこぼしと、秒とマイクロ秒の変換
+- `units_race/`: 1本の線を共有する2部品の合成と、同一マイクロ秒に落ちた効果の順序の決定性
 - `units_fault/`: 異常系（無応答・拒否・途中で切れる読み出し・間欠故障）と、電源断を越えて残る不揮発状態
 - `units_mixed/`: 順序で意味が変わるSPI flashと、I2C+SPIの2本に載る1つのcodec模型
 - `frame_split/`: bus別に容量が違うframe経路と、format側が持つ分割規則

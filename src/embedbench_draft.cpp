@@ -666,6 +666,13 @@ void onWait(uint32_t us, void*) {
       // until their deadline, so they call back in; stopping here is what
       // lets the application see the device's answer at the moment it was
       // produced instead of at the end of the slice it fell in.
+      //
+      // Known limitation (X59): delayMicroseconds is the one waiter in
+      // the core that does NOT loop to a deadline, so a delayMicroseconds
+      // spanning a wake comes back early — 100 us for a 200 us wait in
+      // tests/units_race. Removing this return fixes that and breaks four
+      // experiments that depend on seeing a device's answer at the moment
+      // it was produced, so the trade is deliberate, not an oversight.
       return;
     }
     st().nextTick += st().tickUs;
