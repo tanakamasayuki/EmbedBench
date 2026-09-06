@@ -6,15 +6,30 @@ EmbedBench is an Arduino library and test bed for designing host-side embedded
 application verification through experiments. Its public API and final
 architecture are intentionally not fixed yet.
 
-Unsettled design records are kept in Japanese under
-[docs/README.ja.md](docs/README.ja.md). User-facing documentation is provided
-in linked English and Japanese versions.
+It verifies **what the application was trying to do** — "write 0xF4 to address
+0x76, wait 7.5 ms, read three bytes" — on a virtual clock, against device
+models, with one line recorded per event. The physical layer is deliberately
+out of scope: waveforms and timing margins can only be confirmed on real
+hardware.
 
-The repository currently contains only a minimal runnable environment:
+## Documentation
 
-- a valid Arduino library under `src/`;
-- `pytest-embedded` tests running on `lang-ship:host` 1.7.0;
-- a smoke sketch exercising lifecycle and virtual-clock extension ports.
+- **[Getting started](docs/GUIDE.md)** — what it is for, how to read a trace,
+  how to write your first test.
+- **[Advanced guide](docs/ADVANCED.md)** — writing device models, the
+  contracts they must keep, and the traps found while building the examples.
+
+Design records, the experiment ledger and the device catalog are kept in
+Japanese under [docs/README.ja.md](docs/README.ja.md).
+
+The repository currently contains:
+
+- a valid Arduino library under `src/`, including the frozen device interface
+  (`src/embedbench_device.h`, version 1 / revision 004) and two example
+  environment implementations;
+- twenty-two shared device models under `tests/common_models/`, from a thermometer
+  to a Modbus slave, a UWB anchor and a part that misbehaves on demand;
+- 62 experiments (78 `pytest-embedded` tests) running on `lang-ship:host` 1.7.1.
 
 ## Tests
 

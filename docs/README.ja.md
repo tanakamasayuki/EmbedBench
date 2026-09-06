@@ -17,7 +17,14 @@
 コードから日本語の設計説明へリンクする必要がある場合も、コード側のコメント自体は
 英語で記述する。
 
-## 文書
+## 利用者向けガイド（英語・日本語）
+
+- [GUIDE.ja.md](GUIDE.ja.md) / [GUIDE.md](GUIDE.md): **入門ガイド。まずこれ。**
+  何のためのものか、3つの登場人物、記録の読み方、最初のテストの書き方
+- [ADVANCED.ja.md](ADVANCED.ja.md) / [ADVANCED.md](ADVANCED.md): **上級ガイド。**
+  デバイス模型の書き方、守るべき契約、frame経路、環境実装の落とし穴
+
+## 設計記録（日本語のみ）
 
 - [DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md): 工程、承認ゲート、作業分割、完了条件
 - [EXPERIMENTS.ja.md](EXPERIMENTS.ja.md): hostで確認した数値、候補、未決事項の台帳
