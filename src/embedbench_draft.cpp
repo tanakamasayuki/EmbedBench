@@ -229,7 +229,13 @@ bool foldCycle() {
       const size_t removed = width * (copies - 1);
       const uint64_t lastTime = st().buf[start + width * copies - 1].timeUs;
       for (size_t k = 0; k < width; ++k) {
-        st().buf[start + k].repeats += static_cast<uint32_t>(copies - 1);
+        // Sum, not increment: a copy being absorbed may itself already
+        // stand for several events from an earlier fold.
+        uint32_t total = 0;
+        for (size_t c = 0; c < copies; ++c) {
+          total += st().buf[start + width * c + k].repeats;
+        }
+        st().buf[start + k].repeats = total;
         st().buf[start + k].lastTimeUs = lastTime;
       }
       for (size_t k = start + width; k + removed < st().count; ++k) {
@@ -241,6 +247,114 @@ bool foldCycle() {
     }
   }
   return false;
+}
+
+uint8_t crc8Step(uint8_t crc, uint8_t value);  // defined with the summaries
+
+// The shape of an event: its text with every run of hex digits replaced
+// by one placeholder, so `spi.req mosi=A0` and `spi.req mosi=A1` share a
+// shape while `uart.rx G` and `uart.rx P` do not.
+void shapeOf(const char* text, char* out, size_t cap) {
+  size_t o = 0;
+  bool inDigits = false;
+  for (size_t i = 0; text[i] != '\0' && o + 1 < cap; ++i) {
+    const char c = text[i];
+    const bool hex = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F');
+    if (hex) {
+      if (!inDigits) {
+        out[o++] = '*';
+        inDigits = true;
+      }
+      continue;
+    }
+    inDigits = false;
+    out[o++] = c;
+  }
+  out[o] = '\0';
+}
+
+// The second tier: the same cycle search comparing shapes rather than
+// exact text, so a request/response pair whose bytes all differ still
+// folds. The count and a checksum over the values still answer what a
+// test asks — that it happened, how many times, and that the data was
+// right; the individual values are what is given up, which is why this
+// runs only after the lossless tier has failed (X54).
+//
+// It takes the candidate that frees the most slots rather than the first
+// found: a short numbered setup is technically a cycle too, and folding
+// that instead of a long burst would be the wrong trade.
+bool foldShapeCycle() {
+  static char shapes[kCapacity][sizeof(Event::text)];
+  const size_t n = st().count;
+  for (size_t i = 0; i < n; ++i) {
+    shapeOf(st().buf[i].text, shapes[i], sizeof(shapes[i]));
+  }
+  size_t bestStart = 0;
+  size_t bestWidth = 0;
+  size_t bestCopies = 0;
+  size_t bestRemoved = 0;
+  for (size_t width = 1; width <= 8; ++width) {
+    if (n < width * 2) continue;
+    for (size_t start = 0; start + width * 2 <= n; ++start) {
+      bool same = true;
+      for (size_t k = 0; k < width && same; ++k) {
+        if (strcmp(shapes[start + k], shapes[start + width + k]) != 0) {
+          same = false;
+        }
+      }
+      if (!same) continue;
+      size_t copies = 2;
+      for (;;) {
+        const size_t next = start + width * copies;
+        if (next + width > n) break;
+        bool more = true;
+        for (size_t k = 0; k < width && more; ++k) {
+          if (strcmp(shapes[start + k], shapes[next + k]) != 0) more = false;
+        }
+        if (!more) break;
+        ++copies;
+      }
+      const size_t removed = width * (copies - 1);
+      if (removed > bestRemoved) {
+        bestRemoved = removed;
+        bestStart = start;
+        bestWidth = width;
+        bestCopies = copies;
+      }
+    }
+  }
+  if (bestRemoved == 0) return false;
+  const uint64_t lastTime =
+      st().buf[bestStart + bestWidth * bestCopies - 1].timeUs;
+  for (size_t k = 0; k < bestWidth; ++k) {
+    // The checksum covers this position across every copy, so a value
+    // that changed is still detectable even though it is not printed.
+    uint8_t crc = 0;
+    uint32_t total = 0;
+    for (size_t c = 0; c < bestCopies; ++c) {
+      const Event& copy = st().buf[bestStart + bestWidth * c + k];
+      total += copy.repeats;
+      for (const char* q = copy.text; *q != '\0'; ++q) {
+        crc = crc8Step(crc, static_cast<uint8_t>(*q));
+      }
+    }
+    Event& head = st().buf[bestStart + k];
+    char summary[sizeof(Event::text) * 2];
+    snprintf(summary, sizeof(summary), "%s crc=%02X", shapes[bestStart + k],
+             crc);
+    size_t copyLen = strlen(summary);
+    if (copyLen > sizeof(head.text) - 1) copyLen = sizeof(head.text) - 1;
+    memcpy(head.text, summary, copyLen);
+    head.text[copyLen] = '\0';
+    head.repeats = total;
+    head.lastTimeUs = lastTime;
+  }
+  for (size_t k = bestStart + bestWidth; k + bestRemoved < st().count; ++k) {
+    st().buf[k] = st().buf[k + bestRemoved];
+  }
+  st().count -= bestRemoved;
+  st().folded += static_cast<uint32_t>(bestRemoved);
+  return true;
 }
 
 // The last slot becomes a standing notice once nothing can be folded, so
@@ -264,7 +378,9 @@ uint32_t vrecord(Origin origin, uint32_t link, const char* fmt, va_list ap) {
   if (st().count >= kCapacity) {
     // Once the buffer is full and no cycle remains, it can never change
     // again, so the search is not repeated for every later event.
-    if (!st().foldExhausted && foldCycle()) {
+    // Lossless first, then the shape summary, which gives up the values
+    // but keeps the count and a checksum of them.
+    if (!st().foldExhausted && (foldCycle() || foldShapeCycle())) {
       // Room was made; fall through and store.
     } else {
       if (!st().foldExhausted) {

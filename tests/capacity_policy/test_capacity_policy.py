@@ -54,6 +54,19 @@ def test_capacity_policy():
     assert ("compact_nocycle stored=24 first=1 last=46 lost=22 folded=0 "
             "setup=0 tail=0 visible=1") in out
 
+    # A burst of 200 transfers whose every byte differs: the exact-cycle
+    # tier has nothing to work with and cuts most of the run away.
+    assert "burst events=409" in out
+    assert ("burst_cycle_only stored=24 first=1 last=409 lost=385 folded=0 "
+            "setup=1 tail=0 visible=1") in out
+    # Comparing shapes instead of exact text recognises the repeating
+    # request/response pair, so nothing is lost and the end of the run
+    # survives. The setup folds too here (setup=0): under this much
+    # pressure its numbered steps are a cycle as well, and a summarised
+    # setup beats a discarded conclusion.
+    assert ("burst_shapes stored=22 first=1 last=409 lost=0 folded=387 "
+            "setup=0 tail=1 visible=1") in out
+
     # Wake slots: distinct moments beyond the table are refused, and the
     # refusal is returned to the device rather than accepted and dropped.
     assert "wake distinct=12 accepted=8 refused=4 high=8" in out

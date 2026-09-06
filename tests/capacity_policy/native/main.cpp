@@ -253,6 +253,174 @@ Result compactOnFull(const Record* scene, size_t total) {
   return r;
 }
 
+// The shape of an event: its text with every run of hex digits replaced
+// by one placeholder, so `spi.req mosi=A0` and `spi.req mosi=A1` are the
+// same shape while `uart.rx G` and `uart.rx P` are not.
+void shapeOf(const char* text, char* out, size_t cap) {
+  size_t o = 0;
+  bool inDigits = false;
+  for (size_t i = 0; text[i] != '\0' && o + 1 < cap; ++i) {
+    const char c = text[i];
+    const bool hex = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F');
+    if (hex) {
+      if (!inDigits) {
+        out[o++] = '*';
+        inDigits = true;
+      }
+      continue;
+    }
+    inDigits = false;
+    out[o++] = c;
+  }
+  out[o] = '\0';
+}
+
+uint8_t crc8Step(uint8_t crc, uint8_t value) {
+  crc = static_cast<uint8_t>(crc ^ value);
+  for (int i = 0; i < 8; ++i) {
+    crc = static_cast<uint8_t>((crc & 0x80) ? ((crc << 1) ^ 0x07) : (crc << 1));
+  }
+  return crc;
+}
+
+// The second tier: the same cycle search, but comparing shapes instead
+// of exact text, so a request/response pair whose bytes all differ still
+// folds. A cycle fold has nothing to work with there; the count and a
+// checksum over the values still answer what a test asks — that it
+// happened, how many times, and that the data was right. The values
+// themselves are what is given up, which is why this runs only after the
+// lossless tier has failed.
+//
+// Unlike the lossless tier it takes the candidate that frees the most
+// slots rather than the first one found: a short setup whose steps are
+// numbered is technically a cycle too, and folding that instead of the
+// two-hundred-round burst would be the wrong trade.
+bool foldShapeCycle(Record* buf, size_t& n) {
+  char shapeA[kTextMax];
+  char shapeB[kTextMax];
+  size_t bestStart = 0;
+  size_t bestWidth = 0;
+  size_t bestCopies = 0;
+  size_t bestRemoved = 0;
+  for (size_t width = 1; width <= 8; ++width) {
+    if (n < width * 2) continue;
+    for (size_t start = 0; start + width * 2 <= n; ++start) {
+      bool same = true;
+      for (size_t k = 0; k < width && same; ++k) {
+        shapeOf(buf[start + k].text, shapeA, sizeof(shapeA));
+        shapeOf(buf[start + width + k].text, shapeB, sizeof(shapeB));
+        if (strcmp(shapeA, shapeB) != 0) same = false;
+      }
+      if (!same) continue;
+      size_t copies = 2;
+      for (;;) {
+        const size_t next = start + width * copies;
+        if (next + width > n) break;
+        bool more = true;
+        for (size_t k = 0; k < width && more; ++k) {
+          shapeOf(buf[start + k].text, shapeA, sizeof(shapeA));
+          shapeOf(buf[next + k].text, shapeB, sizeof(shapeB));
+          if (strcmp(shapeA, shapeB) != 0) more = false;
+        }
+        if (!more) break;
+        ++copies;
+      }
+      const size_t removed = width * (copies - 1);
+      if (removed > bestRemoved) {
+        bestRemoved = removed;
+        bestStart = start;
+        bestWidth = width;
+        bestCopies = copies;
+      }
+    }
+  }
+  if (bestRemoved == 0) return false;
+  const uint64_t lastTime =
+      buf[bestStart + bestWidth * bestCopies - 1].timeUs;
+  for (size_t k = 0; k < bestWidth; ++k) {
+    // The checksum covers this position across every copy, so a value
+    // that changed is still detectable even though it is not printed.
+    uint8_t crc = 0;
+    uint32_t total = 0;
+    for (size_t c = 0; c < bestCopies; ++c) {
+      const Record& copy = buf[bestStart + bestWidth * c + k];
+      total += copy.repeats;
+      for (const char* q = copy.text; *q != '\0'; ++q) {
+        crc = crc8Step(crc, static_cast<uint8_t>(*q));
+      }
+    }
+    Record& head = buf[bestStart + k];
+    shapeOf(head.text, shapeA, sizeof(shapeA));
+    char summary[kTextMax * 2];
+    snprintf(summary, sizeof(summary), "%s crc=%02X", shapeA, crc);
+    size_t copy = strlen(summary);
+    if (copy > kTextMax - 1) copy = kTextMax - 1;
+    memcpy(head.text, summary, copy);
+    head.text[copy] = '\0';
+    head.repeats = total;
+    head.lastTimeUs = lastTime;
+  }
+  for (size_t k = bestStart + bestWidth; k + bestRemoved < n; ++k) {
+    buf[k] = buf[k + bestRemoved];
+  }
+  n -= bestRemoved;
+  return true;
+}
+
+Result compactWithShapes(const Record* scene, size_t total) {
+  Record buf[kSlots];
+  size_t n = 0;
+  Result r;
+  for (size_t i = 0; i < total; ++i) {
+    if (n >= kSlots && !foldCycle(buf, n) && !foldShapeCycle(buf, n)) {
+      ++r.lost;
+      continue;
+    }
+    buf[n++] = scene[i];
+  }
+  finish(r, buf, n);
+  r.lossVisible = true;
+  return r;
+}
+
+// A burst whose every value differs: the shape that defeats a cycle fold.
+size_t buildBurst(Record* out, size_t rounds) {
+  size_t n = 0;
+  uint64_t t = 0;
+  for (size_t i = 0; i < kSetup; ++i) {
+    out[n].seq = static_cast<uint32_t>(n + 1);
+    out[n].timeUs = t;
+    out[n].lastTimeUs = t;
+    out[n].repeats = 1;
+    snprintf(out[n].text, kTextMax, "setup step=%u", static_cast<unsigned>(i));
+    ++n;
+    t += 100;
+  }
+  for (size_t i = 0; i < rounds; ++i) {
+    const unsigned v = static_cast<unsigned>(i & 0xFF);
+    out[n].seq = static_cast<uint32_t>(n + 1);
+    out[n].timeUs = t;
+    out[n].lastTimeUs = t;
+    out[n].repeats = 1;
+    snprintf(out[n].text, kTextMax, "spi.req mosi=%02X", v);
+    ++n;
+    out[n].seq = static_cast<uint32_t>(n + 1);
+    out[n].timeUs = t;
+    out[n].lastTimeUs = t;
+    out[n].repeats = 1;
+    snprintf(out[n].text, kTextMax, "spi.resp miso=%02X", 255u - v);
+    ++n;
+    t += 10;
+  }
+  out[n].seq = static_cast<uint32_t>(n + 1);
+  out[n].timeUs = t;
+  out[n].lastTimeUs = t;
+  out[n].repeats = 1;
+  snprintf(out[n].text, kTextMax, "run.end");
+  ++n;
+  return n;
+}
+
 // A scenario with nothing to fold, to see the degradation.
 size_t buildDistinct(Record* out, size_t count) {
   uint64_t t = 0;
@@ -331,6 +499,15 @@ int main() {
   printf("compact_fits stored=%u lost=%u folded=%u\n",
          static_cast<unsigned>(untouched.stored), untouched.lost,
          untouched.folded);
+
+  // A burst of 200 transfers whose every byte differs: no cycle exists,
+  // so the run is summarised by shape instead — what happened, how many
+  // times, and a checksum over the values.
+  static Record burst[8 + 400 + 1];
+  const size_t burstTotal = buildBurst(burst, 200);
+  printf("burst events=%u\n", static_cast<unsigned>(burstTotal));
+  report("burst_cycle_only", compactOnFull(burst, burstTotal));
+  report("burst_shapes", compactWithShapes(burst, burstTotal));
 
   // Nothing repeats: the fold has no purchase and the policy must fall
   // back to something a reader can still see.
