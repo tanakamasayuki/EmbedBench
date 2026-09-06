@@ -90,13 +90,17 @@ namespace ebdev {
 constexpr uint16_t kDeviceInterfaceVersion = 1;
 
 // Revision within version 1: a three-digit counter of approved additions,
-// bumped by every one of them rather than saved up. 1 reads as 0.0.1 and
+// bumped by every one of them rather than saved up. 4 reads as 0.0.4 and
 // 100 is the release mark, so the number is meant to move often; a device
 // or environment can ask for the revision it needs.
 //
 // Only the maintainer approves a bump. Measure the gap first (the way
 // tests/if_gaps does), bring the numbers, and wait for the answer.
-constexpr uint16_t kDeviceInterfaceRevision = 1;
+//
+//   002  analogOut / analogOutMilliVolts
+//   003  requestWake
+//   004  diagnose
+constexpr uint16_t kDeviceInterfaceRevision = 4;
 
 // I2C write status as Arduino's Wire::endTransmission() reports it. A
 // device's i2cWrite() must return one of these five values; anything
@@ -181,6 +185,61 @@ class HostPort {
   // Drive one of the device's logical output lines (IRQ, DRDY, ...).
   // Line ids are device-local; the binding maps them to real pins.
   virtual void lineOut(uint8_t line, uint8_t level) = 0;
+
+  // Drive one of the device's analog output lines: the voltage a sensor
+  // presents to an ADC input, in the same raw units the application will
+  // read. Analog line ids are their own space, like the digital ones, and
+  // the binding maps them to whatever the platform reads from. Returns
+  // true when the environment routed it; an environment that models no
+  // analog inputs returns false rather than dropping it silently.
+  //
+  // Raw counts and millivolts are separate on purpose: deriving one from
+  // the other needs an attenuation and reference model no environment
+  // here has, and an application that reads both should be given both.
+  //
+  // Approved as revision 2 (measured in tests/if_gaps: without it a
+  // device cannot present its own value and the director has to pull it
+  // out and inject it, once per update).
+  virtual bool analogOut(uint8_t line, uint16_t raw) {
+    (void)line;
+    (void)raw;
+    return false;
+  }
+  virtual bool analogOutMilliVolts(uint8_t line, uint32_t millivolts) {
+    (void)line;
+    (void)millivolts;
+    return false;
+  }
+
+  // Ask to be advanced at a particular time. Without this a device is
+  // only advanced on the environment's own boundaries, so a latency that
+  // does not divide by the tick is served late — an error that belongs to
+  // the environment's tick rather than to the device. Returns true when
+  // the environment accepted the request; false means the device must
+  // keep working from the boundaries it is given.
+  //
+  // Requesting a time already past is legal and asks for the next
+  // possible advance. The environment may advance more often than asked,
+  // never less. Approved as revision 3 (measured in tests/if_gaps: a
+  // 1500 us latency in a 1000 us tick was served at 2000 us without it).
+  virtual bool requestWake(uint64_t whenUs) {
+    (void)whenUs;
+    return false;
+  }
+
+  // Report something the device noticed that has no return path to say it
+  // with: a command in the wrong order, a payload it had to discard, a
+  // limit of its own it hit. This is commentary, never an effect — the
+  // environment records it in order among the events, and a device must
+  // not use it to change the world. Returns true when it was recorded.
+  //
+  // Approved as revision 4 (measured in tests/if_gaps: without it such a
+  // violation is only counted inside the model and never reaches the log
+  // in order).
+  virtual bool diagnose(const char* text) {
+    (void)text;
+    return false;
+  }
 
   // Send bytes toward the application (the device's serial TX). Any byte
   // value, including NUL, is carried — environments must not treat the

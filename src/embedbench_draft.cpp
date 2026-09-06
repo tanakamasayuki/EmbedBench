@@ -123,6 +123,9 @@ struct State {
   uint32_t rejectedListeners = 0;
   bool dispatching = false;
 
+  // A device's outstanding wake request, or 0 when there is none.
+  uint64_t wakeAtUs = 0;
+
   // Lifecycle-driven run window.
   bool windowArmed = false;
   bool windowClosed = false;
@@ -380,9 +383,37 @@ void onWait(uint32_t us, void*) {
     return;
   }
   const uint64_t target = st().vnow + us;
-  while (st().nextTick <= target) {
-    st().vnow = st().nextTick;
+  for (;;) {
+    // The next stop is a tick boundary, or a device's requested wake when
+    // that falls earlier: a latency that does not divide by the tick is
+    // still served at the moment it is due.
+    uint64_t next = st().nextTick;
+    bool isWake = false;
+    if (st().wakeAtUs != 0 && st().wakeAtUs > st().vnow &&
+        st().wakeAtUs < next) {
+      next = st().wakeAtUs;
+      isWake = true;
+    }
+    if (next > target) break;
+    st().vnow = next;
+    if (isWake) {
+      st().wakeAtUs = 0;
+      ++st().dirDepth;
+      if (st().tickDevice) {
+        enterDevice();
+        st().tickDevice(st().vnow, st().tickDeviceUser);
+        leaveDevice();
+        deliverDeferred();
+      }
+      --st().dirDepth;
+      // Return with the slice unfinished. The core's own wait loops run
+      // until their deadline, so they call back in; stopping here is what
+      // lets the application see the device's answer at the moment it was
+      // produced instead of at the end of the slice it fell in.
+      return;
+    }
     st().nextTick += st().tickUs;
+    if (st().wakeAtUs != 0 && st().wakeAtUs <= st().vnow) st().wakeAtUs = 0;
     fireTick();
     while (st().pendingTicks > 0) {
       --st().pendingTicks;
@@ -790,6 +821,7 @@ void runBegin(uint32_t tickUs) {
   st().deferredFrames = 0;
   st().deferredDropped = 0;
   st().i2cOpenAddress = 0xFFFF;
+  st().wakeAtUs = 0;
   st().running = true;
 
   HostArduino::setPinWriteHook(&onPinWrite);
@@ -1042,6 +1074,19 @@ void analogInjectMilliVolts(Origin origin, uint8_t pin, uint32_t mv) {
           static_cast<unsigned>(mv));
   HostArduino::setAnalogMilliVolts(pin, mv);
 }
+
+void deviceNote(const char* text) {
+  recordf(Origin::kDev, 0, "dev.note %s", text);
+}
+
+bool requestWake(uint64_t whenUs) {
+  // Keep the earliest outstanding request: an environment may always
+  // advance more often than asked, never less.
+  if (st().wakeAtUs == 0 || whenUs < st().wakeAtUs) st().wakeAtUs = whenUs;
+  return true;
+}
+
+uint64_t pendingWakeUs() { return st().wakeAtUs; }
 
 void dumpf(const char* fmt, ...) {
   char text[50];  // fills the 56-byte event text after the "dump " prefix

@@ -10,8 +10,7 @@
 #include <string.h>
 
 #include <embedbench_device.h>
-
-#include "../proposed_port.h"
+#include <nenv.h>
 
 namespace {
 
@@ -23,10 +22,6 @@ class ThermistorModel : public ebdev::Device {
   static const uint8_t kChannelTemp = 0;
   static const uint8_t kLineAnalog = 0;
 
-  // The proposal is handed in separately: the frozen interface has no
-  // analog path, which is exactly what this experiment measures.
-  void usePort(proposal::ProposedPort* port) { proposed_ = port; }
-
   void reset() override {
     raw_ = 0;
     pushed_ = 0;
@@ -36,8 +31,8 @@ class ThermistorModel : public ebdev::Device {
   bool channelWrite(uint8_t channel, const uint8_t* data, size_t len) override {
     if (channel != kChannelTemp || len != 2) return false;
     raw_ = static_cast<uint16_t>((data[0] << 8) | data[1]);
-    if (proposed_ != nullptr) {
-      if (proposed_->analogOut(kLineAnalog, raw_)) {
+    if (port() != nullptr) {
+      if (port()->analogOut(kLineAnalog, raw_)) {
         ++pushed_;
       } else {
         ++refused_;  // no analog routing: the value stays inside the model
@@ -59,7 +54,6 @@ class ThermistorModel : public ebdev::Device {
   uint32_t refused() const { return refused_; }
 
  private:
-  proposal::ProposedPort* proposed_ = nullptr;
   uint16_t raw_ = 0;
   uint32_t pushed_ = 0;
   uint32_t refused_ = 0;
@@ -69,8 +63,6 @@ class ThermistorModel : public ebdev::Device {
 class LatencyModel : public ebdev::Device {
  public:
   static const uint64_t kLatencyUs = 1500;
-
-  void usePort(proposal::ProposedPort* port) { proposed_ = port; }
 
   void reset() override {
     due_ = 0;
@@ -86,7 +78,7 @@ class LatencyModel : public ebdev::Device {
     // Ask to be advanced exactly when the reply is due. An environment
     // that cannot schedule says so, and the device is served on the
     // environment's own boundaries instead.
-    wakeAccepted_ = proposed_ != nullptr && proposed_->requestWake(due_);
+    wakeAccepted_ = port()->requestWake(due_);
   }
 
   void advanceTo(uint64_t nowUs) override {
@@ -102,7 +94,6 @@ class LatencyModel : public ebdev::Device {
   bool wakeAccepted() const { return wakeAccepted_; }
 
  private:
-  proposal::ProposedPort* proposed_ = nullptr;
   uint64_t due_ = 0;
   bool pending_ = false;
   uint64_t repliedAt_ = 0;
@@ -112,8 +103,6 @@ class LatencyModel : public ebdev::Device {
 // --- A device that notices a protocol error it cannot answer with --------
 class StrictModel : public ebdev::Device {
  public:
-  void usePort(proposal::ProposedPort* port) { proposed_ = port; }
-
   void reset() override {
     started_ = false;
     errors_ = 0;
@@ -131,7 +120,7 @@ class StrictModel : public ebdev::Device {
         // A byte outside a frame. Serial has no return value to say this
         // with, so without diagnose() it can only be counted internally.
         ++errors_;
-        if (proposed_ != nullptr && proposed_->diagnose("byte outside frame")) {
+        if (port() != nullptr && port()->diagnose("byte outside frame")) {
           ++reported_;
         }
       }
@@ -148,14 +137,13 @@ class StrictModel : public ebdev::Device {
   uint32_t reported() const { return reported_; }
 
  private:
-  proposal::ProposedPort* proposed_ = nullptr;
   bool started_ = false;
   uint32_t errors_ = 0;
   uint32_t reported_ = 0;
 };
 
 // --- A miniature environment whose capabilities can be switched off ------
-struct MiniEnv : public proposal::ProposedPort {
+struct MiniEnv : public ebdev::HostPort {
   bool routeAnalog = true;
   bool routeWake = true;
   bool routeDiagnostics = true;
@@ -225,7 +213,6 @@ void measureAnalog() {
   without.routeAnalog = false;
   ThermistorModel a;
   a.attach(&without);
-  a.usePort(&without);
   a.reset();
   a.channelWrite(ThermistorModel::kChannelTemp, sample, 2);
   const uint16_t beforePull = without.heldRaw;
@@ -234,7 +221,6 @@ void measureAnalog() {
   MiniEnv with;
   ThermistorModel b;
   b.attach(&with);
-  b.usePort(&with);
   b.reset();
   b.channelWrite(ThermistorModel::kChannelTemp, sample, 2);
 
@@ -249,7 +235,6 @@ void measureWake() {
   without.routeWake = false;
   LatencyModel a;
   a.attach(&without);
-  a.usePort(&without);
   a.reset();
   a.serialIn(reinterpret_cast<const uint8_t*>("go"), 2);
   without.runUntil(4000, &a);
@@ -257,7 +242,6 @@ void measureWake() {
   MiniEnv with;
   LatencyModel b;
   b.attach(&with);
-  b.usePort(&with);
   b.reset();
   b.serialIn(reinterpret_cast<const uint8_t*>("go"), 2);
   with.runUntil(4000, &b);
@@ -276,14 +260,12 @@ void measureDiagnose() {
   without.routeDiagnostics = false;
   StrictModel a;
   a.attach(&without);
-  a.usePort(&without);
   a.reset();
   a.serialIn(reinterpret_cast<const uint8_t*>("x<ok>"), 5);
 
   MiniEnv with;
   StrictModel b;
   b.attach(&with);
-  b.usePort(&with);
   b.reset();
   b.serialIn(reinterpret_cast<const uint8_t*>("x<ok>"), 5);
 
@@ -291,6 +273,34 @@ void measureDiagnose() {
          "with_routing errors=%u reported=%u recorded=%u last=%s\n",
          a.errors(), a.reported(), without.diagnostics, b.errors(),
          b.reported(), with.diagnostics, with.lastDiagnostic);
+}
+
+// The same three paths on environment example #2, so the evidence is not
+// only about a purpose-built miniature environment.
+void measureOnSharedEnvironment() {
+  nenv::Env env;
+  ThermistorModel thermistor;
+  LatencyModel latency;
+  StrictModel strict;
+  thermistor.attach(&env);
+  latency.attach(&env);
+  strict.attach(&env);
+  thermistor.reset();
+  latency.reset();
+  strict.reset();
+  env.reset();
+  env.addTicking(&latency);
+
+  const uint8_t sample[2] = {0x04, 0xD2};
+  thermistor.channelWrite(ThermistorModel::kChannelTemp, sample, 2);
+  latency.serialIn(reinterpret_cast<const uint8_t*>("go"), 2);
+  env.delayMicros(4000);
+  strict.serialIn(reinterpret_cast<const uint8_t*>("x<ok>"), 5);
+
+  printf("shared analog=%u replied_at=%llu wake=%d notes=%u\n",
+         env.analogValue(ThermistorModel::kLineAnalog),
+         static_cast<unsigned long long>(latency.repliedAt()),
+         latency.wakeAccepted() ? 1 : 0, strict.reported());
 }
 
 }  // namespace
@@ -302,6 +312,7 @@ int main() {
   measureAnalog();
   measureWake();
   measureDiagnose();
+  measureOnSharedEnvironment();
   printf("NATIVE done\n");
   return 0;
 }

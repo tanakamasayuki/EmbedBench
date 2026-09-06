@@ -49,6 +49,9 @@ class Env : public ebdev::HostPort {
   // test can drive serialOut into its capacity-shortfall branch.
   void setRxCapacity(size_t bytes);
 
+  // What the application would read from an analog line a device drives.
+  uint16_t analogValue(uint8_t line) const;
+
 
   // --- Director --------------------------------------------------------------
   void chanWrite(uint8_t channel, const uint8_t* data, size_t len);
@@ -58,6 +61,9 @@ class Env : public ebdev::HostPort {
   uint64_t nowMicros() override;
   void lineOut(uint8_t line, uint8_t level) override;
   bool serialOut(const uint8_t* data, size_t len) override;
+  bool analogOut(uint8_t line, uint16_t raw) override;
+  bool requestWake(uint64_t whenUs) override;
+  bool diagnose(const char* text) override;
   bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,
                 size_t bits) override;
   uint16_t formatId(const char* name, uint32_t schema) override;
@@ -103,6 +109,8 @@ class Env : public ebdev::HostPort {
 
   I2cSlot i2c_[2] = {{false, 0, nullptr}, {false, 0, nullptr}};
   uint16_t openAddress_ = 0xFFFF;  // bus-level: last transfer without STOP
+  uint16_t analog_[4] = {0, 0, 0, 0};
+  uint64_t wakeAtUs_ = 0;
 
   ebdev::Device* serialDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;

@@ -13,7 +13,7 @@ HEADER = SRC / "embedbench_device.h"
 # rules in the header; editing or removing one is a version 2 decision.
 FROZEN_SURFACE = [
     "constexpr uint16_t kDeviceInterfaceVersion = 1;",
-    "constexpr uint16_t kDeviceInterfaceRevision = 1;",
+    "constexpr uint16_t kDeviceInterfaceRevision = 4;",
     "constexpr size_t kFormatNameMaxLength = 19;",
     "constexpr size_t kChannelUnsupported = static_cast<size_t>(-1);",
     "enum I2cStatus : uint8_t {",
@@ -26,6 +26,13 @@ FROZEN_SURFACE = [
     "virtual uint64_t nowMicros() = 0;",
     "virtual void lineOut(uint8_t line, uint8_t level) = 0;",
     "virtual bool serialOut(const uint8_t* data, size_t len) = 0;",
+    # Revisions 002-004, approved by the maintainer on the evidence in
+    # tests/if_gaps: each is a new virtual whose default means "this
+    # environment does not route it", so revision-001 code still works.
+    "virtual bool analogOut(uint8_t line, uint16_t raw) {",
+    "virtual bool analogOutMilliVolts(uint8_t line, uint32_t millivolts) {",
+    "virtual bool requestWake(uint64_t whenUs) {",
+    "virtual bool diagnose(const char* text) {",
     "virtual bool frameOut(uint8_t bus, uint16_t format, const uint8_t* data,",
     "virtual uint16_t formatId(const char* name, uint32_t schema) {",
     "virtual uint32_t maxFrameBits(uint8_t bus) {",
@@ -90,8 +97,10 @@ def test_standalone_build_and_defaults():
     assert ("defaults version=1 i2c_write=2 i2c_read=0 spi=FF "
             "channel_write=0 channel_read_unsupported=1 dump=0 dump_nul=1"
             ) in result.stdout
-    # An environment that routes no frames refuses them and reports id 0.
-    assert "port_defaults frame_out=0 format_id=0 max_bits=0" in result.stdout
+    # An environment that routes nothing optional refuses every one of
+    # them and reports id 0, so a device can tell what it may rely on.
+    assert ("port_defaults frame_out=0 format_id=0 max_bits=0 analog=0 "
+            "analog_mv=0 wake=0 note=0 revision=004") in result.stdout
     # Helpers: byte counts, padding checks (including the null cases), the
     # name limit, and a deterministic fingerprint.
     assert ("helpers bytes0=0 bytes1=1 bytes8=1 bytes9=2 clean=1 dirty=0 "
@@ -103,4 +112,4 @@ def test_header_declares_the_freeze():
     text = HEADER.read_text()
     assert "FROZEN — interface version 1" in text
     assert re.search(r"kDeviceInterfaceVersion = 1;", text)
-    assert re.search(r"kDeviceInterfaceRevision = 1;", text)
+    assert re.search(r"kDeviceInterfaceRevision = 4;", text)

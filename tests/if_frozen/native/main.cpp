@@ -49,12 +49,20 @@ int main() {
          applied ? 1 : 0, unsupported ? 1 : 0, dumpLen,
          dumpTerminated ? 1 : 0);
 
-  // Defaults of an environment that routes no frames.
+  // Defaults of an environment that routes nothing optional: frames, and
+  // the revision 002-004 paths, all answer "not here" rather than
+  // pretending to have worked.
   const bool framed = port.frameOut(0, 1, buf, 8);
   const uint16_t id = port.formatId("acme.x.1", 1);
   const uint32_t maxBits = port.maxFrameBits(0);
-  printf("port_defaults frame_out=%d format_id=%u max_bits=%u\n",
-         framed ? 1 : 0, id, maxBits);
+  const bool analog = port.analogOut(0, 1234);
+  const bool analogMv = port.analogOutMilliVolts(0, 3300);
+  const bool wake = port.requestWake(1000);
+  const bool note = port.diagnose("nothing routes this");
+  printf("port_defaults frame_out=%d format_id=%u max_bits=%u analog=%d "
+         "analog_mv=%d wake=%d note=%d revision=%03u\n",
+         framed ? 1 : 0, id, maxBits, analog ? 1 : 0, analogMv ? 1 : 0,
+         wake ? 1 : 0, note ? 1 : 0, ebdev::kDeviceInterfaceRevision);
 
   // Frozen helpers.
   const uint8_t clean[2] = {0xAB, 0xC0};

@@ -71,6 +71,8 @@ void Env::reset() {
   rxHead_ = 0;
   rxCount_ = 0;
   openAddress_ = 0xFFFF;
+  wakeAtUs_ = 0;
+  for (size_t i = 0; i < 4; ++i) analog_[i] = 0;
 }
 
 // --- Bindings ----------------------------------------------------------------
@@ -148,9 +150,24 @@ size_t Env::formatTrace(char* out, size_t cap) const {
 
 void Env::advance(uint32_t us) {
   const uint64_t target = nowUs_ + us;
-  while (nextTickUs_ <= target) {
-    nowUs_ = nextTickUs_;
-    nextTickUs_ += kTickUs;
+  for (;;) {
+    // Stop at the next tick boundary, or earlier at a device's requested
+    // wake time, so a latency that does not divide by the tick is served
+    // when it is due rather than at the boundary after it.
+    uint64_t next = nextTickUs_;
+    bool isWake = false;
+    if (wakeAtUs_ != 0 && wakeAtUs_ > nowUs_ && wakeAtUs_ < next) {
+      next = wakeAtUs_;
+      isWake = true;
+    }
+    if (next > target) break;
+    nowUs_ = next;
+    if (isWake) {
+      wakeAtUs_ = 0;
+    } else {
+      nextTickUs_ += kTickUs;
+      if (wakeAtUs_ != 0 && wakeAtUs_ <= nowUs_) wakeAtUs_ = 0;
+    }
     inTick_ = true;
     for (size_t i = 0; i < tickingCount_; ++i) ticking_[i]->advanceTo(nowUs_);
     inTick_ = false;
@@ -354,5 +371,32 @@ uint16_t Env::formatId(const char* name, uint32_t schema) {
 }
 
 uint32_t Env::maxFrameBits(uint8_t) { return kMaxFrameBits; }
+
+// The device presents a voltage: recorded, then held for the application
+// to read, with no director step in between (interface revision 002).
+bool Env::analogOut(uint8_t line, uint16_t raw) {
+  if (line >= 4) return false;
+  record("dev", 0, "analog.inject line=%u val=%u", line, raw);
+  analog_[line] = raw;
+  return true;
+}
+
+uint16_t Env::analogValue(uint8_t line) const {
+  return line < 4 ? analog_[line] : 0;
+}
+
+// A wake request (revision 003): the clock stops there as well as at its
+// tick boundaries, so a latency that does not divide by the tick is still
+// served when it is due. The earliest outstanding request wins.
+bool Env::requestWake(uint64_t whenUs) {
+  if (wakeAtUs_ == 0 || whenUs < wakeAtUs_) wakeAtUs_ = whenUs;
+  return true;
+}
+
+// Device commentary (revision 004), in order among the events.
+bool Env::diagnose(const char* text) {
+  record("dev", 0, "dev.note %s", text);
+  return true;
+}
 
 }  // namespace nenv

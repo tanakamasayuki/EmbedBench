@@ -148,6 +148,15 @@ void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
 // interface has no analog port), so these are director-side.
 void analogInject(Origin origin, uint8_t pin, uint16_t raw);
 void analogInjectMilliVolts(Origin origin, uint8_t pin, uint32_t mv);
+// Device commentary (HostPort::diagnose, interface revision 004):
+// recorded in order among the events, never an effect.
+void deviceNote(const char* text);
+// A device's wake request (HostPort::requestWake, revision 003). The wait
+// splitter stops at the requested time as well as at its tick boundaries,
+// so a latency that does not divide by the tick is still served when it is
+// due. Only the earliest outstanding request is kept.
+bool requestWake(uint64_t whenUs);
+uint64_t pendingWakeUs();
 void dumpf(const char* fmt, ...);
 
 uint64_t nowUs();

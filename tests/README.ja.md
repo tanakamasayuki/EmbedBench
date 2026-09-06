@@ -80,7 +80,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `core_draft2/`: draft core v2（Analog・lifecycle連動のrun window・event listener）
 - `log_formats/`: 1行形式3候補のparse時間・ファイル長・diff変化行の比較（WP-B2の残り）
 - `bulk_checksum/`: 集約サマリのchecksum種別（byte和とCRC-8の検出率比較）
-- `if_gaps/`: 凍結IFに足りない3経路を回避策と比較した測定（revision 1の根拠）
-- `if_rev1/`: revision 1の3経路（analogOut・requestWake・diagnose）のhost環境での通し
+- `if_gaps/`: 凍結IFに足りない3経路を回避策と比較した測定（revision 002〜004の根拠）
+- `if_rev1/`: revision 002〜004（analogOut・requestWake・diagnose）のhost環境での通し
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型（温度センサ、ATモデム、register-map、準拠probe）

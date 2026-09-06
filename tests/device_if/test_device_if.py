@@ -106,7 +106,7 @@ def test_native_portability():
     # only the size signal.
     print(f"LOC {sizes}")
     assert sizes == {
-        "device_if_header": 122,
+        "device_if_header": 140,
         "temp_model": 64,
         "modem_model": 80,
         "adapter": 33,
