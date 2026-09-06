@@ -1849,13 +1849,59 @@ format id解決で既に使っている定石と同じ形だったので、契�
 
 **凍結IF（revision 004）だけで両方書けた。追加要求は出ていない。**
 
+## X56. bus別のframe容量と、分割規則の置き場所
+
+対象: `tests/frame_split/`、模型は `tests/common_models/src/unit_chunk_model`
+
+[SCOPE](DEVICE_IF_SCOPE.ja.md)5節の残り1件。凍結IFは容量を
+**busごと**に問う（`maxFrameBits(uint8_t bus)`）一方で、超過フレームは
+分割せず**丸ごと拒否**する。分割は「どのbyteなら切り離してよいか、
+断片にどう番号を振るか、受け手はどこが最後と分かるか」という**意味の決定**
+なのでformatの責務、というのがX27以来の立場だった。その書き方の実例を作った。
+
+3本のリンクに異なる容量を持たせ、**同じ20 byteのメッセージ**を流す。
+format `m5.chunk.1` は `[seq, more, payload...]`。
+
+| リンク | 容量 | 1フレームのpayload | 結果 |
+| --- | ---: | ---: | --- |
+| 広い | 64 bit | 6 byte | **4断片**、復元一致 |
+| 狭い | 32 bit | 2 byte | **10断片**、復元一致 |
+| 極狭 | 16 bit | 0 byte | **拒否**（ヘッダすら入らない） |
+
+```text
+02 000000 main dev dev.frame bus=2 ... bits=64        ← 広いリンク、6 byteずつ
+05 001500 tick dev dev.frame bus=2 ... bits=32 data=0300B2B3  ← 端数かつmore=0
+07 003500 main dev dev.frame bus=1 ... bits=32 data=0001A0A1  ← 狭いリンク
+16 008000 tick dev dev.frame bus=1 ... bits=32 data=0900B2B3  ← seq=9で終端
+18 009500 main dev dev.note link too small for a chunk header
+21 ... dump chunk sent=0 fr=0 rx=2 len=20 no=0 bad=0  ← 両方20 byteで復元
+```
+
+**発見（重要）: 最初の模型は1回の呼び出しで10断片を一気に出し、
+環境の遅延配送キュー（容量4）を溢れさせて6断片を失っていた。**
+
+```text
+11 000000 main dev dev.frame bus=1 ... data=0401A8A9
+12 000000 main diag diag.deferred_full kind=frame bus=1   ← 以降ずっと欠落
+```
+
+これは環境の不具合ではなく**模型の誤り**だった。1フレームあたりの容量が
+決まっているリンクには1フレームあたりの**時間**も必ずあるので、
+10断片が時間ゼロで出るという想定自体が現実に無い。容量を4→8へ上げても
+10 > 8 で解決しないし、`reentry_paths` はその溢れ方針を意図的に実証している。
+**模型を「1断片ずつ間隔を空けて送る」に直した**（`requestWake` で500 us刻み）。
+環境の有限資源が非現実的な模型を炙り出した形で、遅延配送の容量は変更しない。
+
+**決定: 分割規則はformatに書く。** IFは容量をbusごとに答え、
+超過は丸ごと拒否するところまで。断片の番号付け・終端判定・
+「そもそも載らないリンク」の扱いはformat側が持ち、
+載らない場合は無言でなく通知する。
+
+**IFは変更なし。** SCOPE 5節の未決はこれで**全て解消**した。
+
 ## 次に必要な実験
 
-（デバイスIFはX42で凍結済み。X44〜X46でIF外の課題も片付いた）
+（デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）
 
-1. 検分を証拠に残す場合のEmbedBench経由dump経路の比較（X12の未決。dumpfは1案目）
-2. Wire1/Serial2など複数instanceのbinding（実装例の残り）
-3. revision 002〜004 を使う模型を実運用で増やし、次に足りない経路を探す
-5. SCOPE 5節の残り2項目（集約記録の基準とchecksum種別、bus別`maxFrameBits`下の
-   format分割規則）はIF外なので、IFヘッダを「決定版」として凍結する判断へ
-   （実験ではなく決定。凍結後の変更は台帳へ理由を残す）
+1. カタログの更なる拡張で凍結IFの不足を探し続ける
+   （X51〜X56で6回連続、追加要求は出ていない）

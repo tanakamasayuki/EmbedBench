@@ -89,6 +89,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `units_bus/`: アナログ2種（角度・光）、I2Cエンコーダ、Modbus RTU（沈黙framing）
 - `units_radio/`: frame経路のUnit 3種（IR・LoRa・UWBアンカー3台）。複数wakeの同時保持を要求する
 - `units_sense/`: 自走するUnit 2種（FIFO付きIMU・RTC）。取りこぼしと、秒とマイクロ秒の変換
+- `frame_split/`: bus別に容量が違うframe経路と、format側が持つ分割規則
 - `capacity_policy/`: 固定容量が尽きたときの4方式比較（native）。満杯時の周期畳み込みとwakeスロットの消費単位
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - `common_models/`: 実験間・環境間で共有する参照模型。IF検証用（温度センサ、ATモデム、register-map、準拠probe）、カタログ機器2種（環境センサー、GPS）、M5StackのUnit系8種（`unit_*`。GPIO・アナログ・I2C・バイナリserial）

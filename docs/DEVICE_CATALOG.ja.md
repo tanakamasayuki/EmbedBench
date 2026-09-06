@@ -73,6 +73,7 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_uwb_model` | UWB | frame（bus 2）、`requestWake`、`diagnose`、channel | **同一模型を複数実体**で1リンクに載せ順番に応答、**12ビット**のbit-packed poll |
 | `unit_imu_model` | IMU | I2C、`lineOut`、`requestWake`、`diagnose`、channel | **自走サンプリング**、深さ16のFIFO、**読み出し長がデバイス状態次第**、遅刻すると取りこぼす |
 | `unit_rtc_model` | RTC | I2C、`lineOut`、`requestWake`、`diagnose` | カタログで唯一**自分の時刻の単位（秒）を持つ**。アラームは時刻指定 |
+| `unit_chunk_model` | （汎用中継） | frame、`requestWake`、`diagnose`、channel | **bus別容量に応じた分割規則**の実例。載らないリンクは通知して拒否 |
 
 ## 3. 新しい模型を追加する手順
 
