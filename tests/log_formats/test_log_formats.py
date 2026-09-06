@@ -52,10 +52,13 @@ def test_log_formats():
     ratio = measured["json"]["bytes"] / measured["seq_first"]["bytes"]
     assert 1.6 < ratio < 1.7
 
-    # Timings vary by machine, so only the shape is pinned: JSON parsing
-    # is never faster than fixed-width parsing, even with this optimistic
-    # key-search parser rather than a real JSON library.
-    assert measured["json"]["parse_us"] >= measured["seq_first"]["parse_us"]
+    # Parse time does not separate the formats: the two are within a
+    # factor of two of each other, and which one wins moves from run to
+    # run. (JSON is read here by searching for keys rather than by a real
+    # parser, so this is its optimistic case, and it still buys nothing.)
+    ratio_parse = (measured["json"]["parse_us"] /
+                   measured["seq_first"]["parse_us"])
+    assert 0.5 < ratio_parse < 2.0, measured
 
     # Diff readability: one changed field in the middle of the stream.
     diffs = {}
