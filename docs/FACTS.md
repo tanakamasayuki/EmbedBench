@@ -93,6 +93,10 @@ real hardware:
 - The diagnostics vocabulary (`diag.unbound` and the rest). Two
   environments that disagree here still both conform, but their traces
   cannot be compared line for line.
+- Contract violations on the model side (`reset`, `channelRead` or `dump`
+  calling HostPort). The kit checks environments, not models; the model
+  side is checked by `tests/device_if/`, which found three real
+  violations when it was added.
 
 ## Notes for anyone quoting this
 

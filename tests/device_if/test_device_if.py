@@ -155,6 +155,31 @@ def test_timing_constants_state_their_basis():
     ], compressed
 
 
+def test_effect_free_methods_are_effect_free():
+    """reset(), channelRead() and dump() must not call HostPort.
+
+    The contract exists so that inspecting a device cannot change it, and
+    so that reset() is safe before the environment is ready. Three models
+    once set their line's resting level in reset(), which reads as
+    harmless and is not: the level a line sits at before anyone drives it
+    belongs to the environment, and a model that announces it is raising
+    an effect from a method the environment is entitled to call at any
+    time.
+    """
+    import re
+    violations = []
+    for path in sorted(MODELS.glob("*.cpp")):
+        text = path.read_text()
+        for method in ("reset", "channelRead", "dump"):
+            body = re.search(rf"::{method}\([^)]*\)[^{{]*{{(.*?)\n}}", text,
+                             re.S)
+            if body and "port()->" in body.group(1):
+                called = sorted(set(re.findall(r"port\(\)->(\w+)",
+                                               body.group(1))))
+                violations.append(f"{path.name}::{method} calls {called}")
+    assert not violations, violations
+
+
 def test_device_if(dut):
     dut.expect("TEST start device_if", timeout=10)
     dut.expect("values t1=300 spins=3 reply=OK elapsed=1000", timeout=10)

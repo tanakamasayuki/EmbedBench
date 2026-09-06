@@ -562,6 +562,18 @@ void leaveDevice() {
 // Hold an effect raised inside a device call. Beyond the capacity the
 // effect is diagnosed and dropped: never delivered re-entrantly, never
 // lost in silence.
+// A director-side call that would enter a device while one is already
+// running. The re-entrancy contract is what every model is written
+// against, so the call is refused rather than honoured: raising an effect
+// on a device that is mid-transfer corrupts its state machine, and doing
+// it quietly would be worse than not doing it at all.
+bool refuseReentrantCall(const char* what) {
+  if (st().deviceDepth == 0) return false;
+  ++st().diagCount;
+  recordf(Origin::kDiag, 0, "diag.reentrant %s", what);
+  return true;
+}
+
 void queueDeferred(const Deferred& effect) {
   if (st().deferredCount < kDeferralCapacity) {
     st().deferred[st().deferredCount++] = effect;
@@ -1296,6 +1308,10 @@ void chanWrite(Origin origin, uint8_t channel, const uint8_t* data,
   char hex[12];
   hexOf(data, len, hex, sizeof(hex));
   recordf(origin, 0, "chan.write chan=%u data=%s", channel, hex);
+  // The world may not reach into a device that is mid-call: channelWrite
+  // is allowed to raise effects (only reset, channelRead and dump are
+  // effect-free), so honouring this here would re-enter the device.
+  if (refuseReentrantCall("chan.write")) return;
   if (st().channelHandler) {
     enterDevice();
     const bool applied =
@@ -1367,6 +1383,7 @@ bool frameTx(Origin origin, uint8_t bus, uint16_t format, const uint8_t* data,
   recordf(origin, 0, "frame.tx bus=%u fmt=%s bits=%u %s", bus, label,
           static_cast<unsigned>(bits), payload);
   if (st().frameDevice) {
+    if (refuseReentrantCall("frame.tx")) return false;
     enterDevice();
     st().frameDevice(bus, format, data, bits, st().frameDeviceUser);
     leaveDevice();

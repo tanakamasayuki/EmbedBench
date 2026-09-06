@@ -6,8 +6,10 @@
 void UnitButtonModel::reset() {
   pressed_ = false;
   presses_ = 0;
-  // Idle is high: the pull-up wins while nobody is pressing.
-  if (port() != nullptr) port()->lineOut(kLineSignal, 1);
+  // The resting level (high, because the pull-up wins while nobody is
+  // pressing) is not set here: reset() is effect-free by contract, and
+  // the level a line sits at before anyone drives it belongs to the
+  // environment — a pull-up is wiring, not device behaviour.
 }
 
 bool UnitButtonModel::channelWrite(uint8_t channel, const uint8_t* data,

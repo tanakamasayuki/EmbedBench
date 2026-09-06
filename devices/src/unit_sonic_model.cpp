@@ -9,7 +9,8 @@ void UnitSonicModel::reset() {
   dueUs_ = 0;
   pulses_ = 0;
   ignored_ = 0;
-  if (port() != nullptr) port()->lineOut(kLineEcho, 0);
+  // No lineOut here: reset() is effect-free by contract. The echo line
+  // rests low until a measurement drives it.
 }
 
 bool UnitSonicModel::channelWrite(uint8_t channel, const uint8_t* data,

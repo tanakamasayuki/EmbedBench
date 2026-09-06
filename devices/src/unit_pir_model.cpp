@@ -7,7 +7,9 @@ void UnitPirModel::reset() {
   asserted_ = false;
   releaseAtUs_ = 0;
   triggers_ = 0;
-  if (port() != nullptr) port()->lineOut(kLineSignal, 0);
+  // No lineOut here: reset() is effect-free by contract. The line rests
+  // low until this sensor drives it, which is the environment's initial
+  // pin state rather than something the model announces.
 }
 
 bool UnitPirModel::channelWrite(uint8_t channel, const uint8_t* data,

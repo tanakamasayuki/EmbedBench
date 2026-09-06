@@ -39,9 +39,19 @@ static size_t encRead(uint8_t* data, size_t len, bool stop, bool continued,
   const ebdev::I2cTransfer xfer = {stop, continued};
   return encoder.i2cRead(data, len, xfer);
 }
+// Mistake 8, and the nastiest: reaching into the world from inside a
+// device call. This handler is running as the device, so the second
+// chanWrite would re-enter it — which every model is written on the
+// assumption cannot happen.
+static bool reachBack = false;
 static bool routeChannel(uint8_t channel, const uint8_t* data, size_t len,
                          void*) {
   if (channel != 0) return false;  // only channel 0 is handled
+  if (reachBack) {
+    reachBack = false;
+    const uint8_t again[1] = {0x01};
+    ebhost::chanWrite(ebhost::Origin::kDir, 0, again, 1);
+  }
   return encoder.channelWrite(UnitEncoderModel::kChannelTurn, data, len);
 }
 // [adapter end]
@@ -54,6 +64,7 @@ static uint8_t unboundStatus = 0;
 static size_t unboundBytes = 0;
 static uint8_t staleRead[2] = {0, 0};
 static uint8_t noDeviceSpi = 0;
+static uint32_t reentrantDepth = 0;
 static uint16_t badFormat = 0;
 static bool badFrame = false;
 
@@ -105,6 +116,13 @@ void setup() {
   const uint8_t payload[1] = {0x01};
   ebhost::chanWrite(ebhost::Origin::kDir, 9, payload, 1);
 
+  // Mistake 8: the world reaching into a device that is mid-call. The
+  // handler below calls chanWrite again from inside itself.
+  reachBack = true;
+  const uint8_t turn[1] = {0x02};
+  ebhost::chanWrite(ebhost::Origin::kDir, 0, turn, 1);
+  reentrantDepth = ebhost::stats().maxDeviceDepth;
+
   // Mistake 5: SPI with no device bound at all.
   noDeviceSpi = SPI.transfer(0x5A);
 
@@ -130,9 +148,9 @@ void setup() {
   Serial.printf("values before=%u windows0=%u outside=%u,%u unbound=%u,%u\n",
                 beforeStatus, windowsBefore, outsideBefore, outsideAfter,
                 unboundStatus, static_cast<unsigned>(unboundBytes));
-  Serial.printf("values stale=%02X%02X spi=%02X frame=%d fmt=%u\n",
+  Serial.printf("values stale=%02X%02X spi=%02X frame=%d fmt=%u depth=%u\n",
                 staleRead[0], staleRead[1], noDeviceSpi, badFrame ? 1 : 0,
-                badFormat);
+                badFormat, reentrantDepth);
   Serial.print(trace);
   const ebhost::Stats s = ebhost::stats();
   Serial.printf("stats events=%u dropped=%u diag=%u outside=%u windows=%u\n",

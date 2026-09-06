@@ -18,7 +18,11 @@ def test_units_misuse(dut):
     # sketch asking the wrong question, so only an assertion on the value
     # catches it — which is the argument for asserting on values and not
     # just on the absence of errors.
-    dut.expect("values stale=0100 spi=FF frame=0 fmt=0", timeout=10)
+    # depth=1 is the point of the last one: the world reached into a
+    # device that was mid-call, and the device was not entered a second
+    # time. Without the guard this would read 2, and every model is
+    # written on the assumption that it cannot.
+    dut.expect("values stale=0100 spi=FF frame=0 fmt=0 depth=1", timeout=10)
 
     # An address nobody is bound to: the host core has no opinion, so the
     # environment supplies one, on the write and on the read.
@@ -31,13 +35,20 @@ def test_units_misuse(dut):
                timeout=10)
     # A channel nobody handles.
     dut.expect("10 000000 main diag diag.chan_reject chan=9 len=1", timeout=10)
+    # Reaching into the world from inside a device call. The write is
+    # recorded — it was asked for — and then refused, because honouring
+    # it would re-enter a device that is mid-transfer. channelWrite is
+    # allowed to raise effects (only reset, channelRead and dump are
+    # effect-free), which is exactly why it cannot be let through here.
+    dut.expect("12 000000 main dir chan.write chan=0 data=01", timeout=10)
+    dut.expect("13 000000 main diag diag.reentrant chan.write", timeout=10)
     # SPI with no device bound at all.
-    dut.expect("12 000000 main diag diag.unbound spi re=11", timeout=10)
+    dut.expect("15 000000 main diag diag.unbound spi re=14", timeout=10)
     # A format id that was never registered, and a name over the limit.
-    dut.expect("14 000000 main diag diag.frame_unknown_format bus=0 fmt=4660",
+    dut.expect("17 000000 main diag diag.frame_unknown_format bus=0 fmt=4660",
                timeout=10)
-    dut.expect("15 000000 main diag diag.fmt_name_long len=25", timeout=10)
+    dut.expect("18 000000 main diag diag.fmt_name_long len=25", timeout=10)
 
-    dut.expect("stats events=15 dropped=0 diag=6 outside=2 windows=1",
+    dut.expect("stats events=18 dropped=0 diag=7 outside=2 windows=1",
                timeout=10)
     dut.expect("TEST done", timeout=10)
