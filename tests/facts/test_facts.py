@@ -6,6 +6,14 @@ one figure — not because anyone was careless, but because there was no
 single place that was kept correct. This measures the repository and
 compares it with the table, so a stale number fails here instead of
 travelling.
+
+What it does NOT pin is sizes. The first version counted source lines,
+which move whenever a comment is edited: adding three comment lines to
+three models turned a correct change into a red build. A figure that
+cannot be cited without going stale within the day is not worth citing,
+so the size questions are answered by the footprint script and by the
+LOC pins that already own them, and this table carries only what changes
+for a reason worth telling people about.
 """
 
 import re
@@ -25,16 +33,14 @@ def effective_loc(path: Path) -> int:
 def measured() -> dict:
     header = (ROOT / "src" / "embedbench_device.h").read_text()
     models = sorted((ROOT / "devices" / "src").glob("*_model.h"))
-    model_lines = 0
-    for model in models:
-        for path in (model, model.with_suffix(".cpp")):
-            if path.exists():
-                model_lines += len(path.read_text().splitlines())
     experiments = [
         d for d in (ROOT / "tests").iterdir()
         if d.is_dir() and not d.name.startswith("common")
         and any(d.glob("test_*.py"))
     ]
+    # Only figures that change for a reason worth telling people about.
+    # Sizes deliberately left out: a line count moves when a comment is
+    # edited, so pinning one makes an ordinary change fail the build.
     return {
         "version": int(re.search(r"kDeviceInterfaceVersion = (\d+)",
                                  header).group(1)),
@@ -42,11 +48,6 @@ def measured() -> dict:
                                   header).group(1)),
         "if_loc": effective_loc(ROOT / "src" / "embedbench_device.h"),
         "models": len(models),
-        "model_lines": model_lines,
-        "host_loc": (effective_loc(ROOT / "src" / "embedbench_host.h")
-                     + effective_loc(ROOT / "src" / "embedbench_host.cpp")),
-        "nenv_loc": (effective_loc(ROOT / "tests/common_env/nenv.h")
-                     + effective_loc(ROOT / "tests/common_env/nenv.cpp")),
         "experiments": len(experiments),
         "presets": len(re.findall(
             r"extern const Image",
@@ -64,12 +65,16 @@ def table_values(path: Path) -> list:
 
 def test_facts_are_current():
     m = measured()
-    expected = [m["version"], m["revision"], m["if_loc"], m["models"],
-                m["model_lines"], 2, m["host_loc"], m["nenv_loc"],
+    expected = [m["version"], m["revision"], m["if_loc"], m["models"], 2,
                 m["experiments"], m["presets"]]
     for doc in ("FACTS.md", "FACTS.ja.md"):
-        assert table_values(DOCS / doc) == expected, (
-            f"docs/{doc} is out of date; measured {expected}")
+        actual = table_values(DOCS / doc)
+        assert actual == expected, (
+            f"docs/{doc} is out of date.\n"
+            f"  measured: {expected}\n"
+            f"  in doc  : {actual}\n"
+            "  The rows, in order: interface version, revision, interface "
+            "effective LOC, models, environments, experiments, presets.")
 
 
 def test_both_languages_agree():

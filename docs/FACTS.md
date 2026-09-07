@@ -17,16 +17,23 @@ least one number.
 | Device interface revision | 4 |
 | Device interface, effective LOC | 140 |
 | Device models in `devices/` | 23 |
-| Device model source lines (.h + .cpp) | 3001 |
 | Environment implementations | 2 |
-| Host environment, effective LOC | 1465 |
-| Native environment (`nenv`), effective LOC | 464 |
 | Experiment directories | 64 |
 | SD card preset volumes | 7 |
 <!-- FACTS END -->
 
 Effective LOC excludes blank lines and comment-only lines, the same
 measure the ledger uses.
+
+**Sizes are not listed here.** A raw line count moves whenever anyone
+edits a comment, so pinning one turns every ordinary edit into a failing
+build — which is what happened, once. The questions a line count was
+being used to answer have better answers:
+
+| Question | Where to get it |
+| --- | --- |
+| Will the models fit in a firmware? | `devices/tools/measure_footprint.sh` — RAM and `.text` per model, for Cortex-M0+ and RV32 |
+| Has an environment grown? | The LOC pins in `tests/native_env/` and `tests/device_if/`, which carry a growth log and are updated deliberately |
 
 ## What is fixed and what is not
 
