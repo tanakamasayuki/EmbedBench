@@ -17,9 +17,9 @@ least one number.
 | Device interface revision | 4 |
 | Device interface, effective LOC | 140 |
 | Device models in `devices/` | 23 |
-| Device model source lines (.h + .cpp) | 2996 |
+| Device model source lines (.h + .cpp) | 3001 |
 | Environment implementations | 2 |
-| Host environment, effective LOC | 1457 |
+| Host environment, effective LOC | 1465 |
 | Native environment (`nenv`), effective LOC | 464 |
 | Experiment directories | 64 |
 | SD card preset volumes | 7 |
