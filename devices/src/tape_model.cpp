@@ -22,6 +22,7 @@ const char* TapeModel::kindName(uint8_t kind) {
     case kRead: return "read";
     case kSerialIn: return "serial in";
     case kSerialOut: return "serial out";
+    case kSpi: return "spi";
     default: return "?";
   }
 }
@@ -30,8 +31,8 @@ void TapeModel::reset() {
   step_ = 0;
   armed_ = false;
   dueAtUs_ = 0;
-  serialGot_ = 0;
-  serialBad_ = false;
+  progress_ = 0;
+  stepBad_ = false;
   exhaustedSaid_ = false;
   mismatches_ = 0;
 }
@@ -52,8 +53,8 @@ void TapeModel::mismatch(const char* fmt, ...) {
 
 void TapeModel::finishStep() {
   ++step_;
-  serialGot_ = 0;
-  serialBad_ = false;
+  progress_ = 0;
+  stepBad_ = false;
   armed_ = false;
   arm();
 }
@@ -136,21 +137,47 @@ void TapeModel::serialIn(const uint8_t* data, size_t len) {
       return;
     }
     if (s->kind != kSerialIn) {
-      if (!serialBad_) {
+      if (!stepBad_) {
         mismatch("tape %u: want %s, got serial byte %02X",
                  static_cast<unsigned>(step_), kindName(s->kind), data[i]);
       }
-      serialBad_ = true;  // said once per step; the bytes are dropped
+      stepBad_ = true;  // said once per step; the bytes are dropped
       continue;
     }
-    if (data[i] != s->data[serialGot_] && !serialBad_) {
+    if (data[i] != s->data[progress_] && !stepBad_) {
       mismatch("tape %u: serial byte %u want %02X, got %02X",
-               static_cast<unsigned>(step_), static_cast<unsigned>(serialGot_),
-               s->data[serialGot_], data[i]);
-      serialBad_ = true;
+               static_cast<unsigned>(step_), static_cast<unsigned>(progress_),
+               s->data[progress_], data[i]);
+      stepBad_ = true;
     }
-    if (++serialGot_ >= s->length) finishStep();
+    if (++progress_ >= s->length) finishStep();
   }
+}
+
+uint8_t TapeModel::spiTransfer(uint8_t mosi) {
+  const TapeStep* s = current();
+  if (s == nullptr) {
+    if (!exhaustedSaid_) mismatch("tape ended: spi byte %02X", mosi);
+    exhaustedSaid_ = true;
+    return 0xFF;
+  }
+  if (s->kind != kSpi) {
+    if (!stepBad_) {
+      mismatch("tape %u: want %s, got spi byte %02X",
+               static_cast<unsigned>(step_), kindName(s->kind), mosi);
+    }
+    stepBad_ = true;
+    return 0xFF;
+  }
+  if (mosi != s->data[progress_] && !stepBad_) {
+    mismatch("tape %u: spi byte %u want %02X, got %02X",
+             static_cast<unsigned>(step_), static_cast<unsigned>(progress_),
+             s->data[progress_], mosi);
+    stepBad_ = true;
+  }
+  const uint8_t miso = s->data[s->length + progress_];
+  if (++progress_ >= s->length) finishStep();
+  return miso;
 }
 
 void TapeModel::advanceTo(uint64_t nowUs) {

@@ -25,7 +25,8 @@ struct TapeStep {
   uint8_t stop;         // kWrite / kRead: the recorded STOP bit, checked
   uint8_t length;       // bytes in `data`
   uint8_t request;      // kRead: bytes the application asked for (0 = unchecked)
-  const uint8_t* data;  // kWrite / kSerialIn: expected; kRead / kSerialOut: answer
+  const uint8_t* data;  // kWrite / kSerialIn: expected; kRead / kSerialOut: answer;
+                        // kSpi: expected MOSI then answered MISO
   uint32_t delayUs;     // kSerialOut: after the previous step completed
 };
 
@@ -36,7 +37,12 @@ struct TapeSpec {
 
 class TapeModel : public ebdev::Device {
  public:
-  enum Kind : uint8_t { kWrite = 1, kRead = 2, kSerialIn = 3, kSerialOut = 4 };
+  // kSpi: `data` holds `length` MOSI bytes the application is expected
+  // to send, followed by the `length` MISO bytes to answer. Chip select
+  // is not checked: the recording is matched byte by byte.
+  enum Kind : uint8_t {
+    kWrite = 1, kRead = 2, kSerialIn = 3, kSerialOut = 4, kSpi = 5
+  };
 
   explicit TapeModel(const TapeSpec& spec) : spec_(&spec) {}
 
@@ -46,6 +52,7 @@ class TapeModel : public ebdev::Device {
   size_t i2cRead(uint8_t* data, size_t len,
                  const ebdev::I2cTransfer& xfer) override;
   void serialIn(const uint8_t* data, size_t len) override;
+  uint8_t spiTransfer(uint8_t mosi) override;
   void advanceTo(uint64_t nowUs) override;
   size_t dump(char* out, size_t cap) override;
 
@@ -64,8 +71,8 @@ class TapeModel : public ebdev::Device {
   size_t step_ = 0;
   bool armed_ = false;
   uint64_t dueAtUs_ = 0;
-  size_t serialGot_ = 0;
-  bool serialBad_ = false;
+  size_t progress_ = 0;  // bytes of a serial or SPI step matched so far
+  bool stepBad_ = false;  // said so once for this step
   bool exhaustedSaid_ = false;
   uint32_t mismatches_ = 0;
 };

@@ -17,12 +17,20 @@ void Session::append(const char* fmt, ...) {
 void Session::begin(ebdev::Device& dev, uint8_t address) {
   pos = 0;
   results[0] = '\0';
+  env.reset();
+  add(dev, address);
+  env.bindChannel(&dev);
+}
+
+void Session::add(ebdev::Device& dev, uint8_t address) {
   dev.attach(&env);
   dev.reset();
-  env.reset();
-  if (address != 0) env.bindI2c(address, &dev);
-  env.bindSerial(&dev);
-  env.bindChannel(&dev);
+  if (address != 0) {
+    env.bindI2c(address, &dev);
+  } else {
+    env.bindSerial(&dev);
+    env.bindSpi(&dev);
+  }
   env.addTicking(&dev);
 }
 
@@ -56,6 +64,14 @@ size_t Session::serialRead(uint8_t* out, size_t len, uint32_t timeoutUs) {
   for (size_t i = 0; i < got; ++i) append("%02X", out[i]);
   return got;
 }
+
+uint8_t Session::spi(uint8_t mosi) {
+  const uint8_t miso = env.spiTransfer(mosi);
+  append(" X%02X", miso);
+  return miso;
+}
+
+void Session::line(uint8_t line, uint8_t level) { env.lineWrite(line, level); }
 
 void Session::wait(uint32_t us) { env.delayMicros(us); }
 
@@ -181,4 +197,108 @@ void scenarioEnvStrayed(Session& s, ebdev::Device& dev) {
   uint8_t reading[3] = {0, 0, 0};
   s.read(addr, reading, 3);
   s.end(dev);
+}
+
+// --- Two parts on one bus -----------------------------------------------------
+
+void scenarioTwoDevices(Session& s, ebdev::Device& temp, ebdev::Device& env) {
+  s.begin(temp, 0x48);
+  s.add(env, 0x76);
+  const uint8_t config[2] = {0x01, 0x05};
+  s.write(0x48, config, 2);
+  const uint8_t chipIdPointer[1] = {0xD0};
+  s.write(0x76, chipIdPointer, 1, false);
+  uint8_t chipId[1] = {0};
+  s.read(0x76, chipId, 1);
+  const uint8_t raw300[2] = {0x01, 0x2C};
+  s.chan(0, raw300, 2);
+  const uint8_t forced[2] = {0xF4, 0x25};
+  s.write(0x76, forced, 2);
+  const uint8_t pointer[1] = {0x00};
+  s.write(0x48, pointer, 1);
+  uint8_t reading[2] = {0, 0};
+  s.read(0x48, reading, 2);
+  s.wait(8000);
+  const uint8_t statusPointer[1] = {0xF3};
+  s.write(0x76, statusPointer, 1, false);
+  uint8_t status[1] = {0};
+  s.read(0x76, status, 1);
+  s.write(0x48, pointer, 1);
+  s.read(0x48, reading, 2);
+  s.end(temp);
+  s.end(env);
+}
+
+// --- SPI flash ---------------------------------------------------------------------
+
+void scenarioFlash(Session& s, ebdev::Device& flash) {
+  s.begin(flash, 0);
+  // Status: not busy, not write-enabled.
+  s.line(0, 0);
+  s.spi(0x05);
+  s.spi(0x00);
+  s.line(0, 1);
+  // Write enable, then status shows it.
+  s.line(0, 0);
+  s.spi(0x06);
+  s.line(0, 1);
+  s.line(0, 0);
+  s.spi(0x05);
+  s.spi(0x00);
+  s.line(0, 1);
+  // Program two bytes at 0x10; the part is busy for a while.
+  s.line(0, 0);
+  s.spi(0x02);
+  s.spi(0x10);
+  s.spi(0xAB);
+  s.spi(0xCD);
+  s.line(0, 1);
+  s.line(0, 0);
+  s.spi(0x05);
+  s.spi(0x00);
+  s.line(0, 1);
+  s.wait(4000);
+  s.line(0, 0);
+  s.spi(0x05);
+  s.spi(0x00);
+  s.line(0, 1);
+  // Read them back.
+  s.line(0, 0);
+  s.spi(0x03);
+  s.spi(0x10);
+  s.spi(0x00);
+  s.spi(0x00);
+  s.line(0, 1);
+  s.end(flash);
+}
+
+// --- A bus and a serial port at once ----------------------------------------------
+
+void scenarioEnvAndModem(Session& s, ebdev::Device& env, ebdev::Device& modem) {
+  s.begin(env, 0x76);
+  s.add(modem, 0);
+  const uint8_t temp[3] = {0x7F, 0xE0, 0x00};
+  s.chan(0, temp, 3);
+  const uint8_t chipIdPointer[1] = {0xD0};
+  s.write(0x76, chipIdPointer, 1, false);
+  uint8_t chipId[1] = {0};
+  s.read(0x76, chipId, 1);
+  s.serialWrite("AT+S;");
+  const uint8_t forced[2] = {0xF4, 0x25};
+  s.write(0x76, forced, 2);
+  uint8_t reply[2] = {0, 0};
+  s.serialRead(reply, 2, 10000);  // answered a tick later
+  s.wait(7000);
+  const uint8_t statusPointer[1] = {0xF3};
+  s.write(0x76, statusPointer, 1, false);
+  uint8_t status[1] = {0};
+  s.read(0x76, status, 1);
+  const uint8_t tempPointer[1] = {0xFA};
+  s.write(0x76, tempPointer, 1, false);
+  uint8_t reading[3] = {0, 0, 0};
+  s.read(0x76, reading, 3);
+  s.serialWrite("AT+X;");
+  s.serialRead(reply, 2, 10000);
+  s.end(env);
+  s.end(modem);
 }

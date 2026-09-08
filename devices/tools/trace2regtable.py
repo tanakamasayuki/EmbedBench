@@ -59,7 +59,8 @@ from pathlib import Path
 
 KIND_RE = re.compile(
     r"(?<![\w.])(i2c\.rd\.req|i2c\.rd\.resp|i2c\.req|i2c\.resp|chan\.write|"
-    r"gpio\.inject|dev\.note|dev\.tx|uart\.tx|uart\.rx|diag\.[\w.]+|dump)"
+    r"gpio\.inject|gpio\.write|dev\.note|dev\.tx|uart\.tx|uart\.rx|spi\.req|"
+    r"spi\.resp|spi\.xfer|spi\.bulk|diag\.[\w.]+|dump)"
     r"(?=\s|$)")
 FOLD_RE = re.compile(r"\s+x(\d+)\.\.(\d+)$")
 KV_RE = re.compile(r"(\w+)=(\S*)")

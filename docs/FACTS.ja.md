@@ -16,7 +16,7 @@
 | デバイスIFの実効LOC | 140 |
 | `devices/` のデバイス模型 | 25 |
 | 環境実装 | 2 |
-| 実験ディレクトリ | 67 |
+| 実験ディレクトリ | 69 |
 | SDカードのプリセット | 7 |
 <!-- FACTS END -->
 
@@ -51,7 +51,7 @@
 | `src/embedbench_internals.h` | 実験用の内観 |
 | `devices/` | デバイス模型（第2のArduinoライブラリ） |
 | `devices/tools/` | 生成器: キャプチャ→表（`trace2regtable.py`）、→tape（`trace2tape.py`）、ロジックアナライザ→行（`la2trace.py`）、SDイメージ |
-| `capture/` | 実機側のキャプチャシム（第3のArduinoライブラリ、`CaptureWire`） |
+| `capture/` | 実機側のキャプチャシム（第3のArduinoライブラリ）: `CaptureWire`（I2C）、`CaptureSerial`（UART）、`CaptureSPI`（SPI）、`CaptureLines`（部品が駆動する線） |
 | `tests/common_env/` | 純粋C++環境（`nenv`） |
 | `tests/conformance/` | 環境の受け入れ試験 |
 

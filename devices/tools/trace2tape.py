@@ -11,6 +11,12 @@ Input: the same event lines trace2regtable.py reads (see there), plus
     uart.tx <text>          bytes the application sent   -> a kSerialIn step
     dev.tx <text>           bytes the device answered    -> a kSerialOut step,
                             `delayUs` after the previous step
+    spi.xfer mosi=.. miso=..  one transfer call (CaptureSPI) -> a kSpi step
+    spi.req mosi=XX / spi.resp miso=XX   one byte (the environments); a run
+                            of them with nothing else between is one kSpi step
+A trace with several devices on it is split by source: --addr keeps one
+I2C address, --serial the serial exchange, --spi the SPI transfers; each
+becomes its own tape for its own TapeModel.
 Text is as the environments print it: printable characters, \\r \\n \\t
 escapes, `data=HEX` for short binary, `empty`. A `len=N crc=XX` label is a
 checksum of bytes the log did not keep, so that step is left out with a
@@ -19,7 +25,7 @@ it kept and marked INCOMPLETE. A capture meant for a tape should carry
 every byte (CaptureWire does).
 
 Usage:
-    trace2tape.py TRACE --name Env --out env_tape.h [--addr 76]
+    trace2tape.py TRACE --name Env --out env_tape.h [--addr 76 | --serial | --spi]
 """
 
 from __future__ import annotations
@@ -63,7 +69,7 @@ def serial_payload(rest):
 
 class Step:
     def __init__(self, kind, time, source, data=b"", status=0, stop=1,
-                 request=0, delay=0, note=None):
+                 request=0, delay=0, note=None, length=None):
         self.kind = kind
         self.time = time
         self.source = source
@@ -73,16 +79,61 @@ class Step:
         self.request = request
         self.delay = delay
         self.note = note
+        # kSpi: `data` is MOSI then MISO, `length` bytes each.
+        self.length = len(data) if length is None else length
 
 
-def build(events, address):
+def build(events, address, include=("i2c", "serial", "spi")):
     xfers = t2r.pair_transfers(events)
     by_index = {x.req.index: x for x in xfers
-                if address is None or x.addr == address}
+                if "i2c" in include and (address is None or x.addr == address)}
     steps = []
     skipped = []
     prev_time = 0
+    spi_pending = None   # a run of single-byte transfers being merged
+    spi_req = None       # the spi.req waiting for its spi.resp
+
+    def flush_spi():
+        nonlocal spi_pending, prev_time
+        if spi_pending is not None:
+            mosi, miso, time, source = spi_pending
+            steps.append(Step("kSpi", time, source, data=mosi + miso,
+                              length=len(mosi)))
+            prev_time = time if time is not None else prev_time
+            spi_pending = None
+
     for e in events:
+        if e.kind in ("spi.req", "spi.resp", "spi.xfer", "spi.bulk"):
+            if "spi" not in include:
+                continue
+            if e.kind == "spi.req":
+                spi_req = e
+            elif e.kind == "spi.resp" and spi_req is not None:
+                mosi = t2r.hexbytes(spi_req.fields.get("mosi"))
+                miso = t2r.hexbytes(e.fields.get("miso"))
+                if spi_pending is None:
+                    spi_pending = (b"", b"", spi_req.time,
+                                   "spi bytes from " + spi_req.rest)
+                spi_pending = (spi_pending[0] + mosi, spi_pending[1] + miso,
+                               spi_pending[2], spi_pending[3])
+                spi_req = None
+            elif e.kind == "spi.xfer":
+                flush_spi()
+                mosi = t2r.hexbytes(e.fields.get("mosi"))
+                miso = t2r.hexbytes(e.fields.get("miso"))
+                if len(mosi) != len(miso) or not mosi:
+                    skipped.append((e.time, e.kind, e.rest))
+                    continue
+                steps.append(Step("kSpi", e.time, e.rest, data=mosi + miso,
+                                  length=len(mosi)))
+                prev_time = e.time if e.time is not None else prev_time
+            else:  # spi.bulk: a checksum, not the bytes
+                flush_spi()
+                skipped.append((e.time, e.kind, e.rest))
+            continue
+        if e.kind.startswith("diag."):
+            continue  # commentary does not break a run of SPI bytes
+        flush_spi()
         if e.index in by_index:
             x = by_index[e.index]
             if x.kind == "W":
@@ -96,13 +147,13 @@ def build(events, address):
                 steps.append(Step("kRead", e.time, e.rest, data=x.got,
                                   stop=1 if x.stop else 0, request=x.want,
                                   note=note))
-        elif e.kind == "uart.tx":
+        elif e.kind == "uart.tx" and "serial" in include:
             payload = serial_payload(e.rest)
             if payload is None:
                 skipped.append((e.time, e.kind, e.rest))
                 continue
             steps.append(Step("kSerialIn", e.time, e.rest, data=payload))
-        elif e.kind == "dev.tx":
+        elif e.kind == "dev.tx" and "serial" in include:
             payload = serial_payload(e.rest)
             if payload is None:
                 skipped.append((e.time, e.kind, e.rest))
@@ -113,6 +164,7 @@ def build(events, address):
         else:
             continue
         prev_time = e.time if e.time is not None else prev_time
+    flush_spi()
     return steps, skipped
 
 
@@ -141,7 +193,7 @@ def render(steps, skipped, name, source, address):
     for i, s in enumerate(steps):
         data = ("k%sTape_%d" % (ident, i)) if s.data else "nullptr"
         out.append("    {TapeModel::%s, %d, %d, %d, %d, %s, %d}," % (
-            s.kind, s.status, s.stop, len(s.data), s.request, data, s.delay))
+            s.kind, s.status, s.stop, s.length, s.request, data, s.delay))
     out.append("};")
     out.append("static const TapeSpec k%sTapeSpec = {k%sTapeSteps, %d};" % (
         ident, ident, len(steps)))
@@ -159,20 +211,32 @@ def main(argv=None):
     ap.add_argument("trace", type=Path)
     ap.add_argument("--name", required=True)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--addr", help="I2C address (hex) when the trace shows "
-                    "more than one")
+    ap.add_argument("--addr", help="keep only the I2C transfers to this "
+                    "address (hex); needed when the trace shows several")
+    ap.add_argument("--serial", action="store_true",
+                    help="keep only the serial exchange")
+    ap.add_argument("--spi", action="store_true",
+                    help="keep only the SPI transfers")
     args = ap.parse_args(argv)
     events = t2r.parse(args.trace.read_text().splitlines())
     addresses = sorted({x.addr for x in t2r.pair_transfers(events)
                         if x.addr is not None})
+    address = None
     if args.addr is not None:
+        include = ("i2c",)
         address = int(args.addr, 16)
-    elif len(addresses) <= 1:
-        address = addresses[0] if addresses else None
+    elif args.serial:
+        include = ("serial",)
+    elif args.spi:
+        include = ("spi",)
     else:
-        sys.exit("trace shows %d device addresses (%s); pass --addr" % (
-            len(addresses), ", ".join("%02X" % x for x in addresses)))
-    steps, skipped = build(events, address)
+        include = ("i2c", "serial", "spi")
+        if len(addresses) > 1:
+            sys.exit("trace shows %d device addresses (%s); pass --addr, "
+                     "--serial or --spi" % (
+                         len(addresses), ", ".join("%02X" % x for x in addresses)))
+        address = addresses[0] if addresses else None
+    steps, skipped = build(events, address, include)
     args.out.write_text(render(steps, skipped, args.name, args.trace.name,
                                address))
     kinds = {}
@@ -180,7 +244,7 @@ def main(argv=None):
         kinds[s.kind] = kinds.get(s.kind, 0) + 1
     print("%s: %d steps (%s), %d left out" % (
         args.name, len(steps),
-        ", ".join("%d %s" % (n, k[1:].lower()) for k, n in sorted(kinds.items())),
+        ", ".join("%d %s" % (n, k[1:].lower()) for k, n in sorted(kinds.items())) or "none",
         len(skipped)))
     return 0
 

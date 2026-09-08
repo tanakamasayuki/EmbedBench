@@ -18,7 +18,7 @@ least one number.
 | Device interface, effective LOC | 140 |
 | Device models in `devices/` | 25 |
 | Environment implementations | 2 |
-| Experiment directories | 67 |
+| Experiment directories | 69 |
 | SD card preset volumes | 7 |
 <!-- FACTS END -->
 
@@ -56,7 +56,7 @@ change is in [CHANGELOG.md](../CHANGELOG.md).
 | `src/embedbench_internals.h` | Introspection used by the experiments. |
 | `devices/` | The device models, as a second Arduino library. |
 | `devices/tools/` | Generators: capture to table (`trace2regtable.py`), to tape (`trace2tape.py`), logic-analyzer decode to lines (`la2trace.py`), SD images. |
-| `capture/` | The board-side capture shim (`CaptureWire`), as a third Arduino library. |
+| `capture/` | The board-side capture shims, as a third Arduino library: `CaptureWire` (I2C), `CaptureSerial` (UART), `CaptureSPI` (SPI), `CaptureLines` (the lines a part drives). |
 | `tests/common_env/` | The plain-C++ environment (`nenv`). |
 | `tests/conformance/` | The acceptance test for an environment. |
 

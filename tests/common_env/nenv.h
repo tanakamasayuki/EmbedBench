@@ -33,6 +33,7 @@ class Env : public ebdev::HostPort {
   // --- Bindings ------------------------------------------------------------
   bool bindI2c(uint8_t address, ebdev::Device* device);
   void bindSerial(ebdev::Device* device);
+  void bindSpi(ebdev::Device* device);
   void bindChannel(ebdev::Device* device);
   void addTicking(ebdev::Device* device);
 
@@ -42,6 +43,10 @@ class Env : public ebdev::HostPort {
   size_t i2cRead(uint8_t address, uint8_t* out, size_t len,
                  bool stop = true);
   void serialWrite(const uint8_t* data, size_t len);
+  // One SPI byte, and the lines the application drives (chip select,
+  // data/command); both reach the SPI-bound device.
+  uint8_t spiTransfer(uint8_t mosi);
+  void lineWrite(uint8_t line, uint8_t level);
   size_t serialRead(uint8_t* out, size_t len, uint32_t timeoutUs);
   void delayMicros(uint32_t us);
 
@@ -120,6 +125,7 @@ class Env : public ebdev::HostPort {
   void retireWakesUpTo(uint64_t when);
 
   ebdev::Device* serialDevice_ = nullptr;
+  ebdev::Device* spiDevice_ = nullptr;
   ebdev::Device* channelDevice_ = nullptr;
   ebdev::Device* ticking_[4] = {nullptr, nullptr, nullptr, nullptr};
   size_t tickingCount_ = 0;

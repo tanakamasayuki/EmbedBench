@@ -31,10 +31,11 @@ The repository currently contains:
   environment implementations;
 - shared device models under `devices/`, from a thermometer to a Modbus
   slave, a UWB anchor, an SD card and a part that misbehaves on demand;
-- the board-side capture shim under `capture/` (`CaptureWire`), which
-  records a session on real hardware in the lines the scaffold generator
-  (`devices/tools/trace2regtable.py`) and the tape generator
-  (`trace2tape.py`) read
+- the board-side capture shims under `capture/` (`CaptureWire`,
+  `CaptureSerial`, `CaptureSPI`, `CaptureLines`), which record a session
+  on real hardware — bus traffic and the lines a part drives — in the
+  lines the scaffold generator (`devices/tools/trace2regtable.py`) and
+  the tape generator (`trace2tape.py`) read
 - experiments running on `lang-ship:host` 1.7.1 (counts in
   [docs/FACTS.md](docs/FACTS.md)).
 

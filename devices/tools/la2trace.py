@@ -30,8 +30,26 @@ Input formats, told apart by the CSV header:
             names, NOT yet checked against a real export — if yours
             differs, the generic format is a few lines of spreadsheet away.
 
+  sigrok    the text sigrok-cli prints for the i2c decoder, one annotation
+            per line, optionally with sample numbers in front:
+                12345-12400 i2c-1: Start
+                12401-12500 i2c-1: Address write: A0
+                12501-12510 i2c-1: ACK
+                12511-12600 i2c-1: Data write: 01
+                ...         i2c-1: Stop
+            Run it with every class the folding needs:
+              -A i2c=start:repeat-start:stop:ack:nack:address-read:\
+                     address-write:data-read:data-write
+            and --protocol-decoder-samplenum plus --samplerate HERE for
+            timestamps (without them the lines carry no time). The
+            decoder shows addresses shifted by default (A0 = 0x50 write);
+            pass --address-format unshifted if it was run that way.
+            Checked against the example on the decoder's wiki page, not
+            against a live run.
+
 Usage:
     la2trace.py capture.csv > capture.trace
+    la2trace.py decode.txt --samplerate 1000000 > capture.trace
 """
 
 from __future__ import annotations
@@ -43,6 +61,7 @@ import sys
 from pathlib import Path
 
 ADDR_RE = re.compile(r"^(?:0x)?([0-9A-Fa-f]{1,2})\s*([RWrw])$")
+SIGROK_RE = re.compile(r"^\s*(?:(\d+)-(\d+)\s+)?i2c(?:-\d+)?:\s*(.+?)\s*$")
 
 
 class Transfer:
@@ -91,6 +110,39 @@ def parse_saleae(rows):
     return events
 
 
+def parse_sigrok(text, samplerate=None, address_format="shifted"):
+    events = []
+    for raw in text.splitlines():
+        m = SIGROK_RE.match(raw)
+        if not m:
+            continue
+        time = None
+        if m.group(1) is not None and samplerate:
+            time = int(round(int(m.group(1)) * 1_000_000 / samplerate))
+        text_ = m.group(3)
+        low = text_.lower()
+        if low in ("start", "start repeat"):
+            events.append((time, "start", ""))
+        elif low == "stop":
+            events.append((time, "stop", ""))
+        elif low in ("ack", "nack"):
+            events.append((time, low, ""))
+        elif low.startswith("address write:") or low.startswith("address read:"):
+            value = int(text_.split(":", 1)[1].strip(), 16)
+            if address_format == "shifted":
+                value >>= 1
+            read = low.startswith("address read")
+            events.append((time, "address", "%02X%s" % (value, "R" if read else "W")))
+        elif low.startswith("data write:") or low.startswith("data read:"):
+            events.append((time, "data", text_.split(":", 1)[1].strip()))
+        # "Write", "Read", bits and warnings carry nothing the folding needs
+    return events
+
+
+def stamp(time, text):
+    return text if time is None else "%d %s" % (time, text)
+
+
 def to_lines(events):
     lines = []
     open_xfer = None
@@ -103,10 +155,10 @@ def to_lines(events):
         suffix = " rs" if rs else ""
         if x.read:
             got = bytes(x.data) if x.address_acked else b""
-            lines.append("%d i2c.rd.req addr=%02X req=%u stop=%u%s" % (
-                x.time, x.address, len(x.data), stop, suffix))
-            lines.append("%d i2c.rd.resp len=%u data=%s" % (
-                x.time, len(got), got.hex().upper()))
+            lines.append(stamp(x.time, "i2c.rd.req addr=%02X req=%u stop=%u%s" % (
+                x.address, len(x.data), stop, suffix)))
+            lines.append(stamp(x.time, "i2c.rd.resp len=%u data=%s" % (
+                len(got), got.hex().upper())))
         else:
             if x.address_acked is False:
                 status = 2
@@ -114,9 +166,9 @@ def to_lines(events):
                 status = 3
             else:
                 status = 0
-            lines.append("%d i2c.req addr=%02X data=%s stop=%u%s" % (
-                x.time, x.address, bytes(x.data).hex().upper(), stop, suffix))
-            lines.append("%d i2c.resp status=%u" % (x.time, status))
+            lines.append(stamp(x.time, "i2c.req addr=%02X data=%s stop=%u%s" % (
+                x.address, bytes(x.data).hex().upper(), stop, suffix)))
+            lines.append(stamp(x.time, "i2c.resp status=%u" % status))
         last = x
 
     expecting_address = False
@@ -129,7 +181,11 @@ def to_lines(events):
         elif event == "address":
             m = ADDR_RE.match(value)
             if not m:
-                raise SystemExit("bad address value %r at %d us" % (value, time))
+                raise SystemExit("bad address value %r at %s us" % (value, time))
+            if open_xfer is not None:
+                # No Start annotation in this export: a new address begins a
+                # new transfer, and the old one is taken as having stopped.
+                close(open_xfer, 1)
             open_xfer = Transfer(time, int(m.group(1), 16),
                                  m.group(2).upper() == "R")
             expecting_address = False
@@ -155,7 +211,10 @@ def to_lines(events):
     return lines
 
 
-def convert(text):
+def convert(text, samplerate=None, address_format="shifted"):
+    first = next((l for l in text.splitlines() if l.strip()), "")
+    if SIGROK_RE.match(first):
+        return to_lines(parse_sigrok(text, samplerate, address_format))
     rows = list(csv.DictReader(text.splitlines()))
     if not rows:
         return []
@@ -165,16 +224,23 @@ def convert(text):
     elif {"type", "start_time"} <= header:
         events = parse_saleae(rows)
     else:
-        raise SystemExit("unknown CSV header: %s" % ", ".join(sorted(header)))
+        raise SystemExit("unknown input: not sigrok-cli text, and the CSV "
+                         "header is %s" % ", ".join(sorted(header)))
     return to_lines(events)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("csv", type=Path)
+    ap.add_argument("csv", type=Path, help="CSV export or sigrok-cli text")
     ap.add_argument("--out", type=Path, help="write here instead of stdout")
+    ap.add_argument("--samplerate", type=float,
+                    help="sigrok input: samples per second, to turn sample "
+                    "numbers into microseconds")
+    ap.add_argument("--address-format", choices=("shifted", "unshifted"),
+                    default="shifted", help="sigrok input: how the decoder "
+                    "was told to show addresses (default shifted)")
     args = ap.parse_args(argv)
-    lines = convert(args.csv.read_text())
+    lines = convert(args.csv.read_text(), args.samplerate, args.address_format)
     text = "\n".join(lines) + ("\n" if lines else "")
     if args.out:
         args.out.write_text(text)

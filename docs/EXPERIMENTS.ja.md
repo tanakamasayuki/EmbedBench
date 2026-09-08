@@ -2437,13 +2437,76 @@ tapeの設計判断: 種別の違う要求（write を待つ位置に read）は
 
 手順は、まずtape（同じ道を通るか）、次に表＋フック（分岐を書く）。
 
+## X65. キャプチャ一式を揃える — シリアル・SPI・線、複数デバイスのtape、sigrok
+
+対象: `capture/src/CaptureSerial.h`、`capture/src/CaptureSPI.h`、`capture/src/CaptureLines.h`、
+`devices/src/tape_model.*`（SPIステップ）、`devices/tools/trace2tape.py`（`--addr` / `--serial` /
+`--spi`）、`devices/tools/la2trace.py`（sigrok形式）、`tests/common_env/`（SPI追加）、
+`tests/capture_streams/`、`tests/tape_multi/`
+
+X64の「次」5件のうち、実エクスポート待ちの1件を除く4件。
+
+**残り3つのシム。** 経路ごとに形が違うのは、コア側の型に仮想入口があるかどうかで決まった。
+
+| シム | 形 | 理由 |
+| --- | --- | --- |
+| `CaptureSerial` | `Stream` 派生（実体へ転送） | `read` / `available` / `peek` / `write` は全コアで仮想。`Stream*` を取るライブラリ（GPS・モデムの多く）に渡せる |
+| `CaptureSPI` | ラッパー（`SPIClass` ではない） | `SPIClass` にはESP32 3.xにもhostコアにも仮想入口が無い。`SPIClass*` を取るライブラリは捕まえられない（ライブラリ側を変えるしかない） |
+| `CaptureLines` | `digitalRead` のポーリング | 部品が駆動する線を見る唯一の口。`loop()` から `poll()` を呼ぶ。次のpollまで見えないので、アプリが反応するまで上がったままの線（DRDY・BUSY）向き。短いパルスはロジックアナライザのチャネルへ |
+
+シリアルの `dev.tx` の時刻は**アプリが最初に気づいた時刻**（`available()` / `read()` で
+実体から吸い上げたとき）で、到着時刻の上限になる。`loop()` で `available()` を
+呼び続ければ緩みは小さい。
+
+事実（host、1セッションで3シム同時）: シリアルは `uart.tx AT+S;` → `dev.tx OK`
+（1 tick後）、SPIは1転送呼び出し1行（`spi.xfer mosi=05 miso=FF` …）で5行、線は
+`gpio.inject pin=27 val=1` が計測完了後の最初のpollで1行。EmbedBench側の記録は
+同一セッションで39イベント、欠落0。ESP32（`esp32:esp32:esp32`）で4シムを含む
+スケッチが `--warnings all` で通る。シムの行を雛形生成へ通すと、**TODOに線の項目が戻った**
+（`line 27 -> 1 at … us: … us after write F4=25`）。X64で「バス側のキャプチャには
+線が無い」とした穴は `CaptureLines` で埋まる。
+
+**SPIをtapeへ。** `TapeStep` に `kSpi` を足した。`data` に MOSI `length` バイト、
+続けて MISO `length` バイトを持ち、`spiTransfer` が1バイトずつ照合して MISO を返す。
+チップセレクトは照合しない（バイト列の一致で足りる）。`trace2tape.py` は
+`spi.xfer`（シム）を1ステップに、環境の `spi.req` / `spi.resp` の連続（間に他のイベントが
+無いもの）を1ステップに畳む——flashの列では**CSの上下の間が1ステップ**になった
+（status・WREN・status・program 4バイト・status・status・read の7ステップ）。
+
+**複数デバイスのtape。** 1本のトレースに複数の装置が載るとき、`--addr XX` はそのI2C
+アドレスの転送だけ、`--serial` はシリアルだけ、`--spi` はSPIだけを取る。装置ごとに
+1本のtape、1つの `TapeModel`。事実: 1バスにI2C 2台（温度計@48・環境センサー@76）、
+SPI flash、I2C＋シリアルの3セッションで、分けたtape（5・5・7・7・4ステップ）を
+元の位置に束ねて再生し、アプリの受け取りとデバイス側イベントが元模型と一致、
+全tapeの `mismatch=0`。
+
+**環境実装例#2にSPI。** `nenv` に `bindSpi` / `spiTransfer` / `lineWrite`（アプリが駆動する
+CS・DC線）を足した（+20行、464→484。`tests/native_env/` の固定値を更新）。これで
+flash模型とtape模型がnativeで動く。
+
+**sigrok形式。** `la2trace.py` は sigrok-cli の i2c デコーダ出力（1行1注釈、先頭に
+sample番号の範囲、`i2c-1: Address write: EC` 等）を読む。時刻は `--samplerate` で
+sample番号から換算し、無ければ時刻無しの行を出す（雛形生成はそれでも読める）。
+デコーダ既定の**シフト済みアドレス**（EC/ED = 0x76）を既定とし、`--address-format
+unshifted` で切り替える。Start/Stop/ACK の注釈が無いエクスポートでは、次のアドレス注釈で
+前の転送を閉じる。根拠はデコーダのwikiの出力例で、実走行では未検証。
+**Saleaeの列並びは今回も検証できなかった**——公開ドキュメントはデジタル波形CSVと
+アナログCSVの形式しか載せておらず、アナライザのエクスポート形式はアナライザごとに
+異なるとだけ書いてある。実エクスポートが手に入るまで未検証のまま置く。
+
+**結論。** 実機からの入口はI2C・UART・SPI・線の4経路で揃い、tapeはI2C・シリアル・SPIの
+3経路と複数デバイスを再生する。シムの限界は型で決まる: 仮想入口のある `TwoWire`（ESP32）と
+`Stream` はライブラリ越しに捕まえられ、`SPIClass` はアプリ直呼びに限る。
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）
 
 1. カタログの更なる拡張で凍結IFの不足を探し続ける
-   （X51〜X64で13回連続、追加要求は出ていない）
-2. UART側のシム（`CaptureSerial`）とSPI側（`SPIClass` は非仮想なのでラッパー）
-3. Saleae / sigrok の実エクスポートで `la2trace.py` の列対応を検証する
-4. 線のキャプチャ: ロジックアナライザのGPIOチャネル、またはシムでの `digitalRead` 記録
-5. 複数デバイスが載ったバスの tape（アドレスごとに分ける）
+   （X51〜X65で14回連続、追加要求は出ていない）
+2. Saleae Logic 2 と sigrok-cli の**実エクスポート**で `la2trace.py` を検証する
+   （X65: 公開ドキュメントには列並びが無かった。手元のアナライザで1回取れば済む）
+3. 実機で1セッション取って往復する: シム → tape → 表＋フック。実機の時刻
+   （`micros()`）の揺れがtapeの `delayUs` 照合にどう出るかはまだ見ていない
+4. 線のキャプチャの精度: `CaptureLines` のポーリングでは取れない短いパルスを
+   ロジックアナライザ側の行へ載せる（`la2trace.py` にGPIOチャネル列を足す）

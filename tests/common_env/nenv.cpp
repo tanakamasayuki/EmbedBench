@@ -114,6 +114,8 @@ bool Env::bindI2c(uint8_t address, ebdev::Device* device) {
 
 void Env::bindSerial(ebdev::Device* device) { serialDevice_ = device; }
 
+void Env::bindSpi(ebdev::Device* device) { spiDevice_ = device; }
+
 void Env::setRxCapacity(size_t bytes) {
   rxLimit_ = bytes < sizeof(rx_) ? bytes : sizeof(rx_);
   while (rxCount_ > rxLimit_) --rxCount_;
@@ -245,6 +247,23 @@ size_t Env::i2cRead(uint8_t address, uint8_t* out, size_t len, bool stop) {
   record("dev", req, "i2c.rd.resp len=%u data=%s", static_cast<unsigned>(count),
          hex);
   return count;
+}
+
+uint8_t Env::spiTransfer(uint8_t mosi) {
+  const uint32_t req = record("app", 0, "spi.req mosi=%02X", mosi);
+  uint8_t miso = 0xFF;  // an idle bus
+  if (spiDevice_ != nullptr) {
+    miso = spiDevice_->spiTransfer(mosi);
+  } else {
+    record("diag", req, "diag.unbound spi");
+  }
+  record("dev", req, "spi.resp miso=%02X", miso);
+  return miso;
+}
+
+void Env::lineWrite(uint8_t line, uint8_t level) {
+  record("app", 0, "gpio.write line=%u val=%u", line, level);
+  if (spiDevice_ != nullptr) spiDevice_->lineIn(line, level);
 }
 
 void Env::serialWrite(const uint8_t* data, size_t len) {
