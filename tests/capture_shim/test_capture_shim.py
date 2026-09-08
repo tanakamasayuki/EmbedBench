@@ -146,19 +146,7 @@ time_us,event,value
 9030,stop,
 """
 
-SALEAE_CSV = """\
-name,type,start_time,duration,ack,address,data,read
-I2C,start,0.000000,0.000001,,,,
-I2C,address,0.000010,0.000009,true,0x76,,false
-I2C,data,0.000030,0.000009,true,,0xD0,
-I2C,start,0.000050,0.000001,,,,
-I2C,address,0.000060,0.000009,true,0x76,,true
-I2C,data,0.000080,0.000009,false,,0x60,
-I2C,stop,0.000100,0.000001,,,,
-"""
-
-
-def test_la2trace_generic_and_saleae():
+def test_la2trace_generic():
     la = load("la2trace")
     lines = la.convert(GENERIC_CSV)
     assert lines == [
@@ -187,4 +175,7 @@ def test_la2trace_generic_and_saleae():
     assert a.regs[0xF3].volatile and a.require_rs
     assert a.todo == ["register F3 changed 08 -> 00 with only time passing (7000 us)"]
 
-    assert la.convert(SALEAE_CSV) == lines[:4]
+    # An export in some other table layout is refused with directions, not
+    # guessed at: that is what an unverified mapping would have been.
+    with pytest.raises(SystemExit, match="time_us,event,value"):
+        la.convert("name,type,start_time\nI2C,start,0.0\n")

@@ -23,12 +23,13 @@ Input formats, told apart by the CSV header:
             value: for address, hex plus R or W ("76W", "0x76 R");
                    for data, one hex byte
             An ack/nack row qualifies the address or data row before it.
-
-  saleae    name,type,start_time,duration,ack,address,data,read
-            The column layout of Logic 2's I2C analyzer export, as
-            documented; start_time in seconds. Written from the column
-            names, NOT yet checked against a real export — if yours
-            differs, the generic format is a few lines of spreadsheet away.
+            Any analyzer's table export reshapes into this: one row per
+            bus event, its time in microseconds, and for address rows the
+            direction. A Saleae Logic 2 I2C export, for instance, already
+            has type / start_time / address / data / ack / read columns;
+            a mapping for it is not built in because no real export has
+            been checked against (X65) — the sigrok text below is what
+            such a mapping looks like once it has been.
 
   sigrok    the text sigrok-cli prints for the i2c decoder, one annotation
             per line, optionally with sample numbers in front:
@@ -87,29 +88,6 @@ def parse_generic(rows):
         event = row["event"].strip().lower()
         value = (row.get("value") or "").strip()
         events.append((time, event, value))
-    return events
-
-
-def parse_saleae(rows):
-    events = []
-    for row in rows:
-        kind = (row.get("type") or "").strip().lower()
-        if not kind:
-            continue
-        time = int(round(float(row["start_time"]) * 1_000_000))
-        ack = (row.get("ack") or "").strip().lower() in ("true", "1", "ack")
-        if kind == "start":
-            events.append((time, "start", ""))
-        elif kind == "address":
-            addr = int(str(row.get("address", "0")).strip(), 16)
-            read = (row.get("read") or "").strip().lower() in ("true", "1")
-            events.append((time, "address", "%02X%s" % (addr, "R" if read else "W")))
-            events.append((time, "ack" if ack else "nack", ""))
-        elif kind == "data":
-            events.append((time, "data", "%02X" % int(str(row.get("data", "0")).strip(), 16)))
-            events.append((time, "ack" if ack else "nack", ""))
-        elif kind == "stop":
-            events.append((time, "stop", ""))
     return events
 
 
@@ -223,13 +201,11 @@ def convert(text, samplerate=None, address_format="shifted"):
         return []
     header = {k.strip().lower() for k in rows[0].keys() if k}
     if {"time_us", "event"} <= header:
-        events = parse_generic(rows)
-    elif {"type", "start_time"} <= header:
-        events = parse_saleae(rows)
-    else:
-        raise SystemExit("unknown input: not sigrok-cli text, and the CSV "
-                         "header is %s" % ", ".join(sorted(header)))
-    return to_lines(events)
+        return to_lines(parse_generic(rows))
+    raise SystemExit("unknown input: not sigrok-cli text, and the CSV header "
+                     "is not time_us,event,value but %s — reshape the export "
+                     "into that (see the module docstring)"
+                     % ", ".join(sorted(header)))
 
 
 def main(argv=None):
