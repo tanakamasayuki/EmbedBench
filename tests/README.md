@@ -24,7 +24,7 @@ tests/<experiment>/
   test_<experiment>.py
 ```
 
-Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`) have no `.ino` or
+Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`, `capture_scaffold/`) have no `.ino` or
 `sketch.yaml`; pytest builds them directly with g++. Reference models shared
 across experiments and environments live in `common_models/` (Arduino library
 layout, pure C++ models under `src/`), referenced by `libraries: dir` from
@@ -99,5 +99,6 @@ Additional experiments:
 - `units_mixed/`: a SPI flash whose protocol is locked by sequence, and a codec that is one model on two buses at once.
 - `frame_split/`: frame links of differing per-bus capacity, and the splitting rule the format carries.
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.
+- `capture_scaffold/`: a capture as the scaffold of a device model (native). Three catalog models' traces go through `trace2regtable.py` into a table plus a TODO list; the same sequences replay against the table alone and the table with hooks, compared on what the application saw.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - The device models the experiments share now live in [`devices/`](../devices/) at the repository root, as a second Arduino library. They are kept out of `src/` so their build cost falls only on sketches that use them.

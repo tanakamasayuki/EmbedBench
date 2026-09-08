@@ -16,9 +16,9 @@ least one number.
 | Device interface version | 1 |
 | Device interface revision | 4 |
 | Device interface, effective LOC | 140 |
-| Device models in `devices/` | 23 |
+| Device models in `devices/` | 24 |
 | Environment implementations | 2 |
-| Experiment directories | 64 |
+| Experiment directories | 65 |
 | SD card preset volumes | 7 |
 <!-- FACTS END -->
 

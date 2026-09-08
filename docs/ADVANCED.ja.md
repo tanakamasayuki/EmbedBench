@@ -278,6 +278,7 @@ adapterがデバイスを回す順そのものです。hash tableやポインタ
 | フレーム経路と空フレーム | `unit_ir_model` |
 | bus別容量に応じた分割 | `unit_chunk_model` |
 | わざと壊れる | `unit_faulty_model` |
+| 表から作る（キャプチャの雛形、フックの置き場） | `regtable_model` |
 
 一覧は[カタログ](DEVICE_CATALOG.ja.md)、数は[FACTS](FACTS.ja.md)にあります。
 判断の根拠と実測値は[実験台帳](EXPERIMENTS.ja.md)（X0〜X60）にあります。

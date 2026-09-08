@@ -78,6 +78,7 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
 | `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
 | `unit_sdcard_model` | SD/TFカード | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **ブロックデバイス**（512バイト×8）。FATは載せない——それはアプリの仕事 |
+| `regtable_model` | （汎用・表駆動） | I2C、`diagnose`、channel | **表とフックの分離**。register-mapを`RegTableSpec`の表で持ち、表で言えない振る舞いは派生クラスの`onRead`/`afterWrite`へ。キャプチャから表を生成する入口（下記） |
 
 ### ファイルシステムはデバイス側に無い
 
@@ -91,6 +92,17 @@ SDカードが提供するのは番号のついたブロックだけで、FATを
 `loadBlocks()` でそのまま流し込める。プリセットの生成器は
 `devices/tools/make_sd_images.py` で、構築したイメージを
 ドライバと同じ手順で解析し直してからCソースを出す。
+
+### キャプチャから雛形を作る
+
+`devices/tools/trace2regtable.py` は、両環境が出す1行1イベントのトレース
+（実機側のシムが同じ行を時刻だけ付けて出してもよい）から、`regtable_model` の
+表を持つヘッダと、**推定できなかった点のTODO一覧**を作る。表に入るのは
+レジスタ・幅・電源投入値・書込可否・repeated start要否・channelの素通し対応まで。
+時間で変わったレジスタ、動いた線、要求より短い読み出し、ログが切り詰めた
+payload、素通しでないchannelはTODOとして残り、生成クラスを継承した
+別ファイルのフックに人が書く（`tests/capture_scaffold/native/hooks.h` が実例）。
+**JSONで振る舞いまで書こうとしない**——表はデータのまま、規則言語にはしない（X63）。
 
 ### `reset()` は「新品」ではなく「電源投入」
 
