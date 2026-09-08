@@ -295,6 +295,7 @@ happened eight times, and the last was at 007000.
 | Splitting for per-bus capacity | `unit_chunk_model` |
 | Breaking on purpose | `unit_faulty_model` |
 | Built from a table (a capture's scaffold, where hooks go) | `regtable_model` |
+| Playing a recording back (the first thing to run after a capture) | `tape_model` |
 
 They are all listed in the [catalog](DEVICE_CATALOG.ja.md) (Japanese),
 and counted in [FACTS.md](FACTS.md). The reasoning and measurements behind every decision are in

@@ -1,4 +1,4 @@
-// X63 application sequences, shared by capture and replay.
+// Shared application sequences, driven against any Device.
 #include "scenarios.h"
 
 #include <stdarg.h>
@@ -20,7 +20,8 @@ void Session::begin(ebdev::Device& dev, uint8_t address) {
   dev.attach(&env);
   dev.reset();
   env.reset();
-  env.bindI2c(address, &dev);
+  if (address != 0) env.bindI2c(address, &dev);
+  env.bindSerial(&dev);
   env.bindChannel(&dev);
   env.addTicking(&dev);
 }
@@ -41,6 +42,19 @@ size_t Session::read(uint8_t address, uint8_t* out, size_t len, bool stop) {
 
 void Session::chan(uint8_t channel, const uint8_t* data, size_t len) {
   env.chanWrite(channel, data, len);
+}
+
+void Session::serialWrite(const char* text) {
+  size_t len = 0;
+  while (text[len] != '\0') ++len;
+  env.serialWrite(reinterpret_cast<const uint8_t*>(text), len);
+}
+
+size_t Session::serialRead(uint8_t* out, size_t len, uint32_t timeoutUs) {
+  const size_t got = env.serialRead(out, len, timeoutUs);
+  append(" S");
+  for (size_t i = 0; i < got; ++i) append("%02X", out[i]);
+  return got;
 }
 
 void Session::wait(uint32_t us) { env.delayMicros(us); }
@@ -131,5 +145,40 @@ void scenarioImu(Session& s, ebdev::Device& dev) {
   s.read(addr, status, 2);
   const uint8_t stop[2] = {0x20, 0x00};
   s.write(addr, stop, 2);
+  s.end(dev);
+}
+
+// --- AT modem (tests/native_env) ---------------------------------------------
+
+void scenarioModem(Session& s, ebdev::Device& dev) {
+  s.begin(dev, 0);
+  s.serialWrite("AT+S;");
+  uint8_t reply[4] = {0, 0, 0, 0};
+  s.serialRead(reply, 2, 10000);
+  s.serialWrite("AT+X;");
+  s.serialRead(reply, 3, 10000);
+  s.end(dev);
+}
+
+// --- Environmental sensor, off the recorded path ------------------------------
+
+void scenarioEnvStrayed(Session& s, ebdev::Device& dev) {
+  const uint8_t addr = 0x76;
+  s.begin(dev, addr);
+  const uint8_t temp[3] = {0x7F, 0xE0, 0x00};
+  s.chan(0, temp, 3);
+  const uint8_t chipIdPointer[1] = {0xD0};
+  s.write(addr, chipIdPointer, 1, false);
+  uint8_t chipId[1] = {0};
+  s.read(addr, chipId, 1);
+  // A different command than the one recorded.
+  const uint8_t forced[2] = {0xF4, 0x26};
+  s.write(addr, forced, 2);
+  s.wait(1000);
+  // The result is read where the recording polled status.
+  const uint8_t tempPointer[1] = {0xFA};
+  s.write(addr, tempPointer, 1, false);
+  uint8_t reading[3] = {0, 0, 0};
+  s.read(addr, reading, 3);
   s.end(dev);
 }

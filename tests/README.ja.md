@@ -24,7 +24,7 @@ tests/<実験名>/
   test_<実験名>.py
 ```
 
-ネイティブ専用の実験（`native_env/`、`contracts/`、`capacity_policy/`、`capture_scaffold/`）は `.ino` と `sketch.yaml` を持たず、
+ネイティブ専用の実験（`native_env/`、`contracts/`、`capacity_policy/`、`capture_scaffold/`、`tape_replay/`）は `.ino` と `sketch.yaml` を持たず、
 pytestがg++で直接ビルドする。複数の実験と複数の環境で共有する参照模型は
 `common_models/`（Arduinoライブラリ形式、`src/` に純粋C++の模型）に置き、
 sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-I` で参照する。
@@ -98,5 +98,8 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `frame_split/`: bus別に容量が違うframe経路と、format側が持つ分割規則
 - `capacity_policy/`: 固定容量が尽きたときの4方式比較（native）。満杯時の周期畳み込みとwakeスロットの消費単位
 - `capture_scaffold/`: キャプチャを雛形にデバイス模型を組む（native）。カタログ3模型のトレースを `trace2regtable.py` で表＋TODO一覧へ変換し、表だけ・表＋フックで同じ列を再生してアプリが見た値を比較
+- `tape_replay/`: 録画の再生（native）。環境センサーとATモデムのトレースを `trace2tape.py` でtapeへ変換し、録画どおりの列では元模型と一致、外れた列では外れた箇所を名指しすることを確認
+- `capture_shim/`: 実機からの入口。`CaptureWire` の出力をhost上でEmbedBenchの記録と突き合わせ、ESP32向けにビルドできることを確認。ロジックアナライザ出力の変換 `la2trace.py` も検査
+- `common_scenarios/`: capture系実験が共有するアプリの操作列（`Session`）。`capture_scaffold/`・`tape_replay/` が使用
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - 実験が共有するデバイス模型は、第2のArduinoライブラリとしてリポジトリ直下の [`devices/`](../devices/) へ移した。`src/` に置かないのは、使わない人のビルド時間に乗せないため

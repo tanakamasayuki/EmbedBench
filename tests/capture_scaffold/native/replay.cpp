@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "hooks.h"
-#include "scenarios.h"
+#include <scenarios.h>
 
 static void run(Scenario scenario, ebdev::Device& dev, const char* variant,
                 const char* name) {

@@ -1,10 +1,10 @@
-// The application sequences of X63, written once so the same sequence
-// can be driven against the hand-written catalog model (to capture) and
-// against the table the capture produced (to replay). A Session is one
-// run on environment example #2 with every result the application saw
-// kept aside: the trace shows at most five payload bytes, the results
-// line shows them all, so the comparison is on what the application got,
-// not on what the log had room for.
+// Application sequences shared by the capture experiments (X63, X64):
+// written once so the same sequence can be driven against a hand-written
+// catalog model (to capture) and against what the capture produced (to
+// replay). A Session is one run on environment example #2 with every
+// result the application saw kept aside: the trace shows at most five
+// payload bytes, the results line shows them all, so the comparison is on
+// what the application got, not on what the log had room for.
 #pragma once
 
 #include <stddef.h>
@@ -23,6 +23,8 @@ struct Session {
                 bool stop = true);
   size_t read(uint8_t address, uint8_t* out, size_t len, bool stop = true);
   void chan(uint8_t channel, const uint8_t* data, size_t len);
+  void serialWrite(const char* text);
+  size_t serialRead(uint8_t* out, size_t len, uint32_t timeoutUs);
   void wait(uint32_t us);
   void end(ebdev::Device& dev);
   void print(const char* variant, const char* name);
@@ -41,3 +43,9 @@ void scenarioEnv(Session& s, ebdev::Device& dev);
 // tests/units_sense: start sampling, come back at the watermark, drain the
 // FIFO, be late enough to overflow it, stop.
 void scenarioImu(Session& s, ebdev::Device& dev);
+// tests/native_env: two AT commands to the modem, each answered a tick
+// later; the second one is unknown to it.
+void scenarioModem(Session& s, ebdev::Device& dev);
+// The env sequence with the application off the recorded path: it reads
+// the result before polling status, and writes a different command.
+void scenarioEnvStrayed(Session& s, ebdev::Device& dev);

@@ -27,6 +27,8 @@ Arduinoライブラリです。公開APIと最終的な構成はまだ確定し�
   （`src/embedbench_device.h`、version 1 / revision 004）と環境実装例2種を含む
 - `devices/` の共有デバイス模型。温度計からModbusスレーブ、UWBアンカー、
   SDカード、わざと壊れる部品まで
+- `capture/` の実機側キャプチャシム（`CaptureWire`）。実機の通信を、雛形生成
+  （`devices/tools/trace2regtable.py`）や録画再生（`trace2tape.py`）が読む行で残す
 - `lang-ship:host` 1.7.1 上で動く実験群（数は [docs/FACTS.ja.md](docs/FACTS.ja.md)）
 
 ## テスト

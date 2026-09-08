@@ -27,6 +27,7 @@ MODELS = ROOT / "devices" / "src"
 ENV = HERE.parent / "common_env"
 TOOL = ROOT / "devices" / "tools" / "trace2regtable.py"
 NATIVE = HERE / "native"
+SCENARIOS_DIR = HERE.parent / "common_scenarios"
 
 SCENARIOS = ["temp", "env", "imu"]
 ORIGINALS = {
@@ -140,9 +141,9 @@ def test_capture_scaffold():
     # 1. Capture: the hand-written models, as if on a board.
     capture = out / "capture"
     build(capture,
-          [NATIVE / "capture.cpp", NATIVE / "scenarios.cpp", ENV / "nenv.cpp",
+          [NATIVE / "capture.cpp", SCENARIOS_DIR / "scenarios.cpp", ENV / "nenv.cpp",
            *[MODELS / f"{ORIGINALS[n]}.cpp" for n in SCENARIOS]],
-          [SRC, MODELS, ENV])
+          [SRC, MODELS, ENV, SCENARIOS_DIR])
     captured = split_runs(run(capture))
     for name in SCENARIOS:
         (out / f"{name}.trace").write_text(
@@ -165,9 +166,9 @@ def test_capture_scaffold():
     # 3. Replay: the table alone, then the table with hand-written hooks.
     replay = out / "replay"
     build(replay,
-          [NATIVE / "replay.cpp", NATIVE / "scenarios.cpp", ENV / "nenv.cpp",
+          [NATIVE / "replay.cpp", SCENARIOS_DIR / "scenarios.cpp", ENV / "nenv.cpp",
            MODELS / "regtable_model.cpp"],
-          [SRC, MODELS, ENV, out, NATIVE])
+          [SRC, MODELS, ENV, out, NATIVE, SCENARIOS_DIR])
     replayed = split_runs(run(replay))
 
     coverage = {}

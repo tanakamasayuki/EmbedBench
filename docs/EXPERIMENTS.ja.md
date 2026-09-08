@@ -2356,14 +2356,94 @@ envのフックは `reset()` で00へ直した。キャプチャは**アプリ�
    ロジックアナライザのCSVから行形式への変換、UART（要求→応答の表）への拡張、
    キャプチャをそのまま再生するtape模型。
 
+## X64. 実機からの入口と、録画の再生 — シム・ロジックアナライザ・tape
+
+対象: `capture/src/CaptureWire.h`、`devices/src/tape_model.*`、
+`devices/tools/trace2tape.py`、`devices/tools/la2trace.py`、
+`tests/capture_shim/`、`tests/tape_replay/`、`tests/common_scenarios/`
+
+X63が挙げた「次の道具」4つ。所有者の問い「キャプチャ用のSPIクラスのようなものを
+作って、それ経由で実機と通信する形になるのか」への実装での答えでもある。
+
+**実機側のシム。** `CaptureWire` は `TwoWire` を継承し、実体の `Wire` へ転送しながら
+1転送につき要求行と応答行を `micros()` 付きで出す。設計上の判断が3つ。
+
+1. **継承＋転送（合成）にした。** hostコアのhook（EmbedBenchの記録）は `Wire`
+   インスタンスに付くので、別のbusインスタンスとして begin すると記録から消える。
+   基底の `TwoWire` は begin されない死んだ部分で、実在しないbus番号（0xFE）を持たせ、
+   destructor の `end()` が実バスを deinit しないようにした（ESP32の `i2cIsInit` が
+   範囲外の番号を false で返すことを確認）。
+2. **ESP32 Arduino 3.x では入口が仮想。** `HardwareI2C` の `beginTransmission` /
+   `endTransmission` / `requestFrom` は仮想なので、`TwoWire*` を受け取るライブラリに
+   `&cap` を渡せばそのライブラリの転送も記録される。hostコアでは非仮想なので、
+   シム自身への呼び出しだけが記録される（hostでの用途は出力形式の確認なので足りる）。
+3. **転送先の `requestFrom` は `uint16_t` にキャストして呼ぶ。** hostコアは
+   7種のオーバーロードを持ち `(uint8_t, size_t, bool)` が曖昧になる。ESP32は1種。
+   キャストで両コアが1つに落ちる。
+
+事実: host上で同じセッションをシムとEmbedBenchの両方が見た。シムは22行
+（11転送×2）、全payload、repeated start付き。`values` は元の実験と同一。
+ESP32（`esp32:esp32:esp32`、core 3.3.11）で `--warnings all` のビルドが通る。
+シムの行を `trace2regtable.py` に通すと、レジスタ・電源投入値・rs要否はX63の表と
+同一だが、**TODOは4件→1件**（F3の時間変化のみ）。**バス側のキャプチャには
+線（DRDY）・世界の注入・部品のnoteが無い。** 線が要るならロジックアナライザの
+GPIOチャネルで取るか、シムに `digitalRead` の記録を足す。
+
+**ロジックアナライザ。** `la2trace.py` はバスレベルの列（START / address / data /
+ACK・NACK / STOP）を転送レベルの行へ畳む。status は `endTransmission` と同じ
+（0 / 2 address NACK / 3 data NACK）。stop=0 の直後に同一アドレスへ START が来た
+転送を `rs` とする。汎用CSV（`time_us,event,value`）と、Saleae Logic 2 の
+I2Cエクスポートの列並び（`name,type,start_time,duration,ack,address,data,read`）を
+ヘッダで見分けて読む。**Saleae形式は列名から書いたもので、実エクスポートでは未検証**
+（合わなければ汎用CSVへ表計算1回で落とせる）。合成CSVでenvの列を流し、生成行の
+解析結果（レジスタ、rs必須、F3揮発、TODO 1件）がX63と一致することを固定した。
+
+**tape模型。** `tape_model` は録画を1ステップずつ再生する。アプリ起点のステップ
+（kWrite / kRead / kSerialIn）はアプリを待ち、デバイス起点（kSerialOut）は
+前ステップ完了から `delayUs` 後に自走する（`requestWake`）。外れたら `diagnose` で
+名指しし、**その後も応答を返し続ける**。`trace2tape.py` が env（11ステップ）と
+modem（4ステップ: 2 in、2 out、各1 tick後）のtapeを生成した。
+
+事実: 録画どおりの列では、アプリが受け取ったバイト列と、デバイス側イベント
+（`i2c.resp` / `i2c.rd.resp` / `dev.tx`）の時刻・内容が元模型と一致し、診断0
+（線を除く。tapeに線は無い）。外れた列（F4=26を書く、statusの代わりにFAを読む、
+3バイト読む）では
+
+```text
+tape 2: want write F425, got F426
+tape 3: want write F3, got FA
+tape 4: read of 3, recorded 1
+```
+
+の3件を名指しし、アプリには各回とも応答を返した（`step=5/11 mismatch=3`）。
+
+tapeの設計判断: 種別の違う要求（write を待つ位置に read）はステップを**消費しない**
+（余計な要求として扱い、後続の同期を保つ）。payload の違う write は**消費する**
+（同じ位置の要求として扱う）。読出は**要求長も記録して照合する**——IMUの
+`req=40 len=16` のように要求と応答の長さが違うのが正常な部品があり、応答長だけでは
+照合できない。`reset()` は effect-free なので、先頭がデバイス起点のステップなら
+最初の `advanceTo` で arm する（最大1 tick遅れる。契約の帰結）。
+
+**共通シナリオ。** アプリの操作列（`Session`）を `tests/common_scenarios/` へ移し、
+`capture_scaffold/` と `tape_replay/` が共有する。
+
+**結論。** 実機→模型の入口は3つ揃った。
+
+| 入口 | アプリ | payload | 線 | 手間 |
+| --- | --- | --- | --- | --- |
+| シム `CaptureWire` | `Wire` を渡す1箇所を変える | 全部 | 見えない | 無し |
+| ロジックアナライザ `la2trace.py` | 無改造 | 全部 | GPIOチャネルで取れる | 変換1段、形式ごとに要確認 |
+| EmbedBenchのトレース | 無改造（host） | 5バイトまで | 見える | 無し。雛形には足り、tapeには足りない |
+
+手順は、まずtape（同じ道を通るか）、次に表＋フック（分岐を書く）。
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）
 
 1. カタログの更なる拡張で凍結IFの不足を探し続ける
-   （X51〜X63で12回連続、追加要求は出ていない）
-2. 実機側のキャプチャシム: `TwoWire` を継承して同じイベント行を時刻付きで
-   出すクラス。全payloadを運ぶこと（X63: ログは5バイトまで）
-3. `trace2regtable.py` のUART対応（要求→応答の表、framingの指定）と、
-   ロジックアナライザ出力（sigrok/Saleae CSV）から行形式への変換
-4. キャプチャ列をそのまま再生し、外れたら診断するtape模型
+   （X51〜X64で13回連続、追加要求は出ていない）
+2. UART側のシム（`CaptureSerial`）とSPI側（`SPIClass` は非仮想なのでラッパー）
+3. Saleae / sigrok の実エクスポートで `la2trace.py` の列対応を検証する
+4. 線のキャプチャ: ロジックアナライザのGPIOチャネル、またはシムでの `digitalRead` 記録
+5. 複数デバイスが載ったバスの tape（アドレスごとに分ける）

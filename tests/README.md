@@ -24,7 +24,7 @@ tests/<experiment>/
   test_<experiment>.py
 ```
 
-Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`, `capture_scaffold/`) have no `.ino` or
+Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`, `capture_scaffold/`, `tape_replay/`) have no `.ino` or
 `sketch.yaml`; pytest builds them directly with g++. Reference models shared
 across experiments and environments live in `common_models/` (Arduino library
 layout, pure C++ models under `src/`), referenced by `libraries: dir` from
@@ -100,5 +100,8 @@ Additional experiments:
 - `frame_split/`: frame links of differing per-bus capacity, and the splitting rule the format carries.
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.
 - `capture_scaffold/`: a capture as the scaffold of a device model (native). Three catalog models' traces go through `trace2regtable.py` into a table plus a TODO list; the same sequences replay against the table alone and the table with hooks, compared on what the application saw.
+- `tape_replay/`: a capture played back (native). The environmental sensor's and the AT modem's traces become tapes through `trace2tape.py`; under the recorded sequence they match the models, and an application that strays is told where.
+- `capture_shim/`: the entrances from a real board. `CaptureWire`'s output is checked on the host against EmbedBench's own record and compiled for an ESP32; `la2trace.py`, the logic-analyzer conversion, is checked here too.
+- `common_scenarios/`: the application sequences (`Session`) the capture experiments share; used by `capture_scaffold/` and `tape_replay/`.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - The device models the experiments share now live in [`devices/`](../devices/) at the repository root, as a second Arduino library. They are kept out of `src/` so their build cost falls only on sketches that use them.

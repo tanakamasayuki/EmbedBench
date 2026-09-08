@@ -9,7 +9,7 @@
 #include <temp_model.h>
 #include <unit_imu_model.h>
 
-#include "scenarios.h"
+#include <scenarios.h>
 
 static void run(Scenario scenario, ebdev::Device& dev, const char* name) {
   Session* s = new Session();

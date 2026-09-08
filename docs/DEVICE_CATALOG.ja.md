@@ -79,6 +79,7 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
 | `unit_sdcard_model` | SD/TFカード | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **ブロックデバイス**（512バイト×8）。FATは載せない——それはアプリの仕事 |
 | `regtable_model` | （汎用・表駆動） | I2C、`diagnose`、channel | **表とフックの分離**。register-mapを`RegTableSpec`の表で持ち、表で言えない振る舞いは派生クラスの`onRead`/`afterWrite`へ。キャプチャから表を生成する入口（下記） |
+| `tape_model` | （汎用・録画再生） | I2C、serial、`requestWake`、`diagnose` | **録画を1ステップずつ再生**。外れた要求を診断で名指しし、その後も応答を返し続ける。分岐は持たない（X64） |
 
 ### ファイルシステムはデバイス側に無い
 
@@ -103,6 +104,14 @@ SDカードが提供するのは番号のついたブロックだけで、FATを
 payload、素通しでないchannelはTODOとして残り、生成クラスを継承した
 別ファイルのフックに人が書く（`tests/capture_scaffold/native/hooks.h` が実例）。
 **JSONで振る舞いまで書こうとしない**——表はデータのまま、規則言語にはしない（X63）。
+
+キャプチャの入口は3つ（X64）。実機側のシム `capture/src/CaptureWire.h`（`TwoWire` 派生、
+実体の `Wire` へ転送しつつ同じイベント行を `micros()` 付きで出す。全payloadを運ぶが
+**線は見えない**）、ロジックアナライザのバスレベル出力を同じ行へ畳む
+`devices/tools/la2trace.py`（無改造で線も取れるが変換が1段増える）、そして
+EmbedBench自身のトレース（payloadは5バイトまでなので雛形には足りるがtapeには足りない）。
+キャプチャ直後の一手目は `devices/tools/trace2tape.py` で作る `tape_model` の録画再生で、
+「アプリが同じ道を通るか」を確かめてから表＋フックへ進む。
 
 ### `reset()` は「新品」ではなく「電源投入」
 
