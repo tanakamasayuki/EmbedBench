@@ -107,12 +107,12 @@ def test_shims_compile_for_esp32():
 
 SIGROK_TEXT = """\
 100-110 i2c-1: Start
-111-200 i2c-1: Address write: EC
+111-200 i2c-1: Address write: 76
 201-210 i2c-1: ACK
 211-300 i2c-1: Data write: D0
 301-310 i2c-1: ACK
 311-320 i2c-1: Start repeat
-321-410 i2c-1: Address read: ED
+321-410 i2c-1: Address read: 76
 411-420 i2c-1: ACK
 421-510 i2c-1: Data read: 60
 511-520 i2c-1: NACK
@@ -123,7 +123,7 @@ SIGROK_TEXT = """\
 def test_la2trace_sigrok():
     la = load("la2trace")
     # 1 MHz sample rate: sample numbers are microseconds. The decoder's
-    # default shows the address byte with its R/W bit: EC/ED is 0x76.
+    # default address_format=shifted prints the 7-bit address.
     assert la.convert(SIGROK_TEXT, samplerate=1_000_000) == [
         "111 i2c.req addr=76 data=D0 stop=0",
         "111 i2c.resp status=0",
@@ -137,3 +137,91 @@ def test_la2trace_sigrok():
     scaffold = load("trace2regtable")
     a = scaffold.analyze(scaffold.parse(lines), 0x76)
     assert a.regs[0xD0].reset == b"\x60" and a.require_rs
+    # Run with address_format=unshifted, the decoder prints the address
+    # byte with its R/W bit: EC to write, ED to read.
+    raw = SIGROK_TEXT.replace("Address write: 76", "Address write: EC").replace(
+        "Address read: 76", "Address read: ED")
+    assert la.convert(raw, samplerate=1_000_000, address_format="unshifted") == \
+        la.convert(SIGROK_TEXT, samplerate=1_000_000)
+
+
+# Real captures of real parts, published in sigrok-dumps (the sigrok
+# project's collection of example captures), decoded here by sigrok-cli.
+# This is the check X64 left open — the format against a live decoder —
+# done without a board: the analyzer output is the analyzer output.
+DUMPS = "https://raw.githubusercontent.com/sigrokproject/sigrok-dumps/master/i2c/"
+REAL_CAPTURES = {
+    # a ROHM BH1750 light sensor, ADDR grounded (0x23), fx2lafw clone, 500 kHz
+    "bh1750": ("rohm_bh1750/bh1750_hresolutionmode.sr", 500_000),
+    # a Sensirion SHT31 humidity sensor at 0x45, USBee SX, 8 MHz
+    "sht31": ("sensirion_sht3x/sensirion_sht31_25rh_28rh.sr", 8_000_000),
+}
+CLASSES = ("start:repeat-start:stop:ack:nack:address-read:address-write:"
+           "data-read:data-write")
+
+
+def decode_real_capture(name):
+    import urllib.request
+    if shutil.which("sigrok-cli") is None:
+        pytest.skip("sigrok-cli not on PATH")
+    path, samplerate = REAL_CAPTURES[name]
+    out = HERE / "output" / "sigrok"
+    out.mkdir(parents=True, exist_ok=True)
+    sr = out / f"{name}.sr"
+    if not sr.exists():
+        try:
+            urllib.request.urlretrieve(DUMPS + path, sr)
+        except OSError as e:
+            pytest.skip(f"sigrok-dumps not reachable: {e}")
+    result = subprocess.run(
+        ["sigrok-cli", "-i", str(sr), "-P", "i2c:scl=SCL:sda=SDA",
+         "-A", f"i2c={CLASSES}", "--protocol-decoder-samplenum"],
+        capture_output=True, text=True, check=True)
+    return result.stdout, samplerate
+
+
+def test_la2trace_real_bh1750():
+    text, samplerate = decode_real_capture("bh1750")
+    la = load("la2trace")
+    lines = la.convert(text, samplerate=samplerate)
+    # Power on, two MTreg halves under one repeated start, the mode
+    # command twice, then the 2-byte reading — at the address the README
+    # gives, 0x23, which the decoder prints as the 7-bit address.
+    assert [l.split(" ", 1)[1] for l in lines] == [
+        "i2c.req addr=23 data=01 stop=1", "i2c.resp status=0",
+        "i2c.req addr=23 data=42 stop=0", "i2c.resp status=0",
+        "i2c.req addr=23 data=65 stop=0 rs", "i2c.resp status=0",
+        "i2c.req addr=23 data=20 stop=1 rs", "i2c.resp status=0",
+        "i2c.req addr=23 data=20 stop=1", "i2c.resp status=0",
+        "i2c.rd.req addr=23 req=2 stop=1", "i2c.rd.resp len=2 data=0029",
+    ]
+    times = [int(l.split()[0]) for l in lines]
+    assert times[0] == 2014 and times[-1] == 127614  # 500 kHz: 2 us a sample
+    scaffold = load("trace2regtable")
+    a = scaffold.analyze(scaffold.parse(lines), 0x23)
+    # A part with commands rather than registers still fits: the last
+    # command byte selects the 2-byte reading.
+    assert sorted(a.regs) == [0x20] and a.regs[0x20].reset == b"\x00\x29"
+
+
+def test_la2trace_real_sht31():
+    text, samplerate = decode_real_capture("sht31")
+    la = load("la2trace")
+    lines = la.convert(text, samplerate=samplerate)
+    # Twelve seconds of single-shot measurements: a read, then eleven
+    # rounds of "write the command 0x2400 or 0x2416, wait a second under
+    # a repeated start, read six bytes".
+    assert len(lines) == 48
+    assert lines[0].endswith("i2c.rd.req addr=45 req=6 stop=1")
+    assert lines[1].endswith("i2c.rd.resp len=6 data=67A2E4487FE9")
+    assert lines[2].endswith("i2c.req addr=45 data=2400 stop=0")
+    assert lines[4].endswith("i2c.rd.req addr=45 req=6 stop=1 rs")
+    assert sum(1 for l in lines if " rs" in l) == 11
+    scaffold = load("trace2regtable")
+    a = scaffold.analyze(scaffold.parse(lines), 0x45)
+    # Every round writes the same command and reads a fresh measurement:
+    # the table cannot say that, and the TODO list says so once per change.
+    assert sorted(a.regs) == [0x00, 0x24]
+    assert a.regs[0x24].volatile
+    assert all("a command, not stored contents" in t for t in a.todo)
+    assert len(a.todo) == 10  # eleven reads, ten changes between them

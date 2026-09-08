@@ -375,9 +375,14 @@ def analyze(events, address):
                 xfers, chans, prev.xfer.req.index, cur.xfer.req.index,
                 reg.address)
             if own_w:
-                continue  # explained by a write to this register
+                written = own_w[-1].data[1:]
+                if cur.payload[:len(written)] == written:
+                    continue  # the read shows what was written: stored
             elapsed = (cur.time or 0) - (prev.time or 0)
             causes = []
+            if own_w:
+                causes += ["after writing %s to it (a command, not stored "
+                           "contents)" % x.data[1:].hex().upper() for x in own_w[-1:]]
             if other_w:
                 causes += ["after write %02X=%s" % (x.data[0],
                                                     x.data[1:].hex().upper())

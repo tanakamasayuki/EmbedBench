@@ -42,10 +42,13 @@ Input formats, told apart by the CSV header:
                      address-write:data-read:data-write
             and --protocol-decoder-samplenum plus --samplerate HERE for
             timestamps (without them the lines carry no time). The
-            decoder shows addresses shifted by default (A0 = 0x50 write);
-            pass --address-format unshifted if it was run that way.
-            Checked against the example on the decoder's wiki page, not
-            against a live run.
+            decoder's default address_format=shifted prints the 7-bit
+            address (a BH1750 shows as 23); if it was run with
+            address_format=unshifted it prints the address byte with the
+            R/W bit (46 for a write, 47 for a read) — pass
+            --address-format unshifted then. Checked against two real
+            captures from sigrok-dumps (BH1750 at 500 kHz, SHT31 at 8 MHz)
+            decoded by sigrok-cli 0.7.2 (X65).
 
 Usage:
     la2trace.py capture.csv > capture.trace
@@ -129,8 +132,8 @@ def parse_sigrok(text, samplerate=None, address_format="shifted"):
             events.append((time, low, ""))
         elif low.startswith("address write:") or low.startswith("address read:"):
             value = int(text_.split(":", 1)[1].strip(), 16)
-            if address_format == "shifted":
-                value >>= 1
+            if address_format == "unshifted":
+                value >>= 1  # the raw byte carries the R/W bit
             read = low.startswith("address read")
             events.append((time, "address", "%02X%s" % (value, "R" if read else "W")))
         elif low.startswith("data write:") or low.startswith("data read:"):
@@ -237,8 +240,8 @@ def main(argv=None):
                     help="sigrok input: samples per second, to turn sample "
                     "numbers into microseconds")
     ap.add_argument("--address-format", choices=("shifted", "unshifted"),
-                    default="shifted", help="sigrok input: how the decoder "
-                    "was told to show addresses (default shifted)")
+                    default="shifted", help="sigrok input: the decoder's "
+                    "address_format option (default shifted, the 7-bit address)")
     args = ap.parse_args(argv)
     lines = convert(args.csv.read_text(), args.samplerate, args.address_format)
     text = "\n".join(lines) + ("\n" if lines else "")
