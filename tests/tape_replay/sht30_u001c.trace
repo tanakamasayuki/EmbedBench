@@ -1,0 +1,118 @@
+# SHT30 on an M5Stack U001-C at 100 kHz, an ESP32-S3 controller: I2CDeviceDB pilot run
+# sht30__sht30__characterize__100k__nominal__1b9dbfe9f8c22329 (decoded jsonl, 2026-07-10), as event lines (X67).
+0 mark case=Device_Detection
+0 i2c.req addr=44 data= stop=1
+0 i2c.resp status=0
+6670 mark case=Reset
+6670 i2c.req addr=44 data=30A2 stop=1
+6670 i2c.resp status=0
+9325 i2c.req addr=44 data=F32D stop=1
+9325 i2c.resp status=0
+10359 i2c.rd.req addr=44 req=3 stop=1
+10359 i2c.rd.resp len=3 data=000081
+10920 i2c.req addr=44 data=3041 stop=1
+10920 i2c.resp status=0
+23871 mark case=Single_Measurement phase=polling-high
+23871 i2c.req addr=44 data=2400 stop=1
+23871 i2c.resp status=0
+25329 i2c.rd.req addr=44 req=0 stop=1
+25329 i2c.rd.resp len=0 data= status=2
+25862 i2c.rd.req addr=44 req=0 stop=1
+25862 i2c.rd.resp len=0 data= status=2
+26278 i2c.rd.req addr=44 req=0 stop=1
+26278 i2c.rd.resp len=0 data= status=2
+26693 i2c.rd.req addr=44 req=0 stop=1
+26693 i2c.rd.resp len=0 data= status=2
+27109 i2c.rd.req addr=44 req=0 stop=1
+27109 i2c.rd.resp len=0 data= status=2
+27525 i2c.rd.req addr=44 req=0 stop=1
+27525 i2c.rd.resp len=0 data= status=2
+27940 i2c.rd.req addr=44 req=0 stop=1
+27940 i2c.rd.resp len=0 data= status=2
+28355 i2c.rd.req addr=44 req=0 stop=1
+28355 i2c.rd.resp len=0 data= status=2
+28770 i2c.rd.req addr=44 req=0 stop=1
+28770 i2c.rd.resp len=0 data= status=2
+29186 i2c.rd.req addr=44 req=0 stop=1
+29186 i2c.rd.resp len=0 data= status=2
+29602 i2c.rd.req addr=44 req=0 stop=1
+29602 i2c.rd.resp len=0 data= status=2
+30018 i2c.rd.req addr=44 req=0 stop=1
+30018 i2c.rd.resp len=0 data= status=2
+30433 i2c.rd.req addr=44 req=0 stop=1
+30433 i2c.rd.resp len=0 data= status=2
+30847 i2c.rd.req addr=44 req=0 stop=1
+30847 i2c.rd.resp len=0 data= status=2
+31262 i2c.rd.req addr=44 req=0 stop=1
+31262 i2c.rd.resp len=0 data= status=2
+31677 i2c.rd.req addr=44 req=0 stop=1
+31677 i2c.rd.resp len=0 data= status=2
+32092 i2c.rd.req addr=44 req=0 stop=1
+32092 i2c.rd.resp len=0 data= status=2
+32508 i2c.rd.req addr=44 req=0 stop=1
+32508 i2c.rd.resp len=0 data= status=2
+32923 i2c.rd.req addr=44 req=0 stop=1
+32923 i2c.rd.resp len=0 data= status=2
+33338 i2c.rd.req addr=44 req=0 stop=1
+33338 i2c.rd.resp len=0 data= status=2
+33753 i2c.rd.req addr=44 req=0 stop=1
+33753 i2c.rd.resp len=0 data= status=2
+34167 i2c.rd.req addr=44 req=0 stop=1
+34167 i2c.rd.resp len=0 data= status=2
+34587 i2c.rd.req addr=44 req=0 stop=1
+34587 i2c.rd.resp len=0 data= status=2
+35002 i2c.rd.req addr=44 req=0 stop=1
+35002 i2c.rd.resp len=0 data= status=2
+35417 i2c.rd.req addr=44 req=0 stop=1
+35417 i2c.rd.resp len=0 data= status=2
+35832 i2c.rd.req addr=44 req=0 stop=1
+35832 i2c.rd.resp len=0 data= status=2
+36247 i2c.rd.req addr=44 req=0 stop=1
+36247 i2c.rd.resp len=0 data= status=2
+36662 i2c.rd.req addr=44 req=6 stop=1
+36662 i2c.rd.resp len=6 data=67FB129A670E
+62871 mark case=Single_Measurement phase=stretching-high
+62871 i2c.req addr=44 data=2C06 stop=1
+62871 i2c.resp status=0
+64340 i2c.rd.req addr=44 req=0 stop=0
+64340 i2c.rd.resp len=0 data=
+88369 i2c.rd.req addr=44 req=6 stop=1 rs
+88369 i2c.rd.resp len=6 data=67F65E9A6DD5
+114567 mark case=Single_Measurement phase=polling-medium
+114567 i2c.req addr=44 data=240B stop=1
+114567 i2c.resp status=0
+116342 i2c.rd.req addr=44 req=0 stop=1
+116342 i2c.rd.resp len=0 data= status=2
+116871 i2c.rd.req addr=44 req=0 stop=1
+116871 i2c.rd.resp len=0 data= status=2
+117301 i2c.rd.req addr=44 req=0 stop=1
+117301 i2c.rd.resp len=0 data= status=2
+117718 i2c.rd.req addr=44 req=0 stop=1
+117718 i2c.rd.resp len=0 data= status=2
+118133 i2c.rd.req addr=44 req=0 stop=1
+118133 i2c.rd.resp len=0 data= status=2
+118548 i2c.rd.req addr=44 req=0 stop=1
+118548 i2c.rd.resp len=0 data= status=2
+118963 i2c.rd.req addr=44 req=0 stop=1
+118963 i2c.rd.resp len=0 data= status=2
+119378 i2c.rd.req addr=44 req=6 stop=1
+119378 i2c.rd.resp len=6 data=6811919A849C
+145879 mark case=Single_Measurement phase=stretching-medium
+145879 i2c.req addr=44 data=2C0D stop=1
+145879 i2c.resp status=0
+147344 i2c.rd.req addr=44 req=6 stop=1
+147344 i2c.rd.resp len=6 data=67F65E9A823A
+187556 mark case=Single_Measurement phase=polling-low
+187556 i2c.req addr=44 data=2416 stop=1
+187556 i2c.resp status=0
+189348 i2c.rd.req addr=44 req=0 stop=1
+189348 i2c.rd.resp len=0 data= status=2
+189870 i2c.rd.req addr=44 req=0 stop=1
+189870 i2c.rd.resp len=0 data= status=2
+190292 i2c.rd.req addr=44 req=6 stop=1
+190292 i2c.rd.resp len=6 data=6800E39A7863
+216442 mark case=Single_Measurement phase=stretching-low
+216442 i2c.req addr=44 data=2C10 stop=1
+216442 i2c.resp status=0
+217347 i2c.rd.req addr=44 req=6 stop=1
+217347 i2c.rd.resp len=6 data=6826C39A5E43

@@ -32,7 +32,8 @@ I2C_JSON   wireskein's transactions, as its analysis export writes them:
            capture's host time t0, and says so with clock=host.
 
 Lines follow la2trace.py: both lines of a transfer carry its START time;
-status is 0 / 2 address NACK / 3 data NACK, read off the bus. That is the
+status is 0 / 2 address NACK / 3 data NACK, read off the bus; a read
+whose address went unanswered carries status=2 as well. That is the
 bus's view, not the library's: the first sample's Wire returned 4 (no
 pull-ups) for a transfer the bus shows as an address NACK. `rs` marks a
 transfer that a repeated start continued to the same address; stop=0 is
@@ -108,8 +109,9 @@ def transfer_lines(transactions, hz, start_ns, tick0):
             got = data if x["addr_ack"] else b""
             out.append((time, "i2c.rd.req addr=%02X req=%u stop=%u%s" % (
                 x["addr"], len(data), stop, suffix)))
-            out.append((time, "i2c.rd.resp len=%u data=%s%s" % (
-                len(got), got.hex().upper(), wait)))
+            out.append((time, "i2c.rd.resp len=%u data=%s%s%s" % (
+                len(got), got.hex().upper(),
+                "" if x["addr_ack"] else " status=2", wait)))
         else:
             if not x["addr_ack"]:
                 status = 2

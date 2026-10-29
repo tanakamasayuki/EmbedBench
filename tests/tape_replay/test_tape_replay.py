@@ -145,3 +145,44 @@ def test_tape_replay():
     assert strayed["results"] == ["W0", "R60", "W0", "W0", "R08"]
     assert any(l.endswith("dump tape step=5/11 mismatch=3")
                for l in strayed["trace"])
+
+
+def test_busy_step_holds_time_not_poll_count(tmp_path):
+    """X67: a real SHT30 capture (high repeatability, polled until the part
+    answers its address). With --busy the tape answers the first poll
+    after the time the part was busy, whatever the polling period; without
+    it, the tape answers the 28th poll whenever that comes — at 11.2 ms
+    when the part was still measuring — and says nothing."""
+    trace = HERE / "sht30_u001c.trace"
+    builds = {}
+    for mode, extra in (("busy", ["--busy"]), ("step", [])):
+        out = tmp_path / mode
+        out.mkdir()
+        tool = subprocess.run(
+            [sys.executable, str(TOOL), str(trace), "--name", "Sht30",
+             "--out", str(out / "sht30_tape.h"), "--addr", "44",
+             "--case", "Single_Measurement", "--phase", "polling-high",
+             *extra],
+            capture_output=True, text=True, check=True)
+        builds[mode] = tool.stdout.strip()
+        binary = out / "busy"
+        build(binary, [NATIVE / "busy.cpp", MODELS / "tape_model.cpp"],
+              [SRC, MODELS, out])
+        builds[mode + "_run"] = run(binary).splitlines()
+
+    assert builds["busy"] == "Sht30: 3 steps (1 busy, 1 read, 1 write), 0 left out"
+    assert builds["busy_run"] == [
+        "period=400 status=0 polls=31 answered_at=12400 got=67FB129A670E "
+        "diag=0 dump=<tape step=3/3 mismatch=0 busy=30>",
+        "period=1000 status=0 polls=13 answered_at=13000 got=67FB129A670E "
+        "diag=0 dump=<tape step=3/3 mismatch=0 busy=12>",
+        "period=3000 status=0 polls=5 answered_at=15000 got=67FB129A670E "
+        "diag=0 dump=<tape step=3/3 mismatch=0 busy=4>",
+    ]
+    assert builds["step"] == "Sht30: 29 steps (28 read, 1 write), 0 left out"
+    assert [l.split(" got=")[0] for l in builds["step_run"]] == [
+        "period=400 status=0 polls=28 answered_at=11200",
+        "period=1000 status=0 polls=28 answered_at=28000",
+        "period=3000 status=0 polls=28 answered_at=84000",
+    ]
+    assert all("diag=0" in l for l in builds["step_run"])

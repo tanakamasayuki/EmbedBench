@@ -2580,6 +2580,56 @@ sigrok非対応で、Logic 2 からのエクスポートになる（所有者の
    I2C と主張しないため。analyze の JSON を直接読むかは wireskein と相談中。
 3. SPI と線（DRDY）の変換は、実データが来てから同じ手順で足す。
 
+## X67. 実機の実データを雛形と tape に通す — QMP6988 と SHT30（I2CDeviceDB の pilot）
+
+対象: `devices/tools/trace2regtable.py`（時間だけの変化を畳む）、`devices/tools/trace2tape.py`（`--busy`・
+`--case` / `--phase`）、`devices/src/tape_model.*`（`kBusy`）、`devices/tools/la2trace.py` / `skein2trace.py`
+（アドレス NACK の読出しに `status=2`）、`tests/tape_replay/`
+
+新しい実機を使わずに、ライブラリ開発の流れ（[REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md) §2）を実データで
+通した。材料は I2CDeviceDB の pilot run（2026-07-10、M5Stack U001-C、ESP32-S3、100 kHz、sigrok）の復号済み jsonl。
+この環境に sigrok-cli が無いので `.sr` からは復号せず、jsonl を使い捨ての変換（コミットしない。I2CDeviceDB の形式は
+捨てる予定）で行にした。
+
+**QMP6988（レジスタ型）は表に収まった。** 9 レジスタ（書込み可 2）、repeated start 必須（26 / 26）。
+
+- status（F3）は forced 測定の書込み（F4=25）から 08 になり、**約 4.1〜4.8 ms で 00 に戻った**。測定時間の実測値。
+- 測定後も F4 は 25 と読み返した（I2CDeviceDB の pilot の記録と同じ）。
+- 測定値（F7）は normal mode で約 11 ms ごとに変わった。**TODO 12 件のうち 10 件がこの繰り返し**で、読み手には
+  1 つの振る舞い。同じレジスタの「時間だけで変わった」の連続は 1 行に畳むようにした
+  （`changed 9 times with only time passing, every 10997-11004 us`）。12 件 → 4 件。
+- **要確認: Reset の直後（E0=E6 の 17 µs 後）に 0x73 へのアドレスだけの書込みが ACK されている**（2 本とも）。
+  I2CDeviceDB の probe のソースに 0x73 は無く、長さ（約 98 µs）はアドレスだけの書込みに合う。0x70 の在否確認が
+  復号で化けた可能性があるが、確かめられない。生のキャプチャを残す理由の実例として記録する。
+
+**SHT30（コマンド型）は表に合わず、tape で 1 つ穴が見えた。**
+
+- 表は 16 ビットのコマンドを「先頭 1 バイトのレジスタ ＋ 書いた値」と読み、0x2400 / 0x240B / 0x2416（精度違い）を
+  1 つのレジスタにまとめる。X63 の「表が効くのは register-map 型まで」のとおりで、コマンド型は手書きの模型 ＋ tape にする。
+- **tape は poll の回数を覚えてしまう。** 54 ステップのうち 36 が測定待ちのアドレス NACK の読出しで、
+  再生では「28 回目の poll で答える」になる。poll の間隔を 400 µs にすると、**実物がまだ測定中の 11.2 ms で答え、
+  診断は 0 件**。待ちが短すぎるライブラリが通ってしまう。
+- そこで tape に `kBusy` を足した: 前のステップから `delayUs` が経つまで、どの要求もアドレスで断り、その後の最初の
+  要求で次のステップへ進む。`trace2tape.py --busy` がアドレス NACK の読出しの連なりを 1 つの `kBusy` にする
+  （待ちは「最後に断られた poll の直後まで」）。再生は poll の間隔に依らず、12.4 ms を過ぎた最初の poll で答える
+  （400 / 1000 / 3000 µs 間隔で 12.4 / 13.0 / 15.0 ms、診断 0）。
+- 測定待ちの実測値（コマンドから、最後に断られた時点〜答えた時点）: 高精度 0x2400 が 12.4〜12.8 ms、
+  中精度 0x240B が 4.4〜4.8 ms、低精度 0x2416 が 2.3〜2.7 ms。
+- **行の形の穴も 1 つ。** clock stretch 付きの読出し（0x2C06）が controller の timeout で 0 バイトになったもの
+  （アドレスは ACK）と、アドレス NACK の読出しが、どちらも `i2c.rd.resp len=0` で区別できなかった。最初の `--busy` は
+  これも待ちに畳んでいた。アドレス NACK の読出しには書込みと同じ `status=2` を付けるようにし（`la2trace.py`・
+  `skein2trace.py`）、`--busy` はそれだけを畳む。ホストの環境の行は今までどおり（付けない）。
+
+**`--case` / `--phase`。** 目印（`mark case= phase=`）の区間だけを tape にする。上の試験は
+`--case Single_Measurement --phase polling-high` で 3 ステップの tape を作っている。
+
+**結論。**
+
+1. 実データでライブラリ開発の流れが回った。レジスタ型は表 ＋ フック、コマンド型は tape（`--busy`）＋ 手書き。
+2. 実データで初めて見えた穴が 3 つあり、どれも直した: TODO の繰り返し、poll の回数への依存、アドレス NACK と
+   0 バイトの区別。合成データの試験では出ていなかった。
+3. 試料（SHT30 の行、118 行）を `tests/tape_replay/sht30_u001c.trace` に固定した。I2CDeviceDB を閉じても残る。
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）

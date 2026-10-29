@@ -17,6 +17,15 @@ Input: the same event lines trace2regtable.py reads (see there), plus
 A trace with several devices on it is split by source: --addr keeps one
 I2C address, --serial the serial exchange, --spi the SPI transfers; each
 becomes its own tape for its own TapeModel.
+--case / --phase keep only the lines inside a run's markers
+(`mark case=X [phase=Y]`, closed by the same with end=1 or by the next
+case; see skein2trace.py), so one case of a long run becomes one tape.
+--busy folds each run of reads refused at the address (`status=2` on the
+read's response: a part refusing its address while it measures or
+writes) into one kBusy step: the part is
+busy until just after the last refused poll, whatever the number of polls
+the application makes (X67). Without it every poll is a step, and an
+application that polls once more or less leaves the tape.
 Text is as the environments print it: printable characters, \\r \\n \\t
 escapes, `data=HEX` for short binary, `empty`. A `len=N crc=XX` label is a
 checksum of bytes the log did not keep, so that step is left out with a
@@ -26,6 +35,7 @@ every byte (CaptureWire does).
 
 Usage:
     trace2tape.py TRACE --name Env --out env_tape.h [--addr 76 | --serial | --spi]
+                  [--case ID [--phase ID]] [--busy]
 """
 
 from __future__ import annotations
@@ -69,7 +79,7 @@ def serial_payload(rest):
 
 class Step:
     def __init__(self, kind, time, source, data=b"", status=0, stop=1,
-                 request=0, delay=0, note=None, length=None):
+                 request=0, delay=0, note=None, length=None, refused=False):
         self.kind = kind
         self.time = time
         self.source = source
@@ -79,6 +89,7 @@ class Step:
         self.request = request
         self.delay = delay
         self.note = note
+        self.refused = refused  # kRead: the address went unanswered
         # kSpi: `data` is MOSI then MISO, `length` bytes each.
         self.length = len(data) if length is None else length
 
@@ -146,7 +157,7 @@ def build(events, address, include=("i2c", "serial", "spi")):
                             % (x.got_len, len(x.got)))
                 steps.append(Step("kRead", e.time, e.rest, data=x.got,
                                   stop=1 if x.stop else 0, request=x.want,
-                                  note=note))
+                                  note=note, refused=x.status == 2))
         elif e.kind == "uart.tx" and "serial" in include:
             payload = serial_payload(e.rest)
             if payload is None:
@@ -166,6 +177,64 @@ def build(events, address, include=("i2c", "serial", "spi")):
         prev_time = e.time if e.time is not None else prev_time
     flush_spi()
     return steps, skipped
+
+
+def marker_fields(line):
+    """The key=value fields of a `mark` line, or None for any other line."""
+    tokens = line.split()
+    if "mark" not in tokens:
+        return None
+    rest = tokens[tokens.index("mark") + 1:]
+    return dict(t.split("=", 1) for t in rest if "=" in t)
+
+
+def select_case(lines, case, phase=None):
+    """The lines inside case `case` (and phase `phase`), markers left out."""
+    cur_case = cur_phase = None
+    kept = []
+    for line in lines:
+        m = marker_fields(line)
+        if m is None:
+            if cur_case == case and (phase is None or cur_phase == phase):
+                kept.append(line)
+            continue
+        if "src" in m:
+            continue  # the application's own text, not a boundary
+        ended = m.get("end") == "1"
+        if "phase" in m:
+            cur_case = m.get("case", cur_case)
+            cur_phase = None if ended else m["phase"]
+        elif "case" in m:
+            cur_case = None if ended else m["case"]
+            cur_phase = None
+    return kept
+
+
+def fold_busy(steps):
+    """Each run of empty reads becomes one kBusy step (see --busy)."""
+    out = []
+    i = 0
+    while i < len(steps):
+        s = steps[i]
+        if s.kind != "kRead" or not s.refused or s.time is None:
+            out.append(s)
+            i += 1
+            continue
+        j = i
+        while (j < len(steps) and steps[j].kind == "kRead" and
+               steps[j].refused and steps[j].time is not None):
+            j += 1
+        run = steps[i:j]
+        since = out[-1].time if out and out[-1].time is not None else 0
+        answered = (" answered @%s us" % steps[j].time) if j < len(steps) else ""
+        # Busy until just past the last refused poll: a poll at that same
+        # moment is still refused, and the first one after it is answered.
+        out.append(Step("kBusy", run[0].time,
+                        "%d polls refused @%s..%s us%s" % (
+                            len(run), run[0].time, run[-1].time, answered),
+                        delay=run[-1].time - since + 1))
+        i = j
+    return out
 
 
 def render(steps, skipped, name, source, address):
@@ -217,8 +286,22 @@ def main(argv=None):
                     help="keep only the serial exchange")
     ap.add_argument("--spi", action="store_true",
                     help="keep only the SPI transfers")
+    ap.add_argument("--case", help="keep only the lines inside this case's "
+                    "markers")
+    ap.add_argument("--phase", help="with --case: only this phase of it")
+    ap.add_argument("--busy", action="store_true",
+                    help="fold each run of address-refused reads into one "
+                    "busy step")
     args = ap.parse_args(argv)
-    events = t2r.parse(args.trace.read_text().splitlines())
+    if args.phase is not None and args.case is None:
+        sys.exit("--phase needs --case")
+    lines = args.trace.read_text().splitlines()
+    if args.case is not None:
+        lines = select_case(lines, args.case, args.phase)
+        if not lines:
+            sys.exit("no lines inside case %s%s" % (
+                args.case, "" if args.phase is None else " phase " + args.phase))
+    events = t2r.parse(lines)
     addresses = sorted({x.addr for x in t2r.pair_transfers(events)
                         if x.addr is not None})
     address = None
@@ -237,6 +320,8 @@ def main(argv=None):
                          len(addresses), ", ".join("%02X" % x for x in addresses)))
         address = addresses[0] if addresses else None
     steps, skipped = build(events, address, include)
+    if args.busy:
+        steps = fold_busy(steps)
     args.out.write_text(render(steps, skipped, args.name, args.trace.name,
                                address))
     kinds = {}

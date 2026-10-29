@@ -13,7 +13,7 @@ The one-line-per-event trace both environments print. Only these events
 matter; every other line is ignored:
 
     i2c.req addr=76 data=F425 stop=1 [rs]       i2c.resp status=0 [re=N]
-    i2c.rd.req addr=76 req=1 stop=1 [rs]        i2c.rd.resp len=1 data=08 [re=N]
+    i2c.rd.req addr=76 req=1 stop=1 [rs]        i2c.rd.resp len=1 data=08 [status=2] [re=N]
     chan.write chan=0 data=7FE000               gpio.inject line=0 val=1
     gpio.inject pin=27 0->1 match=0             dev.note <text>
     diag.<name> ...
@@ -171,6 +171,10 @@ class Xfer:
         if self.kind == "W":
             self.status = int(resp.fields.get("status", "255") or 255)
         else:
+            # status=2 on a read: the address went unanswered (la2trace,
+            # skein2trace); without it an empty read could be either.
+            if "status" in resp.fields:
+                self.status = int(resp.fields.get("status") or 255)
             self.got_len = int(resp.fields.get("len", "0") or 0)
             self.got = hexbytes(resp.fields.get("data"))
             self.truncated = len(self.got) < self.got_len
@@ -369,6 +373,24 @@ def analyze(events, address):
                                  "contents unknown (zeros)")
 
         reads = [o for o in reg.obs if o.kind == "R"]
+        # A run of changes with only time passing is one behaviour (a value
+        # the part refreshes on its own), told once with its period.
+        drift = []
+
+        def flush_drift():
+            if len(drift) == 1:
+                prev, cur, elapsed = drift[0]
+                a.todo.append("register %02X changed %s -> %s with only time "
+                              "passing (%d us)" % (reg.address, prev.hex(),
+                                                   cur.hex(), elapsed))
+            elif drift:
+                gaps = [elapsed for _, _, elapsed in drift]
+                a.todo.append("register %02X changed %d times with only time "
+                              "passing, every %d-%d us (%s -> ... -> %s)" % (
+                                  reg.address, len(drift), min(gaps), max(gaps),
+                                  drift[0][0].hex(), drift[-1][1].hex()))
+            del drift[:]
+
         for prev, cur in zip(reads, reads[1:]):
             n = min(len(prev.payload), len(cur.payload))
             if prev.payload[:n] == cur.payload[:n]:
@@ -394,13 +416,15 @@ def analyze(events, address):
             if chan:
                 causes += ["after chan.write %s" % c.fields.get("chan")
                            for c in chan]
-            if not causes:
-                cause = "with only time passing (%d us)" % elapsed
-            else:
-                cause = "%s (%d us)" % (", ".join(causes), elapsed)
             reg.volatile = True
-            a.todo.append("register %02X changed %s -> %s %s" %
-                          (reg.address, prev.hex(), cur.hex(), cause))
+            if not causes:
+                drift.append((prev, cur, elapsed))
+                continue
+            flush_drift()
+            a.todo.append("register %02X changed %s -> %s %s (%d us)" %
+                          (reg.address, prev.hex(), cur.hex(),
+                           ", ".join(causes), elapsed))
+        flush_drift()
         for x in reg.short_reads:
             a.todo.append("register %02X answered %d bytes to a %d-byte read: the "
                           "length is device state, not the table's width" %

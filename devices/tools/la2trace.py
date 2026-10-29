@@ -12,7 +12,8 @@ read, with the master's view of each transfer:
     <time_us> i2c.rd.resp len=1 data=08
 
 status follows Wire::endTransmission(): 0 acknowledged, 2 address NACK,
-3 data NACK. `stop=0` is a transfer followed by a repeated START; `rs`
+3 data NACK. A read whose address went unanswered says status=2 too, so
+it is not mistaken for one that was answered with nothing (X67). `stop=0` is a transfer followed by a repeated START; `rs`
 marks the transfer that continued it to the same address. A read whose
 address was not acknowledged answers len=0.
 
@@ -138,8 +139,9 @@ def to_lines(events):
             got = bytes(x.data) if x.address_acked else b""
             lines.append(stamp(x.time, "i2c.rd.req addr=%02X req=%u stop=%u%s" % (
                 x.address, len(x.data), stop, suffix)))
-            lines.append(stamp(x.time, "i2c.rd.resp len=%u data=%s" % (
-                len(got), got.hex().upper())))
+            lines.append(stamp(x.time, "i2c.rd.resp len=%u data=%s%s" % (
+                len(got), got.hex().upper(),
+                "" if x.address_acked else " status=2")))
         else:
             if x.address_acked is False:
                 status = 2

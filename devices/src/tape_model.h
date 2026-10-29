@@ -14,20 +14,27 @@
 // steps the device initiates (kSerialOut) are performed on their own once
 // they become current, `delayUs` after the previous step completed. A
 // device-initiated first step is armed at the first advanceTo(), since
-// reset() may not call HostPort. Pure C++11.
+// reset() may not call HostPort.
+//
+// A kBusy step stands for a run of polls the part did not answer (an
+// SHT30 measuring, an EEPROM writing): until `delayUs` after the previous
+// step completed, every request is refused at the address and the step
+// stays; the first request after that passes it and is answered from the
+// next step. The tape then holds the time the part was busy, not how many
+// times this application happened to ask (X67). Pure C++11.
 #pragma once
 
 #include <embedbench_device.h>
 
 struct TapeStep {
-  uint8_t kind;         // TapeModel::kWrite / kRead / kSerialIn / kSerialOut
+  uint8_t kind;         // TapeModel::kWrite / kRead / kSerialIn / kSerialOut / kSpi / kBusy
   uint8_t status;       // kWrite: the I2cStatus to answer
   uint8_t stop;         // kWrite / kRead: the recorded STOP bit, checked
   uint8_t length;       // bytes in `data`
   uint8_t request;      // kRead: bytes the application asked for (0 = unchecked)
   const uint8_t* data;  // kWrite / kSerialIn: expected; kRead / kSerialOut: answer;
                         // kSpi: expected MOSI then answered MISO
-  uint32_t delayUs;     // kSerialOut: after the previous step completed
+  uint32_t delayUs;     // kSerialOut / kBusy: after the previous step completed
 };
 
 struct TapeSpec {
@@ -41,7 +48,8 @@ class TapeModel : public ebdev::Device {
   // to send, followed by the `length` MISO bytes to answer. Chip select
   // is not checked: the recording is matched byte by byte.
   enum Kind : uint8_t {
-    kWrite = 1, kRead = 2, kSerialIn = 3, kSerialOut = 4, kSpi = 5
+    kWrite = 1, kRead = 2, kSerialIn = 3, kSerialOut = 4, kSpi = 5,
+    kBusy = 6
   };
 
   explicit TapeModel(const TapeSpec& spec) : spec_(&spec) {}
@@ -59,11 +67,13 @@ class TapeModel : public ebdev::Device {
   size_t position() const { return step_; }
   bool finished() const { return step_ >= spec_->count; }
   uint32_t mismatches() const { return mismatches_; }
+  uint32_t busyRefusals() const { return busyRefusals_; }
 
  private:
   const TapeStep* current() const;
   void finishStep();
   void arm();
+  bool busy();
   void mismatch(const char* fmt, ...);
   static const char* kindName(uint8_t kind);
 
@@ -75,4 +85,5 @@ class TapeModel : public ebdev::Device {
   bool stepBad_ = false;  // said so once for this step
   bool exhaustedSaid_ = false;
   uint32_t mismatches_ = 0;
+  uint32_t busyRefusals_ = 0;
 };

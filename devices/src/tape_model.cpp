@@ -23,6 +23,7 @@ const char* TapeModel::kindName(uint8_t kind) {
     case kSerialIn: return "serial in";
     case kSerialOut: return "serial out";
     case kSpi: return "spi";
+    case kBusy: return "busy";
     default: return "?";
   }
 }
@@ -35,6 +36,7 @@ void TapeModel::reset() {
   stepBad_ = false;
   exhaustedSaid_ = false;
   mismatches_ = 0;
+  busyRefusals_ = 0;
 }
 
 const TapeStep* TapeModel::current() const {
@@ -61,14 +63,33 @@ void TapeModel::finishStep() {
 
 void TapeModel::arm() {
   const TapeStep* s = current();
-  if (s == nullptr || s->kind != kSerialOut || armed_ || port() == nullptr) return;
+  if (s == nullptr || armed_ || port() == nullptr) return;
+  if (s->kind != kSerialOut && s->kind != kBusy) return;
   armed_ = true;
   dueAtUs_ = port()->nowMicros() + s->delayUs;
-  port()->requestWake(dueAtUs_);
+  // A busy step does nothing on its own; it only waits to be asked.
+  if (s->kind == kSerialOut) port()->requestWake(dueAtUs_);
+}
+
+// True while the current step is a busy one whose time has not come: the
+// request is refused at the address. Once it has, the step is passed and
+// the request goes on to the next one.
+bool TapeModel::busy() {
+  const TapeStep* s = current();
+  if (s == nullptr || s->kind != kBusy) return false;
+  arm();
+  const uint64_t now = port() != nullptr ? port()->nowMicros() : dueAtUs_;
+  if (now < dueAtUs_) {
+    ++busyRefusals_;
+    return true;
+  }
+  finishStep();
+  return false;
 }
 
 uint8_t TapeModel::i2cWrite(const uint8_t* data, size_t len,
                             const ebdev::I2cTransfer& xfer) {
+  if (busy()) return ebdev::kI2cAddressNack;
   const TapeStep* s = current();
   char got[24];
   hexOf(data, len, got, sizeof(got));
@@ -101,6 +122,7 @@ uint8_t TapeModel::i2cWrite(const uint8_t* data, size_t len,
 
 size_t TapeModel::i2cRead(uint8_t* data, size_t len,
                           const ebdev::I2cTransfer& xfer) {
+  if (busy()) return 0;  // a read has no status: nothing comes back
   const TapeStep* s = current();
   if (s == nullptr) {
     if (!exhaustedSaid_) {
@@ -193,8 +215,15 @@ void TapeModel::advanceTo(uint64_t nowUs) {
 }
 
 size_t TapeModel::dump(char* out, size_t cap) {
-  const int n = snprintf(out, cap, "tape step=%u/%u mismatch=%u",
-                         static_cast<unsigned>(step_),
-                         static_cast<unsigned>(spec_->count), mismatches_);
+  // busy= only when a busy step refused something: tapes without one
+  // dump as they always have.
+  const int n = busyRefusals_ == 0
+      ? snprintf(out, cap, "tape step=%u/%u mismatch=%u",
+                 static_cast<unsigned>(step_),
+                 static_cast<unsigned>(spec_->count), mismatches_)
+      : snprintf(out, cap, "tape step=%u/%u mismatch=%u busy=%u",
+                 static_cast<unsigned>(step_),
+                 static_cast<unsigned>(spec_->count), mismatches_,
+                 busyRefusals_);
   return n > 0 ? static_cast<size_t>(n) : 0;
 }
