@@ -29,7 +29,8 @@
 ## 設計記録（日本語のみ）
 
 - [HARNESS_REQUESTS.ja.md](HARNESS_REQUESTS.ja.md): 実機harnessとの接続。EmbedBench側の要望・回答・提供物
-- [REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md): 実デバイスのデータから模型へ。収集（OEP）・正本の置き場・ホストのテストでの照合
+- [REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md): 実デバイスのデータと probe。ライブラリ開発（ホストの模型）とコア開発（probe）の2つの用途
+- [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md): その計画と事前調査。データリポジトリ・コアの実機テスト・模型づくりの順序と完了条件
 - [RELEASE_SHAPE.ja.md](RELEASE_SHAPE.ja.md): 公開形の検討（revision 100へ向けて）。実測に基づく提案と未決事項
 - [DEVELOPMENT_PLAN.ja.md](DEVELOPMENT_PLAN.ja.md): 工程、承認ゲート、作業分割、完了条件
 - [EXPERIMENTS.ja.md](EXPERIMENTS.ja.md): hostで確認した数値、候補、未決事項の台帳
