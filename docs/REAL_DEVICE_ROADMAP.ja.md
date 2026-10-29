@@ -10,7 +10,8 @@
 
 - **L（ライブラリ開発）**: 実デバイスのデータでホストの模型を作り・確かめる
 - **C（コア開発）**: probe を相手に ch32rv 用 Arduino コアの Wire / SPI を実機で試す。**持ち主は OEP 側と ch32rv**
-  （利用者の分担: キャプチャ系は EmbedBench、再生系は OEP 側）。ここには EmbedBench で行った事前調査だけを残す
+  （利用者の分担: キャプチャ系は EmbedBench、コア開発は OEP 側。OEP 側の記録は `oep-spec` の `docs/bus-testing.ja.md`）。
+  ここには EmbedBench で行った事前調査だけを残す
 - **D（データ）**: 新しいリポジトリ `EmbedBenchDeviceData`
 
 ---
@@ -19,7 +20,7 @@
 
 | 項目 | 内容 | 記録 |
 | --- | --- | --- |
-| 設計 | 2 つの用途、データの置き場、受け取る形、照合、再生の見通し | REAL_DEVICE_DATA.ja.md |
+| 設計 | 2 つの用途、データの置き場、受け取る形、照合 | REAL_DEVICE_DATA.ja.md |
 | 変換器 | wireskein の I2C の復号 ＋ run.json → 行（`skein2trace.py`） | X66 |
 | 実データでの通し | I2CDeviceDB の pilot（SHT30・QMP6988）を雛形と tape に通した | X67 |
 | tape の改良 | 待ちのステップ（`--busy`）、ケースの切り出し（`--case` / `--phase`） | X67 |
@@ -166,9 +167,12 @@ EmbedBenchDeviceData/
 ### 2.4 その先（OEP 側）
 
 C1（上の「今の fixture でできる」表を ch32rv の instrumented テストにする）は ch32rv と OEP で進める。
-故障の注入と振る舞いのある相手（C2・C3）は、**OEP 側が形の案（標準の fixture に任意の op を足す / 種類ごとの汎用エミュレータ /
-EmbedBench の模型の再生）を P4 の実験で比べてから決める**。検討と実験の記録は OEP 側に置く。
-EmbedBench が関わるのは、そこで EmbedBench の模型を流用するときだけ（[REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md) §8.1）。
+その先は OEP 側の記録 `oep-spec` の `docs/bus-testing.ja.md` を見る:
+
+- probe は試験が先に決めた応答を前もって置く形だけ。**デバイスの模型の再生（C3 の案）はしない**
+  （ライブラリの試験はホストの EmbedBench の領分）。
+- 故障の注入（C2: I2C の NACK、ストレッチの指定など）は、その文書の §8「標準に無い機能」。
+- 上の表の「OEP 側で形を決める（§2.4）」は、そちらの §8 で扱う。
 
 ---
 
@@ -196,7 +200,7 @@ L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模�
 実機が要る:           L4 ←───────────────── D4（最初の run を入れる）
                       L5、L6
 
-コア開発（OEP 側・ch32rv）: C1 → 故障の注入・再生（形は OEP 側が実験で決める）
+コア開発（OEP 側・ch32rv）: C1 → 標準に無い機能（故障の注入。OEP の bus-testing §8）
 ```
 
 - L・D（EmbedBench）と C（OEP 側）は独立に進む。共通なのは P4 の probe、wireskein の verify、run.json の形だけ。
