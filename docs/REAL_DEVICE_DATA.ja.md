@@ -195,7 +195,7 @@ I2CDeviceDB は暫定のもので、今の形（I2C の chip profile、jsonl の
 | I2CDeviceDB を作り直す | 採らない | 名前が I2C で、構造（I2C 前提の profile、jsonl）も壊すことになる。履歴は要らない（利用者） |
 | **新しいリポジトリ** | **採る**（2026-10-29 利用者が決定） | 形に過去の制約が無い。I2CDeviceDB からは中身（chips / products / surveys / guides）だけを、履歴なしで移す |
 
-### 5.3 名前の候補
+### 5.3 名前: `EmbedBenchDeviceData`（決定）
 
 **基準（利用者）:** 汎用のデータとして他にも使うなら関連の無い名前でよい。EmbedBench に特化するなら関連が分かる名前にする。
 
@@ -208,7 +208,7 @@ wireskein の識別の表を作る用途はあるが従である。形式はバ�
 
 | 候補 | 評価 |
 | --- | --- |
-| **`EmbedBenchDeviceData`**（推す） | 「EmbedBench のデバイス（模型）のためのデータ」とそのまま読める。`devices/`（模型の置き場）と言葉が揃う |
+| **`EmbedBenchDeviceData`**（**採用**。2026-10-29 利用者が決定） | 「EmbedBench のデバイス（模型）のためのデータ」とそのまま読める。`devices/`（模型の置き場）と言葉が揃う |
 | `EmbedBenchRecords` | 短い。「実物の記録」は出るが、何の記録かは `DeviceData` より弱い |
 | `EmbedBenchCaptures` | 分かりやすいが、正本はキャプチャでなく分析済みデータ（§5.1）なので名前と中身がずれる |
 
@@ -354,15 +354,20 @@ wireskein の analyze の JSON（[oep] 調べ）:
   clock stretch を待つか、timeout、SCL の周波数、バスが詰まったときの回復
 - **SPI:** mode（CPOL / CPHA）、ビットの順、CS のタイミング、長い転送や DMA
 
-**P4 の spi-target が受けるのは mode 0 と 2 だけ**（describe の `modes`）。mode 1 と 3 は、ESP32 の slave が最初の SCK の辺まで
-MISO に 0 を出すので、仕様の `cs_setup_ns` の約束を守れず断る。**CH32 の SPI の mode 1 / 3 を試すときは spi-target を
-相手にせず、キャプチャ ＋ wireskein の verify（mode、ビットの順、SCK の周波数）で判定する。** MOSI を見るだけなら受け手は要らない。
+**SPI の mode は P4 では制約にならない。** `oep-probe-arduino` の `OepP4SpiTarget` が mode 1 / 3 を断るのは
+**初代 ESP32 だけ**（`CONFIG_IDF_TARGET_ESP32` のときの MISO の gate の分岐。初代の slave は CPHA 1 で最初の SCK の辺まで
+MISO に 0 を出し、fixture §4 の MISO の約束を守れないため）。P4 ではこの分岐が無く、configure は mode 0〜3 を受け付ける
+（2026-10-29 にソースで確認。[oep] の初めの説明は初代 ESP32 の制約を P4 に当てはめていた）。
+しかもこの制約は MISO の約束の話で、ハードウェアの SPI slave が MOSI を受けることとは関係が無い。
+**書くだけの相手（表示器の形）なら、どの mode でも受け手として成り立つ。** P4 の mode 1 / 3 での MISO の出方は未測定。
+いずれにしても、mode・ビットの順・SCK の周波数の判定はキャプチャ ＋ wireskein の verify でできるので、
+MOSI を見るだけなら受け手は要らない。
 
 ### 8.2 段階
 
 | 段 | 相手 | できること | 状態 |
 | --- | --- | --- | --- |
-| 1. 標準の fixture | `oep.fixture.i2c-target` / `spi-target` | 決まったアドレスへの ACK（他はアドレス NACK）、`preload_tx` で決まった応答、stretch op（`stretch_us`、各バイトの後に SCL を保つ。**任意の機能で P4 だけが持つ**。伸ばせる上限は describe の `max_stretch_us`。CH32 と RP2 の i2c-target はコアの Wire の slave の上で動き、stretch が無い）。SPI は mode / bit_order / arm（P4 は mode 0 と 2 だけ。下記） | **今の OEP の仕様と firmware にある。そのまま使える** |
+| 1. 標準の fixture | `oep.fixture.i2c-target` / `spi-target` | 決まったアドレスへの ACK（他はアドレス NACK）、`preload_tx` で決まった応答、stretch op（`stretch_us`、各バイトの後に SCL を保つ。**任意の機能で P4 だけが持つ**。伸ばせる上限は describe の `max_stretch_us`。CH32 と RP2 の i2c-target はコアの Wire の slave の上で動き、stretch が無い）。SPI は mode / bit_order / arm（P4 は mode 0〜3。下記） | **今の OEP の仕様と firmware にある。そのまま使える** |
 | 2. 故障の注入 | fixture の任意の機能、または `unit_faulty_model` の再生 | データ NACK、途中で止まる相手、長い stretch での timeout、バスの詰まり | **コア開発では優先度が高い**。P4 のバイトごとの ACK 制御が効く。標準の i2c-target に足すか独自拡張にするかは OEP 側で検討 |
 | 3. 模型の再生 | EmbedBench の模型を P4 の firmware に載せる（独自拡張） | レジスタポインタに応じた応答（`regmap_model`）、時間で変わる状態（`env_sensor_model`）、`temp_model` | 段 1・2 で足りない所に。凍結 IF のまま載る群から |
 
@@ -501,7 +506,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 
 **利用者の判断:**
 
-1. 新しいリポジトリの名前（§5.3）
+1. ~~新しいリポジトリの名前~~ → `EmbedBenchDeviceData` に決定（§5.3）
 2. チップの知識の正本の形（§5.5）。新しいリポジトリの設計と一緒に決める
 
 **作業（担当）:**
@@ -515,7 +520,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 | コア開発の故障の注入（データ NACK、途中で止まる相手、長い stretch、バスの詰まり）を標準の i2c-target の任意の機能にするか、独自拡張にするか | OEP |
 | `trace2tape.py` に case / phase の絞り込み | EmbedBench |
 | `la2trace.py` に GPIO チャネルの列（X65「次」4） | EmbedBench（OEP の線が来たら不要かもしれない） |
-| データのリポジトリの作成と構成（§5.4） | 名前が決まってから |
+| `EmbedBenchDeviceData` の作成と構成（§5.4） | 利用者が作成 |
 
 **要実測（実機が用意できたら）:**
 
@@ -526,4 +531,4 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - （コア開発の段 3）P4 に `regmap_model` を載せ、読出しの stretch（原因 0）の間に応答が間に合うか、受信 FIFO の残りで
   `continued` を正しく判断できるか（ch32rv のコアの試験の最初の相手。§8）
 - （コア開発の段 2・3）P4 の slave のバイトごとの ACK 制御（`slave_byte_ack_*`）で **NACK を選んだときに**効くか（ACK を出す側は既存の i2c-target が使っている）
-- （コア開発）P4 の SPI の slave で、CH32 のコアが使う速さを受けられるか（書くだけの相手の前提）
+- （コア開発）P4 の SPI の slave で、CH32 のコアが使う速さを受けられるか、mode 1 / 3 でも受けられるか（書くだけの相手の前提）
