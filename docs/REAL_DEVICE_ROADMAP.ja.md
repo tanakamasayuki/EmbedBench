@@ -10,7 +10,7 @@
 
 - **L（ライブラリ開発）**: 実デバイスのデータでホストの模型を作り・確かめる
 - **C（コア開発）**: probe を相手に ch32rv 用 Arduino コアの Wire / SPI を実機で試す。**持ち主は OEP 側と ch32rv**
-  （利用者の分担: キャプチャ系は EmbedBench、コア開発は OEP 側。OEP 側の記録は `oep-spec` の `docs/bus-testing.ja.md`）。
+  （利用者の分担: キャプチャ系は EmbedBench、コア開発は OEP 側。OEP 側の記録は `oep-spec` の `docs/peripheral-testing.ja.md`）。
   ここには EmbedBench で行った事前調査だけを残す
 - **D（データ）**: 新しいリポジトリ `EmbedBenchDeviceData`
 
@@ -167,12 +167,13 @@ EmbedBenchDeviceData/
 ### 2.4 その先（OEP 側）
 
 C1（上の「今の fixture でできる」表を ch32rv の instrumented テストにする）は ch32rv と OEP で進める。
-その先は OEP 側の記録 `oep-spec` の `docs/bus-testing.ja.md` を見る:
+その先は OEP 側の記録 `oep-spec` の `docs/peripheral-testing.ja.md` を見る:
 
-- probe は試験が先に決めた応答を前もって置く形だけ。**デバイスの模型の再生（C3 の案）はしない**
-  （ライブラリの試験はホストの EmbedBench の領分）。
-- 故障の注入（C2: I2C の NACK、ストレッチの指定など）は、その文書の §8「標準に無い機能」。
-- 上の表の「OEP 側で形を決める（§2.4）」は、そちらの §8 で扱う。
+- probe は試験が先に決めた応答を前もって置く形。**デバイスの模型の再生（C3 の案）はしない**
+  （ライブラリの試験はホストの EmbedBench の領分）。決めた中身を返す反応する相手（SD、SPI flash など）は
+  OEP 側の機能の候補で、DUT が待つ時間のうちに答えを用意できるかで決まる（その文書の §3.1）。
+- 故障の注入（C2: I2C の NACK、ストレッチの指定など）は、その文書の §3「標準に無い機能」。
+- 上の表の「OEP 側で形を決める（§2.4）」は、そちらの §3 で扱う。
 
 ---
 
@@ -200,7 +201,7 @@ L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模�
 実機が要る:           L4 ←───────────────── D4（最初の run を入れる）
                       L5、L6
 
-コア開発（OEP 側・ch32rv）: C1 → 標準に無い機能（故障の注入。OEP の bus-testing §8）
+コア開発（OEP 側・ch32rv）: C1 → 標準に無い機能（故障の注入。OEP の peripheral-testing §3）
 ```
 
 - L・D（EmbedBench）と C（OEP 側）は独立に進む。共通なのは P4 の probe、wireskein の verify、run.json の形だけ。

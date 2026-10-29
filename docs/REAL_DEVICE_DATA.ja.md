@@ -28,7 +28,7 @@
 | 確かめること | ライブラリの論理。物理層は見ない | コアの Wire / SPI の master の実装を、実バスで |
 | 要るもの | **模型の振る舞いの正確さ** | **バスの条件を制御できること**と、**線を見て判定すること** |
 | 実デバイスのデータ | ここで効く（収集 → 正本 → 雛形 → 照合） | ほとんど要らない。要るのは波形が正しいかの判定 |
-| 持ち主 | **EmbedBench**（キャプチャ系） | **OEP 側**。模型の再生はしない（OEP 側が決めた） |
+| 持ち主 | **EmbedBench**（キャプチャ系） | **OEP 側**。デバイスの模型の再生はしない（OEP 側が決めた） |
 | 節 | §2〜§7 | §8（参照） |
 
 1. **ライブラリ開発: 主役はホスト相手のテストのまま。** EmbedBench の今の形を何も置き換えない。
@@ -40,8 +40,8 @@
 3. **データの正本は EmbedBench の外、バスに依存しない新しいリポジトリに置く**（利用者が決定。
    I2CDeviceDB の履歴は引き継がない）。名前の候補と構成の案は §5。
 4. **コア開発は OEP 側が持つ**（利用者が分担を決めた）。probe を相手にするのはコアの周辺の試験だけで、
-   試験が先に決めた応答を前もって置く形（`oep-spec` の `docs/bus-testing.ja.md`）。
-   **デバイスの模型の再生は OEP 側ではしない**。ライブラリの試験はホスト（EmbedBench）の領分（§8）。
+   試験が先に決めた応答を前もって置く形（`oep-spec` の `docs/peripheral-testing.ja.md`）。**デバイスの模型の再生は OEP 側ではしない**
+   （決めた中身を返す反応する相手は OEP 側の機能の候補）。ライブラリの試験はホスト（EmbedBench）の領分（§8）。
 5. **両方に共通**: 同じ P4、同じ wireskein の verify、同じ run の形（run.json）で回る。
    模型を使うのはライブラリ開発（ホスト）だけ。
 
@@ -54,7 +54,7 @@
 | ホストのテスト | ライブラリ開発（主） | 模型 | ライブラリ・アプリが正しく振る舞うか。決定的で、CI で回る | EmbedBench |
 | 収集 | ライブラリ開発 | 実デバイス | 実物が何を返し、いつ変わるか | OEP（入口）＋ データのリポジトリ（正本） |
 | 照合 | ライブラリ開発 | 模型 vs 実データ | 模型が実物とずれていないか | EmbedBench（試験）＋ データのリポジトリ（材料） |
-| 実機テスト | コア開発 | probe（試験が前もって置いた応答。標準に無い機能は OEP の bus-testing §8） | コアの master が実バスで正しいか | **OEP 側**（＋ wireskein の判定） |
+| 実機テスト | コア開発 | probe（試験が前もって置いた応答。標準に無い機能は OEP の peripheral-testing §3） | コアの master が実バスで正しいか | **OEP 側**（＋ wireskein の判定） |
 
 ライブラリ開発の側の問題: 今の模型は datasheet と推測で書かれている。電源投入値、時間で落ちる status bit、
 計測時間、NACK polling の長さは、実物で確かめていない（[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)
@@ -159,7 +159,7 @@ begin から何回もの測定まで 1 本に入る。流せる速さの上限�
   画面の中身の検査は [reference/tinygfx-emu/](reference/tinygfx-emu/README.ja.md) の絵での検査とつながる。
 - **`spiTransfer(mosi) → miso` の形。** ホストの模型では問題にならない（同じバイトの MOSI を渡してから
   MISO を受け取れる）。実データとの照合では「MISO がそのバイトの MOSI より前の状態で決まっている」
-  ことを確かめる材料になる。効いてくるのは probe の上での再生だけで、それは OEP 側がしないと決めた（§8.1）。
+  ことを確かめる材料になる。効いてくるのは probe の上で模型を再生するときだけで、それは OEP 側がしないと決めた（§8.1）。
 
 ---
 
@@ -350,18 +350,21 @@ wireskein の analyze の JSON（[oep] 調べ）:
 ## 8. コア開発（OEP 側）
 
 **分担（利用者、2026-10-29）: キャプチャ系（データ集め）は EmbedBench、コア開発の実機テストは OEP 側。**
-OEP 側の記録は `oep-spec` の `docs/bus-testing.ja.md`（ガイド。commit 23cf470）。要点:
+OEP 側の記録は `oep-spec` の `docs/peripheral-testing.ja.md`（「周辺の試験と probe の機能」。ガイド。commit 2e668fc）。要点:
 
 - probe を相手にするのは**コアの周辺の試験だけ**。試験が先に決めた応答を probe に前もって置く。
-- **デバイスの模型の再生（メモリや SD のエミュレータ、模型の再生）は OEP 側ではしない。**
-  ライブラリの試験はホスト側（EmbedBench）の領分。
-- 故障の注入（I2C の NACK、ストレッチの指定など。ROADMAP の C2）は、その文書の §8「標準に無い機能」に入っている。
+- **デバイスの模型の再生は OEP 側ではしない。** ライブラリの試験はホスト側（EmbedBench）の領分。
+- ただし、**決めた中身（FAT のイメージ、flash の中身など）を返す反応する相手**（SD、SPI flash など）は、
+  OEP 側の機能の候補。できるかどうかは原理ではなく、DUT が待つ時間のうちに probe が答えを用意できるかで決まる
+  （その文書の §3.1）。振る舞いを決めるのは OEP 側の相手で、EmbedBench の模型ではない。
+  中身のデータとして、EmbedBench の SD カードの模型が持つ FAT12 のプリセット 7 枚を流用する余地はある（要るとき OEP 側から）。
+- 故障の注入（I2C の NACK、ストレッチの指定など。ROADMAP の C2）は、その文書の §3「標準に無い機能」に入っている。
 
 事前調査（コアの Wire / SPI の今、標準の fixture でできる試験）は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2 に残した。
 
 ### 8.1 模型を実バスに載せるとしたら（検討の記録）
 
-OEP 側は模型の再生をしないと決めたので、ここは使われない。方針が変わったときのために、模型のコードを読んで分かった事実だけ残す。
+OEP 側はデバイスの模型の再生をしないと決めたので、ここは使われない（反応する相手は OEP 側が自分で持つ。§8）。方針が変わったときのために、模型のコードを読んで分かった事実だけ残す。
 
 **凍結 IF のまま実バスに載るか。** 凍結 IF は転送をまとめて扱う
 （`i2cRead` は長さと stop が分かっている前提、`i2cWrite` は全部受け取ってから status を返す）。
@@ -416,7 +419,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 
 ### コア開発（OEP 側。参考）
 
-持ち主は OEP 側（§8、`oep-spec` の `docs/bus-testing.ja.md`）。EmbedBench から見た要点だけ:
+持ち主は OEP 側（§8、`oep-spec` の `docs/peripheral-testing.ja.md`）。EmbedBench から見た要点だけ:
 
 - **コアの Wire / SPI の実機テスト**を、P4 の probe を相手に、同じ probe のキャプチャと wireskein の verify で判定して回せる。
   標準の fixture だけで始められる（試験の対応表は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2.3）。
@@ -456,7 +459,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 | wireskein の I2C → 行の変換器、試料の固定 | EmbedBench（`skein2trace.py` で済み。X66） |
 | 変換器の入力を analyze の JSON にするか（wireskein に「指示が役割を決めたら弱い証拠でも出す」口が要る） | 未決。wireskein と相談 |
 | SPI・線の変換 | EmbedBench（実データが来てから） |
-| コア開発の実機テスト、故障の注入 | OEP 側（§8。OEP の bus-testing） |
+| コア開発の実機テスト、故障の注入 | OEP 側（§8。OEP の peripheral-testing） |
 | `trace2tape.py` に case / phase の絞り込み | EmbedBench（済み。X67） |
 | `la2trace.py` に GPIO チャネルの列（X65「次」4） | EmbedBench（OEP の線が来たら不要かもしれない） |
 | `EmbedBenchDeviceData` の作成と構成（§5.4） | 利用者が作成 |
@@ -467,4 +470,4 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - U001-C（SHT30 + QMP6988）をライブラリで 1 ケース: 最初の 1 本。QMP6988（レジスタ型）で表＋フック、
   SHT30（コマンド型、NACK polling、SCL の待ち）で tape の往復
 - 実機の `micros()` / probe の時計の揺れが tape の `delayUs` 照合にどう出るか
-- コア開発の実測（P4 の I2C / SPI の受け手など）は OEP 側の記録（bus-testing）へ移した（§8）
+- コア開発の実測（P4 の I2C / SPI の受け手など）は OEP 側の記録（peripheral-testing）へ移した（§8）
