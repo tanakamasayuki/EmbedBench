@@ -257,13 +257,16 @@ tools/      検証・生成（wireskein の識別の表、EmbedBench の雛形�
 <time_us> i2c.req addr=44 data=2400 stop=1 [rs]
 <time_us> i2c.resp status=0|2|3            (Wire::endTransmission と同じ)
 <time_us> i2c.rd.req addr=44 req=6 stop=1 [rs]
-<time_us> i2c.rd.resp len=6 data=...
+<time_us> i2c.rd.resp len=6 data=... [status=2]   (status=2: アドレスで断られた読出し)
 <time_us> spi.xfer mosi=.. miso=..         (CS の窓 1 つ)
 <time_us> uart.tx <text> / dev.tx <text>
 <time_us> gpio.inject pin=N 0->1           (部品が駆動した線)
 ```
 
 条件: **payload は省略しない**（EmbedBench 内部のトレースは 5 バイトで切れるので tape には使えない。X63）。
+**アドレスで断られた読出しには `status=2` を付ける**（X67）。付けないと、アドレス NACK と「ACK したが 0 バイト」
+（clock stretch の読出しが controller の timeout で切れたものなど）が同じ `len=0` になり、tape の待ちのステップ
+（`--busy`）が誤って畳む。`la2trace.py`・`skein2trace.py` は付ける。ホストの環境の行は付けない（必要が無い）。
 
 ### 6.2 足す行と付記
 
@@ -322,10 +325,13 @@ wireskein の analyze の JSON（[oep] 調べ）:
 
 **手順は X64 のとおり、まず tape、次に表＋フック。**
 
-1. **tape（録画の再生）。** 実データの run を `trace2tape.py` で tape にし、同じライブラリのケースを
+1. **tape（録画の再生）。** 実データの run を `trace2tape.py` で tape にし（目印があれば `--case` / `--phase` で
+   1 ケースずつ。測定待ちの NACK polling があれば `--busy`）、同じライブラリのケースを
    ホストで模型（`tape_model`）相手に回す。外れたら tape が名指しする
    （`tape 2: want write F425, got F426`）。ライブラリの版を上げたときの回帰試験にそのまま使える。
    ただし tape は「同じ道を通るか」しか言えない。
+   `--busy` を付けないと、tape は polling を**回数**で再生し、速く poll するライブラリに実物より早くデータを返す
+   （SHT30 の実データで、実物がまだ測定中の 11.2 ms に診断なしで返した。X67）。
 2. **表＋フック。** `trace2regtable.py` で表と TODO を出し、人がフックを書く。分岐（別の設定、
    別の順序）でも答えられる模型になる。
 3. **照合。** 同じケースを模型相手に回した行と、実データの行を比べる。
@@ -518,7 +524,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 | 変換器の入力を analyze の JSON にするか（wireskein に「指示が役割を決めたら弱い証拠でも出す」口が要る） | 未決。wireskein と相談 |
 | SPI・線の変換 | EmbedBench（実データが来てから） |
 | コア開発の故障の注入（データ NACK、途中で止まる相手、長い stretch、バスの詰まり）を標準の i2c-target の任意の機能にするか、独自拡張にするか | OEP |
-| `trace2tape.py` に case / phase の絞り込み | EmbedBench |
+| `trace2tape.py` に case / phase の絞り込み | EmbedBench（済み。X67） |
 | `la2trace.py` に GPIO チャネルの列（X65「次」4） | EmbedBench（OEP の線が来たら不要かもしれない） |
 | `EmbedBenchDeviceData` の作成と構成（§5.4） | 利用者が作成 |
 
