@@ -153,8 +153,8 @@ EmbedBenchDeviceData/
 
 | 試験 | 足りない物 | 案 |
 | --- | --- | --- |
-| データ NACK（戻り値 3） | i2c-target に NACK の op が無い | 未決（C1 の後で決める）。案は i2c-target の任意の機能（P4 はバイトごとの ACK 制御をハードウェアが持つ） |
-| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | 未決（C1 の後で決める）。案は i2c-target の任意の機能。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
+| データ NACK（戻り値 3） | i2c-target に NACK の op が無い | 未決（§2.5 の案 A / B / C を実験で比べてから）。P4 はバイトごとの ACK 制御をハードウェアが持つ |
+| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | 未決（§2.5）。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
 | レジスタポインタに応じた応答 | `preload_tx` は固定の列 | 期待する読出しごとに host が slot を積む（短い試験なら足りる）。足りなければ EmbedBench の `regmap_model` を P4 で再生（段 3） |
 | 調停負け・バス異常（戻り値 5、timeout 以外） | 起こす手段 | 未検討 |
 | `requestFrom(..., false)` | 相手は足りている | **コアが常に STOP を出す**（上）。キャプチャで確かめれば、それがそのまま試験になる |
@@ -167,10 +167,31 @@ EmbedBenchDeviceData/
 | # | 内容 | 実機 | 担当 | 完了条件 |
 | --- | --- | --- | --- | --- |
 | C1 | 上の「今の fixture でできる」表を、コアの instrumented テスト（pytest ＋ oep-client ＋ キャプチャ ＋ wireskein の verify）にする | 要 | ch32rv | I2C・SPI の基本が CI に近い形で回る |
-| C2 | 故障の注入: データ NACK、バスの詰まり（形は C1 の後で決める） | 要 | OEP（fixture）＋ ch32rv（試験） | 戻り値 3 と回復の試験が回る |
-| C3 | EmbedBench の模型を P4 で再生（`regmap_model` から） | 要 | OEP（拡張）＋ EmbedBench（adapter の契約） | ポインタに応じた応答で、ライブラリと同じ使い方がコアを通る |
+| C2 | 故障の注入: データ NACK、バスの詰まり。**形は §2.5 の案 A / B / C を実験で比べてから決める** | 要 | OEP（fixture）＋ ch32rv（試験） | 戻り値 3 と回復の試験が回る |
+| C3 | 振る舞いのある相手（ポインタに応じた応答など）。**形は §2.5 で決める**。案 C（EmbedBench の模型の再生）なら `regmap_model` から | 要 | OEP（拡張）＋ EmbedBench（案 C のとき、adapter の契約） | ポインタに応じた応答で、ライブラリと同じ使い方がコアを通る |
 
-C1 は EmbedBench の作業を必要としない。EmbedBench が関わるのは C3（と、C2 を模型で行う場合）だけ。
+C1 は EmbedBench の作業を必要としない。EmbedBench が関わるのは、§2.5 で案 C が選ばれた部分だけ。
+
+### 2.5 C2・C3 の拡張の形（利用者の方針: 実験してから決める）
+
+**今は決めない。** 次の順で進める。
+
+1. **拡張の形の案を検討する。**
+
+   | 案 | 内容 | EmbedBench との関係 |
+   | --- | --- | --- |
+   | A | 標準の fixture に任意の op を足す（データ NACK、バスを止める など） | 無し |
+   | B | **デバイスの種類ごとのエミュレータ**を足す。チップ固有ではない汎用品: I2C のレジスタファイルと EEPROM、SPI の NOR flash、SD カードなど | 無し（ただし EmbedBench の `regmap_model`・`unit_flash_model`・`unit_sdcard_model` と役割が重なる） |
+   | C | EmbedBench の模型を P4 で再生する（REAL_DEVICE_DATA §8.3） | 模型の adapter の契約、凍結 IF の分類 |
+
+2. **P4 で実験してデータを取る**（OEP 側）: I2C の受け手の応答の遅れ、ACK の制御、バスを止められるか、SPI の受け手が
+   CS の間に FIFO を詰め足せるか、PSRAM の遅れ、キャプチャとの同時動作。
+3. **そのうえで決める。**
+
+- **機能の有無は op 単位で見分ける方向**（パラメータではなく、describe の `ops` で宣言する任意の op の有無）。これも実験してから決める。
+- **B が入ると、C（模型の再生）が受け持つ範囲は「B で足りない所」に狭まる可能性がある。** 汎用のレジスタファイルや
+  NOR flash は B で足り、C が要るのはチップ固有の振る舞い（時間で変わる状態、CRC 付きのコマンドなど）や、
+  ホストのテストと同じ模型で実バスを試したい場合に限られうる。
 
 ---
 
@@ -212,6 +233,6 @@ L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模�
 | 項目 | 誰が | 選択肢 |
 | --- | --- | --- |
 | `requestFrom(..., false)` の STOP をコアの不具合として扱うか | 利用者（ch32rv の持ち主） | 直す / 仕様として文書化する |
-| C2 の故障の注入を標準の i2c-target に足すか、独自拡張にするか | 利用者 | **未決（C1 の後で決める）。** 案は i2c-target の任意の機能: どちらも `oep.fixture.i2c-target` の任意の機能にする（データ NACK は P4 のバイトごとの ACK 制御、バスの詰まりは同じ fn が SDA / SCL を low に保つ。GPIO の fixture を同じピンに当てるのは、plan でピンの持ち主が 1 つなので試験の途中で使いにくい） |
+| C2・C3 の拡張の形 | 利用者 | **未決。案 A / B / C（§2.5）を P4 の実験で比べてから決める。機能の有無は op 単位の方向。** B が入ると C の範囲は「B で足りない所」に狭まる可能性がある。故障の注入について OEP の当初の案は A（データ NACK は P4 のバイトごとの ACK 制御、バスの詰まりは同じ fn が SDA / SCL を low に保つ） |
 | L1・L2 の模型を pilot のデータで先に作るか、L4 を待つか | 利用者 | **先に作るのを推す**（形と照合の道具が先に固まり、L4 は確かめ直すだけになる） |
 | EmbedBenchDeviceData の `chips/` で I2CDeviceDB の key（部品番号の slug）をそのまま使うか | 利用者 | そのまま使うのを推す（guides の参照が保てる） |

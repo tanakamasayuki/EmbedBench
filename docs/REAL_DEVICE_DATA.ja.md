@@ -377,6 +377,10 @@ MOSI を見るだけなら受け手は要らない。
 | 2. 故障の注入 | fixture の任意の機能、または `unit_faulty_model` の再生 | データ NACK、途中で止まる相手、長い stretch での timeout、バスの詰まり | **コア開発では優先度が高い**。P4 のバイトごとの ACK 制御が効く。標準の i2c-target に足すか独自拡張にするかは OEP 側で検討 |
 | 3. 模型の再生 | EmbedBench の模型を P4 の firmware に載せる（独自拡張） | レジスタポインタに応じた応答（`regmap_model`）、時間で変わる状態（`env_sensor_model`）、`temp_model` | 段 1・2 で足りない所に。凍結 IF のまま載る群から |
 
+**段 2・3 の形は未決**（利用者の方針、2026-10-29）。標準の fixture に任意の op を足す（A）、種類ごとの汎用エミュレータ
+（レジスタファイル・EEPROM・NOR flash・SD カード）を足す（B）、EmbedBench の模型を再生する（C）を P4 の実験で比べてから決める。
+B が入ると、C の範囲は「B で足りない所」に狭まる可能性がある。計画は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2.5。
+
 **コア開発で `unit_faulty_model` は前に出る。** ライブラリ開発（ホスト）ではすでに使えるが、実バスでは
 バイトごとの NACK が要る（下の分類で「後で（拡張が要る）」）。P4 のハードウェアはバイトごとの ACK を選べるので、
 コア開発の側では早めに検討する候補である。ただし標準の i2c-target の任意の機能として足すほうが筋かもしれない
