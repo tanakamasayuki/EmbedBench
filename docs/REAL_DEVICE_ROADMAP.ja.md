@@ -123,6 +123,8 @@ EmbedBenchDeviceData/
 
 ### 2.2 OEP の標準の相手でできること（P4）
 
+数値は 2026-10-29 の `oep-probe-arduino` の値。正は probe の describe（firmware が変われば変わる）。
+
 | fixture | 実装されている機能（P4） | describe |
 | --- | --- | --- |
 | `i2c-target` | configure（7 ビットアドレス）、`read_rx`、`preload_tx`（順に使う。空・使い切りは 0xFF）、`status`、**`stretch`**（受けた各データバイトの ACK の前と、読出しのアドレスの後に SCL を保つ。書込みのアドレスの後は対象外） | max_length 128、max_clock_hz 1 MHz、内蔵プルアップ（約 45 kΩ、弱い）、queue_depth 4、max_stretch_us |
@@ -152,11 +154,12 @@ EmbedBenchDeviceData/
 | 試験 | 足りない物 | 案 |
 | --- | --- | --- |
 | データ NACK（戻り値 3） | i2c-target に NACK の op が無い | OEP 側: i2c-target の任意の機能として足す（P4 はバイトごとの ACK 制御をハードウェアが持つ） |
-| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | GPIO fixture の open-drain low を同じピンに当てる（plan の切り替えが要る）か、i2c-target に足す |
+| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | i2c-target の任意の機能として足す（OEP の案）。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
 | レジスタポインタに応じた応答 | `preload_tx` は固定の列 | 期待する読出しごとに host が slot を積む（短い試験なら足りる）。足りなければ EmbedBench の `regmap_model` を P4 で再生（段 3） |
 | 調停負け・バス異常（戻り値 5、timeout 以外） | 起こす手段 | 未検討 |
 | `requestFrom(..., false)` | 相手は足りている | **コアが常に STOP を出す**（上）。キャプチャで確かめれば、それがそのまま試験になる |
-| 1 MHz を超える I2C、64 バイトを超える SPI | P4 の上限 | 対象外 |
+| 1 MHz を超える I2C | P4 の上限 | 対象外 |
+| 64 バイトを超える SPI の転送 | spi-target の `read_rx` と `arm` の上限が 64 バイト | MOSI と SCK はキャプチャ ＋ verify で判定できる。MISO の内容と `read_rx` は 64 バイトまで |
 | SPI の DMA | コアに無い | 対象外 |
 
 ### 2.4 C のマイルストーン
@@ -209,6 +212,6 @@ L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模�
 | 項目 | 誰が | 選択肢 |
 | --- | --- | --- |
 | `requestFrom(..., false)` の STOP をコアの不具合として扱うか | 利用者（ch32rv の持ち主） | 直す / 仕様として文書化する |
-| C2 の故障の注入を標準の i2c-target に足すか、独自拡張にするか | OEP | REAL_DEVICE_DATA §8.2 |
+| C2 の故障の注入を標準の i2c-target に足すか、独自拡張にするか | OEP（利用者に確認中） | OEP の案: どちらも `oep.fixture.i2c-target` の任意の機能にする（データ NACK は P4 のバイトごとの ACK 制御、バスの詰まりは同じ fn が SDA / SCL を low に保つ。GPIO の fixture を同じピンに当てるのは、plan でピンの持ち主が 1 つなので試験の途中で使いにくい） |
 | L1・L2 の模型を pilot のデータで先に作るか、L4 を待つか | 利用者 | **先に作るのを推す**（形と照合の道具が先に固まり、L4 は確かめ直すだけになる） |
 | EmbedBenchDeviceData の `chips/` で I2CDeviceDB の key（部品番号の slug）をそのまま使うか | 利用者 | そのまま使うのを推す（guides の参照が保てる） |
