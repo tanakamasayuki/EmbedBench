@@ -28,7 +28,8 @@
 | 確かめること | ライブラリの論理。物理層は見ない | コアの Wire / SPI の master の実装を、実バスで |
 | 要るもの | **模型の振る舞いの正確さ** | **バスの条件を制御できること**と、**線を見て判定すること** |
 | 実デバイスのデータ | ここで効く（収集 → 正本 → 雛形 → 照合） | ほとんど要らない。要るのは波形が正しいかの判定 |
-| 節 | §2〜§7 | §8 |
+| 持ち主 | **EmbedBench**（キャプチャ系） | **OEP 側**（再生系）。EmbedBench は模型の流用だけ |
+| 節 | §2〜§7 | §8（参照） |
 
 1. **ライブラリ開発: 主役はホスト相手のテストのまま。** EmbedBench の今の形を何も置き換えない。
    ただしホスト相手では模型の材料が取れない（相手が模型だから）。材料は実デバイスから取る:
@@ -38,10 +39,9 @@
    読む行に落とせば雛形になる。変換器 `skein2trace.py`（wireskein の復号 → 行）は作った（X66）。
 3. **データの正本は EmbedBench の外、バスに依存しない新しいリポジトリに置く**（利用者が決定。
    I2CDeviceDB の履歴は引き継がない）。名前の候補と構成の案は §5。
-4. **コア開発: まず標準の OEP の fixture で足りる範囲が広い。** `oep.fixture.i2c-target`（決まったアドレスへの ACK、
-   決まった応答、stretch）と `spi-target`（mode・bit order）は今の仕様と firmware にあり、ch32rv の実機テストでも
-   そのまま使える。**EmbedBench の模型を P4 で再生する（独自拡張）のはその先**で、レジスタポインタに応じた応答・
-   時間で変わる状態・**故障の注入**が要るとき。故障の注入はコア開発では優先度が高い（§8）。
+4. **コア開発と再生は OEP 側が持つ**（利用者が分担を決めた）。まず標準の OEP の fixture で足りる範囲が広く、
+   故障の注入や振る舞いのある相手の形は OEP 側が P4 の実験で比べてから決める。EmbedBench が関わるのは、
+   そこで EmbedBench の模型を流用するときだけ（§8）。
 5. **両方に共通**: 同じ P4、同じ wireskein の verify、同じ run の形（run.json）で回る。模型も同じもの（凍結 IF）を
    使えるが、正確さを求めるのはライブラリ開発、バスの制御を求めるのはコア開発。
 
@@ -54,7 +54,7 @@
 | ホストのテスト | ライブラリ開発（主） | 模型 | ライブラリ・アプリが正しく振る舞うか。決定的で、CI で回る | EmbedBench |
 | 収集 | ライブラリ開発 | 実デバイス | 実物が何を返し、いつ変わるか | OEP（入口）＋ データのリポジトリ（正本） |
 | 照合 | ライブラリ開発 | 模型 vs 実データ | 模型が実物とずれていないか | EmbedBench（試験）＋ データのリポジトリ（材料） |
-| 実機テスト | コア開発 | probe（標準の fixture、のちに模型の再生） | コアの master が実バスで正しいか | OEP ＋ wireskein（判定）＋ EmbedBench の模型（再生） |
+| 実機テスト | コア開発 | probe（標準の fixture、のちに故障の注入や再生） | コアの master が実バスで正しいか | **OEP 側**（＋ wireskein の判定。模型を流用するなら EmbedBench の模型） |
 
 ライブラリ開発の側の問題: 今の模型は datasheet と推測で書かれている。電源投入値、時間で落ちる status bit、
 計測時間、NACK polling の長さは、実物で確かめていない（[EXPERIMENTS.ja.md](EXPERIMENTS.ja.md)
@@ -159,7 +159,7 @@ begin から何回もの測定まで 1 本に入る。流せる速さの上限�
   画面の中身の検査は [reference/tinygfx-emu/](reference/tinygfx-emu/README.ja.md) の絵での検査とつながる。
 - **`spiTransfer(mosi) → miso` の形。** ホストの模型では問題にならない（同じバイトの MOSI を渡してから
   MISO を受け取れる）。実データとの照合では「MISO がそのバイトの MOSI より前の状態で決まっている」
-  ことを確かめる材料になる。効いてくるのは §8 の再生だけ。
+  ことを確かめる材料になる。効いてくるのは probe の上での再生（OEP 側。§8.1）だけ。
 
 ---
 
@@ -200,7 +200,7 @@ I2CDeviceDB は暫定のもので、今の形（I2C の chip profile、jsonl の
 **基準（利用者）:** 汎用のデータとして他にも使うなら関連の無い名前でよい。EmbedBench に特化するなら関連が分かる名前にする。
 
 **判断: EmbedBench に特化している。** 使う側は EmbedBench の模型（ホストのテスト、照合）と、
-probe の上での再生（これも EmbedBench の模型。§8）で、何を集めるか・どのケースを書くかも模型の必要で決まる。
+probe の上での再生に模型を流用する場合（OEP 側。§8）で、何を集めるか・どのケースを書くかも模型の必要で決まる。
 wireskein の識別の表を作る用途はあるが従である。形式はバスに依存しない一般的なものにしておき
 （wireskein の分析済み ＋ run.json）、将来ほかに使うことは妨げない。
 
@@ -347,93 +347,27 @@ wireskein の analyze の JSON（[oep] 調べ）:
 
 ---
 
-## 8. コア開発: probe を相手にする
+## 8. コア開発と再生（OEP 側）
 
-**当座の対象（利用者）: ch32rv 用 Arduino コア。** DUT は開発中のコアを載せた CH32 のボード、相手は P4 の probe
-（ch32rv の実機テストは P4 がメイン）。試すのは**コアの側**で、相手のデバイスの振る舞いは簡単でよい。
-模型の正確さはあまり要らず、実デバイスのデータもほとんど要らない。要るのは**バスの条件を制御できること**と、
-**同じ probe のキャプチャ ＋ wireskein の verify で線を見て判定すること**。
+**分担（利用者、2026-10-29）: キャプチャ系（データ集め）は EmbedBench、再生系は EmbedBench から切り離して OEP 側。**
+コア開発の実機テスト（当座は ch32rv 用 Arduino コアを P4 の probe 相手に）、故障の注入、probe の上での再生、
+その拡張の形の比較と P4 での実験は、OEP 側で検討し記録する（場所は OEP 側が決める）。
+**EmbedBench が関わるのは、再生に EmbedBench の模型を流用するときだけ**（凍結 IF の模型。候補は `regmap_model`・
+`unit_flash_model`・`unit_sdcard_model`。どれも純粋 C++11 で、SD カードの模型は本物の FAT12 のプリセット 7 枚を持つ）。
+事前調査（コアの Wire / SPI の今、標準の fixture でできる試験）は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2 に残した。
 
-### 8.1 確かめること
+### 8.1 模型を流用するときの注意（EmbedBench 側の事実）
 
-- **I2C:** START / Sr / STOP の出し方、アドレスとデータの NACK の扱いと `endTransmission` / `requestFrom` の戻り値、
-  clock stretch を待つか、timeout、SCL の周波数、バスが詰まったときの回復
-- **SPI:** mode（CPOL / CPHA）、ビットの順、CS のタイミング、長い転送や DMA
-
-**SPI の mode は P4 では制約にならない。** `oep-probe-arduino` の `OepP4SpiTarget` が mode 1 / 3 を断るのは
-**初代 ESP32 だけ**（`CONFIG_IDF_TARGET_ESP32` のときの MISO の gate の分岐。初代の slave は CPHA 1 で最初の SCK の辺まで
-MISO に 0 を出し、fixture §4 の MISO の約束を守れないため）。P4 ではこの分岐が無く、configure は mode 0〜3 を受け付ける
-（2026-10-29 にソースで確認。[oep] の初めの説明は初代 ESP32 の制約を P4 に当てはめていた）。
-しかもこの制約は MISO の約束の話で、ハードウェアの SPI slave が MOSI を受けることとは関係が無い。
-**書くだけの相手（表示器の形）なら、どの mode でも受け手として成り立つ。** P4 の mode 1 / 3 での MISO の出方は未測定。
-いずれにしても、mode・ビットの順・SCK の周波数の判定はキャプチャ ＋ wireskein の verify でできるので、
-MOSI を見るだけなら受け手は要らない。
-
-### 8.2 段階
-
-| 段 | 相手 | できること | 状態 |
-| --- | --- | --- | --- |
-| 1. 標準の fixture | `oep.fixture.i2c-target` / `spi-target` | 決まったアドレスへの ACK（他はアドレス NACK）、`preload_tx` で決まった応答、stretch op（`stretch_us`、各バイトの後に SCL を保つ。**任意の機能で P4 だけが持つ**。伸ばせる上限は describe の `max_stretch_us`。CH32 と RP2 の i2c-target はコアの Wire の slave の上で動き、stretch が無い）。SPI は mode / bit_order / arm（P4 は mode 0〜3。下記） | **今の OEP の仕様と firmware にある。そのまま使える** |
-| 2. 故障の注入 | fixture の任意の機能、または `unit_faulty_model` の再生 | データ NACK、途中で止まる相手、長い stretch での timeout、バスの詰まり | **コア開発では優先度が高い**。P4 のバイトごとの ACK 制御が効く。標準の i2c-target に足すか独自拡張にするかは OEP 側で検討 |
-| 3. 模型の再生 | EmbedBench の模型を P4 の firmware に載せる（独自拡張） | レジスタポインタに応じた応答（`regmap_model`）、時間で変わる状態（`env_sensor_model`）、`temp_model` | 段 1・2 で足りない所に。凍結 IF のまま載る群から |
-
-**段 2・3 の形は未決**（利用者の方針、2026-10-29）。標準の fixture に任意の op を足す（A）、種類ごとの汎用エミュレータ
-（レジスタファイル・EEPROM・NOR flash・SD カード）を足す（B）、EmbedBench の模型を再生する（C）を P4 の実験で比べてから決める。
-B が入ると、C の範囲は「B で足りない所」に狭まる可能性がある。計画は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2.5。
-
-**コア開発で `unit_faulty_model` は前に出る。** ライブラリ開発（ホスト）ではすでに使えるが、実バスでは
-バイトごとの NACK が要る（下の分類で「後で（拡張が要る）」）。P4 のハードウェアはバイトごとの ACK を選べるので、
-コア開発の側では早めに検討する候補である。ただし標準の i2c-target の任意の機能として足すほうが筋かもしれない
-（決めるのは OEP 側）。
-
-HARNESS_REQUESTS の B-001〜B-003（時間定数、requestWake、再入禁止）は段 3 で再び効く（§10）。
-
-### 8.3 模型の再生の作り（段 3）
-
-**OEP 側（[oep] による）。** 標準の `oep.fixture.i2c-target` / `spi-target` は先に置いたバイトを順に返すだけで、
-レジスタポインタに応じた応答は返せない。host から応答を作るのは往復が間に合わない。
-OEP の独自拡張（core §12 の逆 DNS の名前のインターフェース）として firmware に模型を載せる。
-仕様の変更は不要。nowMicros は probe の時計、requestWake は probe のタイマー、
-模型は 1 本の実行文脈だけから呼ぶ（割り込みはそのタスクを起こすだけ）。
-
-**どの probe に載せるか: P4**（利用者: ch32rv の実機テストは P4 の probe がメイン。
-ハードウェアの見立ては [oep] が ESP-IDF の `i2c_struct.h` / `i2c_ll.h` を読んだ机上のもの。要実測）。
-
-**土台は既にある。** P4 の標準の i2c-target（`oep-probe-arduino` の `src/OepP4I2cTarget`）は、ESP-IDF の slave driver を
-周辺の設定にだけ使い、FIFO は自前の割り込みで扱っている。stretch は下の `slave_scl_stretch_en` と
-`slave_byte_ack_ctl_en` / `slave_byte_ack_lvl` で SCL を保ち、決めた時間の後に解く作り。下の「待たせる」「バイトごとの
-ACK 制御」は机上の読みだけでなく、同じレジスタを既存の firmware が使っている。段 2（故障の注入）と段 3（再生）は
-この実装を土台に足せる。ただし ACK の制御は今は ACK を出すことにだけ使っていて、NACK を選ぶ経路は未実装。
-
-- **待たせられる。** `scl_stretch_conf.slave_scl_stretch_en` で SCL を low に保てて、原因が読める
-  （`sr.stretch_cause`: 0 = master が読出しを始めた、1 = 送信 FIFO が空、2 = 受信 FIFO が満杯）。
-  読出しの要求で待たせ、その間に模型を呼んで送信 FIFO に入れ、stretch を解く。
-- **ACK / NACK をバイトごとに選べる**（`slave_byte_ack_ctl_en` / `slave_byte_ack_lvl`）。RP2 には無い。
-  ハードウェアとしてはデータ NACK も返せる。ただし凍結 IF は「全部受け取ってから status を返す」形なので、
-  バイトごとに使うには下のバイト単位の拡張が要る。
-- **repeated start は推定する。** 専用の割り込みは見当たらない。読出しの stretch（原因 0）の時点で、STOP 無しに
-  受けた書込みが受信 FIFO に残っていれば、Sr で続いた（`continued`）と判断する
-  （Arduino の slave のコメントにも「C3 では repeated start で RX のデータが消えるので、ここで取る」とある）。要実測。
-- **作り:** Arduino の Wire の slave は使わず（Arduino 3.3 は P4 で stretch の原因を読まない。S2 / S3 / C3 だけ）、
-  P4 の標準の i2c-target と同じく ESP-IDF の hal で自前の割り込み処理を持つ（既にある実装を土台にする）。割り込みは模型のタスクを起こすだけにし、
-  タスクが FIFO を埋めて stretch を解く（B-003 の「1 本の実行文脈」）。
-- **同じピンのキャプチャ**は P4X で確認済み（LibraryTest）。再生と検証を 1 台でできる。
-- **SPI の書くだけの相手**は、P4 の SPI の slave で受けるだけなので成り立つ。
-- **副の選択肢: RP2**（あれば）。読出し要求（RD_REQ）でハードウェアが待たせるが、ACK は選べず、
-  arduino-pico の Wire の slave は「ポインタを書く → Sr → 読む」で読出しが書込みより先に呼ばれる順の問題がある。
-- **CH32 のコアの試験として:** probe が stretch で待たせるので、CH32 の Wire が stretch を正しく待つかも試験の対象になる。
-  **stretch の長さを probe の設定で変えられるようにしておくと、CH32 側の timeout の試験にも使える。**
-
-**EmbedBench 側: 凍結 IF のまま載るか。** 凍結 IF は転送をまとめて扱う
+**凍結 IF のまま実バスに載るか。** 凍結 IF は転送をまとめて扱う
 （`i2cRead` は長さと stop が分かっている前提、`i2cWrite` は全部受け取ってから status を返す）。
-adapter が「書込みは終わってからまとめて渡す（各バイトは ACK）。読出しは stretch の間に最大長を頼み、
-足りない分は 0xFF」とすると:
+受け手の adapter が「書込みは終わってからまとめて渡す（各バイトは ACK）。読出しは SCL を待たせる間に最大長を頼み、
+足りない分は 0xFF」とすると（模型のコードを読んで分類した。2026-10-29）:
 
 | 区分 | 模型 | ずれる所 |
 | --- | --- | --- |
 | そのまま載る | temp / regmap / env_sensor / unit_encoder / unit_codec / unit_rtc / regtable（長さに依らないフック） | 異常の経路だけ: 書込みのデータ NACK が ACK に見える。regmap・env の「repeated start の無い読出しには答えない」が、失敗ではなく 0xFF の列に見える |
 | 条件付き | tape（長さの照合を外せば） | 録画にある NACK は、バイト単位の拡張までは再現できない |
-| 後で（拡張が要る） | unit_faulty | 故障（不在・拒否・途中で切れる読出し）はバイトごとの NACK か長さに依る。P4 のハードウェアはバイトごとの NACK を選べるので、バイト単位の拡張を足せば書込みの拒否は再生できる見込み |
+| 後で（拡張が要る） | unit_faulty | 故障（不在・拒否・途中で切れる読出し）はバイトごとの NACK か長さに依る。受け手のハードウェアがバイトごとの NACK を選べるなら、バイト単位の拡張を足せば書込みの拒否は再生できる見込み |
 | 載らない | unit_imu | FIFO の取り出しが読む長さで決まる |
 
 SPI: flash・sdcard・tape の `spiTransfer` は、**MISO を今のバイトの MOSI に依らず、前の状態だけで決めている**
@@ -443,7 +377,7 @@ SPI: flash・sdcard・tape の `spiTransfer` は、**MISO を今のバイトの 
 **要るときの拡張。** 凍結 IF の変更規則が認めるのは「既定の実装付きの仮想メソッドの追加」で
 （[DEVICE_IF_FROZEN.ja.md](DEVICE_IF_FROZEN.ja.md) §3）、バイト単位の受け手（I2C）と「次の MISO」（SPI）は
 revision 005 として足せる。既定の実装は今の転送単位のメソッドへ橋渡しし、既存の模型は無改造。
-**足すかどうかは、実際に載せて困ってから決める。**
+**足すかどうかは、OEP 側で実際に載せて困ってから決める**（凍結 IF の rev は EmbedBench が出す）。
 
 ---
 
@@ -475,23 +409,14 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - **収集の手間**。UART マーカーと外部ロジアナの同期、送信待ちの決まり、窓の長さの制約が、
   ProbeLog と ストリーミングで無くなる。
 
-### コア開発
+### コア開発（OEP 側。参考）
 
-**作れるもの:**
+持ち主は OEP 側（§8）。EmbedBench から見た要点だけ:
 
-- **コアの Wire / SPI の実機テスト。** P4 の probe を相手に、ch32rv のコアの master を実バスで回し、
-  同じ probe のキャプチャを wireskein の verify で判定する。標準の fixture だけで始められる。
-- **故障の試験。** データ NACK・途中で止まる相手・長い stretch・バスの詰まりを probe 側で起こし、
-  コアの戻り値・timeout・回復を確かめる。
-- **（段 3）振る舞いのある相手。** レジスタ表型の I2C（`regmap_model`）、時間で変わる状態（`env_sensor_model`）。
-  ライブラリと同じ使い方でコアを通せる。
-
-**解決する問題:**
-
-- **コアのバスの実装を、実物の部品の都合抜きで確かめにくい。** 実物の部品は狙った NACK や stretch を返さない。
-  probe なら条件を設定で決められる。
-- **判定が目視になりがち。** 波形の正しさを wireskein の verify で機械的に判定し、CI に近い形で回せる。
-- **stretch の長さを変えた timeout の試験**。probe の設定で stretch を変えれば、コア側の timeout の扱いを試せる。
+- **コアの Wire / SPI の実機テスト**を、P4 の probe を相手に、同じ probe のキャプチャと wireskein の verify で判定して回せる。
+  標準の fixture だけで始められる（試験の対応表は [REAL_DEVICE_ROADMAP.ja.md](REAL_DEVICE_ROADMAP.ja.md) §2.3）。
+- 実物の部品では狙って起こせない NACK・stretch・timeout を、probe の設定で起こせる。
+- 振る舞いのある相手が要るときに、EmbedBench の模型を流用できる（§8.1）。
 
 ---
 
@@ -504,11 +429,11 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 
 | 当時の要望 | この文書での扱い |
 | --- | --- |
-| B-001 圧縮した時間定数 | 収集とホストのテストには影響しない。実データで物理値との差を確かめる（§9）。コア開発の段 3（模型の再生）で再び効く |
-| B-002 requestWake の宣言 | コア開発の段 3 で probe のタイマーとして実装する（§8.3） |
-| B-003 再入禁止 | コア開発の段 3 で「1 本の実行文脈」として実装する（§8.3） |
+| B-001 圧縮した時間定数 | 収集とホストのテストには影響しない。実データで物理値との差を確かめる（§9）。模型を probe で再生するとき（OEP 側）に再び効く |
+| B-002 requestWake の宣言 | 模型を probe で再生するとき（OEP 側）、probe のタイマーとして実装する |
+| B-003 再入禁止 | 模型を probe で再生するとき（OEP 側）、「1 本の実行文脈」として実装する |
 | B-004 ログ形式と 2 層の diff | §6・§7 の行形式と照合の判定に置き換わる |
-| B-005〜B-007、§4、§8 | コア開発の段 3 まで保留 |
+| B-005〜B-007、§4、§8 | 模型を probe で再生するとき（OEP 側）まで保留 |
 
 ---
 
@@ -527,7 +452,7 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 | wireskein の I2C → 行の変換器、試料の固定 | EmbedBench（`skein2trace.py` で済み。X66） |
 | 変換器の入力を analyze の JSON にするか（wireskein に「指示が役割を決めたら弱い証拠でも出す」口が要る） | 未決。wireskein と相談 |
 | SPI・線の変換 | EmbedBench（実データが来てから） |
-| コア開発の故障の注入（データ NACK、途中で止まる相手、長い stretch、バスの詰まり）を標準の i2c-target の任意の機能にするか、独自拡張にするか | OEP |
+| コア開発の実機テスト、故障の注入、probe の上での再生とその形の比較 | OEP 側（§8） |
 | `trace2tape.py` に case / phase の絞り込み | EmbedBench（済み。X67） |
 | `la2trace.py` に GPIO チャネルの列（X65「次」4） | EmbedBench（OEP の線が来たら不要かもしれない） |
 | `EmbedBenchDeviceData` の作成と構成（§5.4） | 利用者が作成 |
@@ -538,7 +463,4 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - U001-C（SHT30 + QMP6988）をライブラリで 1 ケース: 最初の 1 本。QMP6988（レジスタ型）で表＋フック、
   SHT30（コマンド型、NACK polling、SCL の待ち）で tape の往復
 - 実機の `micros()` / probe の時計の揺れが tape の `delayUs` 照合にどう出るか
-- （コア開発の段 3）P4 に `regmap_model` を載せ、読出しの stretch（原因 0）の間に応答が間に合うか、受信 FIFO の残りで
-  `continued` を正しく判断できるか（ch32rv のコアの試験の最初の相手。§8）
-- （コア開発の段 2・3）P4 の slave のバイトごとの ACK 制御（`slave_byte_ack_*`）で **NACK を選んだときに**効くか（ACK を出す側は既存の i2c-target が使っている）
-- （コア開発）P4 の SPI の slave で、CH32 のコアが使う速さを受けられるか、mode 1 / 3 でも受けられるか（書くだけの相手の前提）
+- コア開発と再生の実測（P4 の I2C / SPI の受け手など）は OEP 側の記録へ移した（§8）
