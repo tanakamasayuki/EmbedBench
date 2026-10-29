@@ -1,0 +1,74 @@
+{
+ "format": "wireskein-run/3",
+ "meta": {
+  "probe": "usb:e8f60ae84e28"
+ },
+ "log": [
+  {
+   "t": 0.011321855010464787,
+   "src": "marker",
+   "text": "# test_wire"
+  },
+  {
+   "t": 0.01902855304069817,
+   "src": "marker",
+   "text": "## write 2 bytes to 0x50",
+   "probe_ns": 6061895000,
+   "boot_id": 2010918671,
+   "probe": "usb:e8f60ae84e28"
+  },
+  {
+   "t": 0.019424904137849808,
+   "src": "dut",
+   "text": "endTransmission=4",
+   "probe_ns": 6062291000,
+   "boot_id": 2010918671,
+   "probe": "usb:e8f60ae84e28"
+  },
+  {
+   "t": 0.01942790695466101,
+   "src": "marker",
+   "text": "##",
+   "probe_ns": 6062294000,
+   "boot_id": 2010918671,
+   "probe": "usb:e8f60ae84e28"
+  },
+  {
+   "t": 0.08745495416224003,
+   "src": "marker",
+   "text": "#"
+  }
+ ],
+ "captures": [
+  {
+   "file": "c0001.wireskein",
+   "t0": 0.017283132998272777,
+   "channels": [
+    "SDA",
+    "SCL"
+   ],
+   "path": "test_wire"
+  }
+ ],
+ "expect": {
+  "test_wire/write 2 bytes to 0x50": {
+   "checks": [
+    {
+     "kind": "i2c",
+     "scl": "SCL",
+     "sda": "SDA",
+     "transactions": [
+      {
+       "addr": 80,
+       "rw": "write",
+       "ack": false
+      }
+     ],
+     "hz": null,
+     "tol_hz": 0.1,
+     "released": true
+    }
+   ]
+  }
+ }
+}

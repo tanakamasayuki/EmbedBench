@@ -2528,6 +2528,58 @@ sigrok非対応で、Logic 2 からのエクスポートになる（所有者の
 検証済み（sigrok）。シムの限界は型で決まる: 仮想入口のある `TwoWire`（ESP32）と
 `Stream` はライブラリ越しに捕まえられ、`SPIClass` はアプリ直呼びに限る。
 
+## X66. OEP の probe が取った実バスを行へ — wireskein の復号と目印を1本の時計に
+
+対象: `devices/tools/skein2trace.py`、`devices/tools/trace2regtable.py`（イベント名の照合）、
+`tests/skein2trace/`、`tests/capture_scaffold/`。流れ全体は [REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md)
+
+実デバイスのデータを集める入口に、OEP の probe（ライブラリのケースを probe の上で動かし、
+同じ線を自分でキャプチャし、ProbeLog の目印を同じ時計に載せる）が加わった。wireskein がそのキャプチャを
+復号する。EmbedBench 側に要るのは、その復号を雛形生成が読む行へ落とす変換だけである。
+
+**実データで先に固定した。** X65 で、合成データの試験が通っていたのに実データでアドレスを二重にシフトしていた。
+同じ轍を踏まないよう、最初の実物の出力を試料にした: P4X で、Wire が不在の 0x50 へ 2 バイト書くケース
+（プルアップ無し）。run.json（1.2 KB）、キャプチャ（8192 サンプル、1.1 KB）、wireskein の転送（e2ced47 で
+`start_cond` / `end_cond` / `scl_waits` を追加した版）を `tests/skein2trace/` に置いた。
+
+**事実。**
+
+```text
+6055947 mark case=test_wire clock=host
+6061895 mark case=test_wire phase=write_2_bytes_to_0x50
+6062119 i2c.req addr=50 data= stop=1
+6062119 i2c.resp status=2
+6062291 mark src=dut text=endTransmission%3D4
+6062294 mark case=test_wire phase=write_2_bytes_to_0x50 end=1
+6132080 mark case=test_wire end=1 clock=host
+```
+
+- **時計は1本で揃った。** 転送はキャプチャの `start_ns`（6,061,908 µs）＋ tick 211。アプリの行は run.json の
+  `probe_ns` から置き、wireskein 自身の目印表（tick 383）と同じ 6,062,291 µs に落ちた。
+- **線と戻り値は別物。** 線はアドレス NACK（status 2）、Wire の `endTransmission` は 4（その他の異常）だった。
+  [oep] はプルアップが無いためと説明している（ドライバの中は確かめていない）。行は線の側を書く。照合ではこの差を「ライブラリの解釈」として扱う。
+- **phase の目印は窓の外にあった。** `## write 2 bytes` は `start_ns` の 13 µs 前で、wireskein のキャプチャ内の
+  目印表には入っていない。目印は run.json から取るのが正しい。host 側の目印（`probe_ns` 無し）は
+  キャプチャの host 時刻 `t0` を介して置き、`clock=host` と印を付けた。
+
+**目印が転送に化けていた。** 雛形生成の照合は行のどこにあるイベント名でも拾っており、
+`mark case=i2c.req` を i2c の要求として読んだ。最初に「先頭の列（seq・時刻・ctx・origin）の直後」に限ったが、
+シムの行は先頭に `CAP` のような目印を付けて出すので、`tests/capture_shim/` が落ちた（表が空になった）。
+「空白で区切られた語として最初に現れるもの」に直した。`case=i2c.req` の `i2c.req` は `=` に続くので語ではない。
+変換器も目印の値を `[A-Za-z0-9_-]` に縮め、アプリの文はパーセント符号化するので、二重に守られる。
+
+**合成で補ったもの。** 試料に無い形（pointer の書込みから repeated start で読む、SCL の待ち 6,759 µs、
+データ NACK、窓の終わりで開いたままの転送）は、試料と同じキャプチャの時計の上で合成して固定した。
+**実物での検証はまだ**で、読出しを含む実データ（U001-C など）が来たら差し替える。
+
+**結論。**
+
+1. OEP の probe → wireskein → `skein2trace.py` → `trace2tape.py` / `trace2regtable.py` が繋がった。
+   OEP の仕様も凍結 IF も変えていない。
+2. 変換器の入力は「役割を決めた復号」（wireskein の verify と同じ経路）。短い試料では `wireskein analyze` が
+   I2C と主張しないため。analyze の JSON を直接読むかは wireskein と相談中。
+3. SPI と線（DRDY）の変換は、実データが来てから同じ手順で足す。
+
 ## 次に必要な実験
 
 （デバイスIFはX42で凍結済み。X51〜X55のカタログ拡張5回で追加要求は出ていない）

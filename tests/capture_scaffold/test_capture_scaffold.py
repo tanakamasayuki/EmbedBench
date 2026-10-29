@@ -266,3 +266,16 @@ def test_parser_accepts_host_and_shim_lines():
     assert sorted(b.regs) == [0xD0]
     assert b.regs[0xD0].reset == b"\x60"
     assert b.regs[0xD0].obs[0].time == 123600
+
+
+def test_parser_reads_event_name_only_at_line_start():
+    """An event name further along a line is a value, not an event: a
+    marker carrying a case name like `i2c.req` adds no transfer."""
+    tool = load_tool()
+    lines = ["123000 mark case=i2c.req phase=i2c.rd.resp"] + \
+        SHIM_SAMPLE.splitlines()
+    events = tool.parse(lines)
+    assert [e.kind for e in events] == [
+        "i2c.req", "i2c.resp", "i2c.rd.req", "i2c.rd.resp"]
+    assert tool.parse(["02 000000 main diag diag.unbound addr=50"])[0].kind \
+        == "diag.unbound"

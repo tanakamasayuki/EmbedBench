@@ -57,8 +57,10 @@ import re
 import sys
 from pathlib import Path
 
+# The event name is a whole word, the first one on the line: a value such
+# as `case=i2c.req` in a marker line is not a transfer.
 KIND_RE = re.compile(
-    r"(?<![\w.])(i2c\.rd\.req|i2c\.rd\.resp|i2c\.req|i2c\.resp|chan\.write|"
+    r"(?<!\S)(i2c\.rd\.req|i2c\.rd\.resp|i2c\.req|i2c\.resp|chan\.write|"
     r"gpio\.inject|gpio\.write|dev\.note|dev\.tx|uart\.tx|uart\.rx|spi\.req|"
     r"spi\.resp|spi\.xfer|spi\.bulk|diag\.[\w.]+|dump)"
     r"(?=\s|$)")

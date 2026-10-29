@@ -18,7 +18,7 @@ least one number.
 | Device interface, effective LOC | 140 |
 | Device models in `devices/` | 25 |
 | Environment implementations | 2 |
-| Experiment directories | 69 |
+| Experiment directories | 70 |
 | SD card preset volumes | 7 |
 <!-- FACTS END -->
 
