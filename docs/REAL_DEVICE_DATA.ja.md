@@ -475,3 +475,5 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - 実機の `micros()` / probe の時計の揺れが tape の `delayUs` 照合にどう出るか
 - （後の段）P4 に `regmap_model` を載せ、読出しの stretch（原因 0）の間に応答が間に合うか、受信 FIFO の残りで
   `continued` を正しく判断できるか（ch32rv のコアの試験の最初の相手。§8）
+- （後の段）P4 の slave のバイトごとの ACK 制御（`slave_byte_ack_*`）が、stretch の間に決めた値で効くか（机上の読みだけ）
+- （後の段）P4 の SPI の slave で、CH32 のコアが使う速さを受けられるか（書くだけの相手の前提）
