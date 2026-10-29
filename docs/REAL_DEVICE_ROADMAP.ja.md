@@ -191,6 +191,21 @@ C1（上の「今の fixture でできる」表を ch32rv の instrumented テ�
 **注意（L1・L2）:** pilot のデータは「統一前の手書き probe」で取った 1 本で、I2CDeviceDB 自身も恒久の正本ではないとしている。
 L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模型の版（HARNESS_REQUESTS B-006）は L4 で振る舞いが変わったら上げる。
 
+### 3.1 層 1 の不足と、OEP と言葉をそろえる提案（OEP から、2026-10-29。未着手）
+
+OEP の `oep-bench` の `docs/peripheral-test-plan.ja.md` が層ごとに洗った結果、層 1 の不足として挙がったもの（OEP の I-13）と、
+OEP からの提案。急ぎではない。
+
+| # | 内容 | どこの仕事か | 見立て |
+| --- | --- | --- | --- |
+| L7 | arduino-pico の API（PIO、マルチコア、RP2 固有の API）を使うライブラリを host で動かす | 主に **host の core**（今は ESP32 の API の host-arduino-core）。EmbedBench の模型は純粋 C++ で `HostPort` 越しにつながるので、その core に port の実装があれば流用できる | `Wire` / `SPI` は arduino-pico も `HardwareI2C` / `HardwareSPI` で形が近い。PIO は命令の模倣まで要るので大きい。マルチコアは host の core の実行モデル（今は 1 本）に関わる。どこまで要るかを使う側のライブラリで決めてから |
+| L8 | CH32 の core（ArduinoCore-CH32RV）の API を使うライブラリを host で動かす | 同上 | Arduino の標準の API だけなら今の host の core で足りる見込み。固有の API が何かを洗うのが先 |
+| L9 | どの模型にも被せられる故障（n バイト目で NACK、k 回 busy を返してから答える） | EmbedBench | 模型を包む故障の層（凍結 IF の `Device` を包んで `Device` として見せる）にすれば、凍結 IF を変えずに作れる見込み。書込みの n バイト目の NACK は「中の模型に n バイトまで渡し、status 3 を返す」。k 回 busy は tape の `kBusy` と同じ考え（回数でなく時間でも選べるようにする）。今ある `unit_faulty_model`（不在・拒否・短い読出し）はこの部分集合になる |
+| L10 | 進行役が時刻を決めて出す線のパターン | EmbedBench（シナリオの側） | 模型への `lineIn` を時刻の列で与える形。OEP の §3.2「パターンの出力」と同じ言葉（level の列、繰り返し、出来事で始める）にそろえれば、同じシナリオを層 1 と層 4 で動かせる |
+
+L9・L10 の言葉（パラメータの名前と意味）は OEP の `oep-spec` の `docs/peripheral-testing.ja.md` §3.2 にそろえる。
+L7・L8 は host の core の持ち主と、どの API が要るかを決めてから。
+
 ---
 
 ## 4. 順序と依存
