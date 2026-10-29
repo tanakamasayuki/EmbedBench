@@ -354,11 +354,15 @@ wireskein の analyze の JSON（[oep] 調べ）:
   clock stretch を待つか、timeout、SCL の周波数、バスが詰まったときの回復
 - **SPI:** mode（CPOL / CPHA）、ビットの順、CS のタイミング、長い転送や DMA
 
+**P4 の spi-target が受けるのは mode 0 と 2 だけ**（describe の `modes`）。mode 1 と 3 は、ESP32 の slave が最初の SCK の辺まで
+MISO に 0 を出すので、仕様の `cs_setup_ns` の約束を守れず断る。**CH32 の SPI の mode 1 / 3 を試すときは spi-target を
+相手にせず、キャプチャ ＋ wireskein の verify（mode、ビットの順、SCK の周波数）で判定する。** MOSI を見るだけなら受け手は要らない。
+
 ### 8.2 段階
 
 | 段 | 相手 | できること | 状態 |
 | --- | --- | --- | --- |
-| 1. 標準の fixture | `oep.fixture.i2c-target` / `spi-target` | 決まったアドレスへの ACK（他はアドレス NACK）、`preload_tx` で決まった応答、stretch op（`stretch_us`、各バイトの後に SCL を保つ）。SPI は mode / bit_order / arm | **今の OEP の仕様と firmware にある。そのまま使える** |
+| 1. 標準の fixture | `oep.fixture.i2c-target` / `spi-target` | 決まったアドレスへの ACK（他はアドレス NACK）、`preload_tx` で決まった応答、stretch op（`stretch_us`、各バイトの後に SCL を保つ。**任意の機能で P4 だけが持つ**。伸ばせる上限は describe の `max_stretch_us`。CH32 と RP2 の i2c-target はコアの Wire の slave の上で動き、stretch が無い）。SPI は mode / bit_order / arm（P4 は mode 0 と 2 だけ。下記） | **今の OEP の仕様と firmware にある。そのまま使える** |
 | 2. 故障の注入 | fixture の任意の機能、または `unit_faulty_model` の再生 | データ NACK、途中で止まる相手、長い stretch での timeout、バスの詰まり | **コア開発では優先度が高い**。P4 のバイトごとの ACK 制御が効く。標準の i2c-target に足すか独自拡張にするかは OEP 側で検討 |
 | 3. 模型の再生 | EmbedBench の模型を P4 の firmware に載せる（独自拡張） | レジスタポインタに応じた応答（`regmap_model`）、時間で変わる状態（`env_sensor_model`）、`temp_model` | 段 1・2 で足りない所に。凍結 IF のまま載る群から |
 
@@ -380,6 +384,12 @@ OEP の独自拡張（core §12 の逆 DNS の名前のインターフェース�
 **どの probe に載せるか: P4**（利用者: ch32rv の実機テストは P4 の probe がメイン。
 ハードウェアの見立ては [oep] が ESP-IDF の `i2c_struct.h` / `i2c_ll.h` を読んだ机上のもの。要実測）。
 
+**土台は既にある。** P4 の標準の i2c-target（`oep-probe-arduino` の `src/OepP4I2cTarget`）は、ESP-IDF の slave driver を
+周辺の設定にだけ使い、FIFO は自前の割り込みで扱っている。stretch は下の `slave_scl_stretch_en` と
+`slave_byte_ack_ctl_en` / `slave_byte_ack_lvl` で SCL を保ち、決めた時間の後に解く作り。下の「待たせる」「バイトごとの
+ACK 制御」は机上の読みだけでなく、同じレジスタを既存の firmware が使っている。段 2（故障の注入）と段 3（再生）は
+この実装を土台に足せる。ただし ACK の制御は今は ACK を出すことにだけ使っていて、NACK を選ぶ経路は未実装。
+
 - **待たせられる。** `scl_stretch_conf.slave_scl_stretch_en` で SCL を low に保てて、原因が読める
   （`sr.stretch_cause`: 0 = master が読出しを始めた、1 = 送信 FIFO が空、2 = 受信 FIFO が満杯）。
   読出しの要求で待たせ、その間に模型を呼んで送信 FIFO に入れ、stretch を解く。
@@ -389,8 +399,8 @@ OEP の独自拡張（core §12 の逆 DNS の名前のインターフェース�
 - **repeated start は推定する。** 専用の割り込みは見当たらない。読出しの stretch（原因 0）の時点で、STOP 無しに
   受けた書込みが受信 FIFO に残っていれば、Sr で続いた（`continued`）と判断する
   （Arduino の slave のコメントにも「C3 では repeated start で RX のデータが消えるので、ここで取る」とある）。要実測。
-- **作り:** Arduino 3.3 の Wire の slave は、P4 では stretch の原因を読まない（S2 / S3 / C3 だけ）ので使わない。
-  adapter は ESP-IDF の hal（`i2c_ll`）で自前の割り込み処理を持つ。割り込みは模型のタスクを起こすだけにし、
+- **作り:** Arduino の Wire の slave は使わず（Arduino 3.3 は P4 で stretch の原因を読まない。S2 / S3 / C3 だけ）、
+  P4 の標準の i2c-target と同じく ESP-IDF の hal で自前の割り込み処理を持つ（既にある実装を土台にする）。割り込みは模型のタスクを起こすだけにし、
   タスクが FIFO を埋めて stretch を解く（B-003 の「1 本の実行文脈」）。
 - **同じピンのキャプチャ**は P4X で確認済み（LibraryTest）。再生と検証を 1 台でできる。
 - **SPI の書くだけの相手**は、P4 の SPI の slave で受けるだけなので成り立つ。
@@ -515,5 +525,5 @@ revision 005 として足せる。既定の実装は今の転送単位のメソ�
 - 実機の `micros()` / probe の時計の揺れが tape の `delayUs` 照合にどう出るか
 - （コア開発の段 3）P4 に `regmap_model` を載せ、読出しの stretch（原因 0）の間に応答が間に合うか、受信 FIFO の残りで
   `continued` を正しく判断できるか（ch32rv のコアの試験の最初の相手。§8）
-- （コア開発の段 2・3）P4 の slave のバイトごとの ACK 制御（`slave_byte_ack_*`）が、stretch の間に決めた値で効くか（机上の読みだけ）
+- （コア開発の段 2・3）P4 の slave のバイトごとの ACK 制御（`slave_byte_ack_*`）で **NACK を選んだときに**効くか（ACK を出す側は既存の i2c-target が使っている）
 - （コア開発）P4 の SPI の slave で、CH32 のコアが使う速さを受けられるか（書くだけの相手の前提）
