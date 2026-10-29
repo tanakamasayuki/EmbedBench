@@ -153,8 +153,8 @@ EmbedBenchDeviceData/
 
 | 試験 | 足りない物 | 案 |
 | --- | --- | --- |
-| データ NACK（戻り値 3） | i2c-target に NACK の op が無い | OEP 側: i2c-target の任意の機能として足す（P4 はバイトごとの ACK 制御をハードウェアが持つ） |
-| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | i2c-target の任意の機能として足す（OEP の案）。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
+| データ NACK（戻り値 3） | i2c-target に NACK の op が無い | 未決（C1 の後で決める）。案は i2c-target の任意の機能（P4 はバイトごとの ACK 制御をハードウェアが持つ） |
+| バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | 未決（C1 の後で決める）。案は i2c-target の任意の機能。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
 | レジスタポインタに応じた応答 | `preload_tx` は固定の列 | 期待する読出しごとに host が slot を積む（短い試験なら足りる）。足りなければ EmbedBench の `regmap_model` を P4 で再生（段 3） |
 | 調停負け・バス異常（戻り値 5、timeout 以外） | 起こす手段 | 未検討 |
 | `requestFrom(..., false)` | 相手は足りている | **コアが常に STOP を出す**（上）。キャプチャで確かめれば、それがそのまま試験になる |
@@ -167,7 +167,7 @@ EmbedBenchDeviceData/
 | # | 内容 | 実機 | 担当 | 完了条件 |
 | --- | --- | --- | --- | --- |
 | C1 | 上の「今の fixture でできる」表を、コアの instrumented テスト（pytest ＋ oep-client ＋ キャプチャ ＋ wireskein の verify）にする | 要 | ch32rv | I2C・SPI の基本が CI に近い形で回る |
-| C2 | 故障の注入: データ NACK、バスの詰まり | 要 | OEP（fixture）＋ ch32rv（試験） | 戻り値 3 と回復の試験が回る |
+| C2 | 故障の注入: データ NACK、バスの詰まり（形は C1 の後で決める） | 要 | OEP（fixture）＋ ch32rv（試験） | 戻り値 3 と回復の試験が回る |
 | C3 | EmbedBench の模型を P4 で再生（`regmap_model` から） | 要 | OEP（拡張）＋ EmbedBench（adapter の契約） | ポインタに応じた応答で、ライブラリと同じ使い方がコアを通る |
 
 C1 は EmbedBench の作業を必要としない。EmbedBench が関わるのは C3（と、C2 を模型で行う場合）だけ。
@@ -212,6 +212,6 @@ L1・L2 の模型は L4 の実データで確かめ直す前提で作る。模�
 | 項目 | 誰が | 選択肢 |
 | --- | --- | --- |
 | `requestFrom(..., false)` の STOP をコアの不具合として扱うか | 利用者（ch32rv の持ち主） | 直す / 仕様として文書化する |
-| C2 の故障の注入を標準の i2c-target に足すか、独自拡張にするか | OEP（利用者に確認中） | OEP の案: どちらも `oep.fixture.i2c-target` の任意の機能にする（データ NACK は P4 のバイトごとの ACK 制御、バスの詰まりは同じ fn が SDA / SCL を low に保つ。GPIO の fixture を同じピンに当てるのは、plan でピンの持ち主が 1 つなので試験の途中で使いにくい） |
+| C2 の故障の注入を標準の i2c-target に足すか、独自拡張にするか | 利用者 | **未決（C1 の後で決める）。** 案は i2c-target の任意の機能: どちらも `oep.fixture.i2c-target` の任意の機能にする（データ NACK は P4 のバイトごとの ACK 制御、バスの詰まりは同じ fn が SDA / SCL を low に保つ。GPIO の fixture を同じピンに当てるのは、plan でピンの持ち主が 1 つなので試験の途中で使いにくい） |
 | L1・L2 の模型を pilot のデータで先に作るか、L4 を待つか | 利用者 | **先に作るのを推す**（形と照合の道具が先に固まり、L4 は確かめ直すだけになる） |
 | EmbedBenchDeviceData の `chips/` で I2CDeviceDB の key（部品番号の slug）をそのまま使うか | 利用者 | そのまま使うのを推す（guides の参照が保てる） |
