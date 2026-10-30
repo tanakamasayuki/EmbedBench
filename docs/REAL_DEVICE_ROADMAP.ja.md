@@ -1,6 +1,6 @@
 # 実デバイスとの接続 — ロードマップと事前調査
 
-文書状態: **計画**（2026-10-29 時点。実機での実測はまだ無い）
+文書状態: **計画と進捗**（2026-10-30 時点。D1〜D4、L1〜L4 は済み）
 文書基準日: 2026-10-29
 
 [REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md) が「何を・なぜ」を決めた設計記録で、この文書は「どの順で・何ができたら次へ」の
@@ -26,6 +26,9 @@
 | tape の改良 | 待ちのステップ（`--busy`）、ケースの切り出し（`--case` / `--phase`） | X67 |
 | 行の改良 | アドレスで断られた読出しに `status=2`、目印が転送に化けない照合 | X66・X67 |
 | 決定 | 保存用は新規リポジトリ `EmbedBenchDeviceData`（履歴なし） | 利用者 |
+| データリポジトリ | 骨組み・validate・run の名前、カタログの移行（D1〜D3。2026-10-30） | EmbedBenchDeviceData |
+| 最初の実データ | OEP が U001-C の run を 100 / 400 kHz で 8 本（D4・L4。2026-10-30） | EmbedBenchDeviceData の runs/ |
+| 模型と照合 | QMP6988・SHT30 の模型、`tracecmp.py`（L1〜L3）。実データで確かめた | X68 |
 
 ---
 
@@ -94,11 +97,11 @@ EmbedBenchDeviceData/
 
 | # | 内容 | 実機 | 完了条件 |
 | --- | --- | --- | --- |
-| D1 | リポジトリを作る（利用者）。上の構成で空の骨組み、README、`schema_version` | 不要 | 作成済み |
-| D2 | chips・products・libraries・surveys・guides を移す。`addresses` と `components` を組み直す | 不要 | validate が通る |
-| D3 | run の manifest（`provenance.yaml`）の形と validate | 不要 | EmbedBench の試料（libtest_run1）を 1 本入れて validate が通る |
-| D4 | 最初の実データの run（L3 と同時） | 要 | U001-C の run が入り、EmbedBench から読める |
-| D5 | `knowledge/` と、そこからの生成（wireskein の識別の表、EmbedBench の雛形の初期値） | 不要 | QMP6988 の knowledge から雛形の初期値が出る |
+| D1 | リポジトリを作る（利用者）。上の構成で空の骨組み、README、`schema_version` | 不要 | **済み**（データモデルは `docs/DATA_MODEL.ja.md`。runs/ は平らな `runs/<run-id>/` にした: 1 本の run が 2 チップにまたがるため） |
+| D2 | chips・products・libraries・surveys・guides を移す。`addresses` と `components` を組み直す | 不要 | **済み**（I2CDeviceDB 38f1d82 から。chip のキーはそのまま） |
+| D3 | run の manifest（`provenance.yaml`）の形と validate | 不要 | **済み** |
+| D4 | 最初の実データの run（L3 と同時） | 要 | **済み**（OEP。100 / 400 kHz で 8 本） |
+| D5 | `knowledge/` と、そこからの生成（wireskein の識別の表、EmbedBench の雛形の初期値） | 不要 | **雛形は済み**（`knowledge/qmp6988.yaml` → `tools/knowledge_table.py` が X68 の模型と同じ表を出す）。wireskein の識別の表は未着手 |
 
 ---
 
@@ -181,10 +184,10 @@ C1（上の「今の fixture でできる」表を ch32rv の instrumented テ�
 
 | # | 内容 | 実機 | 完了条件 |
 | --- | --- | --- | --- |
-| L1 | **QMP6988 の模型**: X67 の表（9 レジスタ）＋ フック（forced 測定で status が約 4.5 ms 立つ、normal mode で約 11 ms ごとに値が変わる、測定後も CTRL_MEAS を読み返す）。pilot のデータの tape と照合 | 不要 | 模型が tape と同じ値・同じ時刻を返す |
-| L2 | **SHT30 の模型**（手書き。16 ビットのコマンド、CRC、NACK polling、clock stretch の読出し、測定時間は X67 の実測値） | 不要 | `tests/tape_replay/sht30_u001c.trace` の tape（`--busy`）と照合が合う |
-| L3 | **照合の道具**: 実データの行と模型相手の行を比べる（`(origin, text)` は完全一致、時刻は許容差、測定値は伏せる） | 不要 | L1・L2 で、外れたときに名指しされる |
-| L4 | OEP の P4 で U001-C を M5Unit-ENV ライブラリで収集 → `skein2trace.py` → L1・L2 の模型と照合 | 要 | 実データで照合が回る。外れは模型の不具合か実データの不足かに分けて記録 |
+| L1 | **QMP6988 の模型**: X67 の表（9 レジスタ）＋ フック（forced 測定で status が約 4.5 ms 立つ、normal mode で約 11 ms ごとに値が変わる、測定後も CTRL_MEAS を読み返す）。pilot のデータの tape と照合 | 不要 | **済み**（X68。記録 5 本で差 0） |
+| L2 | **SHT30 の模型**（手書き。16 ビットのコマンド、CRC、NACK polling、clock stretch の読出し、測定時間は X67 の実測値） | 不要 | **済み**（X68。記録 4 本で、説明の付く差だけ） |
+| L3 | **照合の道具**: 実データの行と模型相手の行を比べる（`(origin, text)` は完全一致、時刻は許容差、測定値は伏せる） | 不要 | **済み**（`devices/tools/tracecmp.py`） |
+| L4 | OEP の P4 で U001-C を M5Unit-ENV ライブラリで収集 → `skein2trace.py` → L1・L2 の模型と照合 | 要 | **済み**（X68。pilot だけの表の誤り 4 か所を直した） |
 | L5 | SPI と線（DRDY）の変換（wireskein の SPI の転送・線の変化 → 行） | 要（最初の実データ） | 実物の出力を試料に固定 |
 | L6 | 2 本目以降のチップ（BMP280、BH1750 など、I2CDeviceDB で guide のあるもの） | 要 | — |
 
@@ -228,5 +231,3 @@ L7・L8 は host の core の持ち主と、どの API が要るかを決めて�
 | 項目 | 誰が | 選択肢 |
 | --- | --- | --- |
 | `requestFrom(..., false)` の STOP をコアの不具合として扱うか | 利用者（ch32rv の持ち主） | 直す / 仕様として文書化する |
-| L1・L2 の模型を pilot のデータで先に作るか、L4 を待つか | 利用者 | **先に作るのを推す**（形と照合の道具が先に固まり、L4 は確かめ直すだけになる） |
-| EmbedBenchDeviceData の `chips/` で I2CDeviceDB の key（部品番号の slug）をそのまま使うか | 利用者 | そのまま使うのを推す（guides の参照が保てる） |

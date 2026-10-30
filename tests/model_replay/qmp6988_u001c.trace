@@ -1,0 +1,123 @@
+# QMP6988 on an M5Stack U001-C at 100 kHz, an ESP32-S3 controller: I2CDeviceDB pilot run
+# qmp6988__qmp6988__characterize__100k__nominal__0283eb57c7a7c010 (decoded jsonl, 2026-07-10), as event lines (X67).
+0 mark case=Device_Detection
+0 i2c.req addr=70 data= stop=1
+0 i2c.resp status=0
+7876 mark case=Reset
+7876 i2c.req addr=70 data=E0E6 stop=1
+7876 i2c.resp status=0
+8163 i2c.req addr=73 data= stop=1
+8163 i2c.resp status=0
+18257 i2c.req addr=70 data=D1 stop=0
+18257 i2c.resp status=0
+18454 i2c.rd.req addr=70 req=1 stop=1 rs
+18454 i2c.rd.resp len=1 data=5C
+18730 i2c.req addr=70 data=F1 stop=0
+18730 i2c.resp status=0
+18927 i2c.rd.req addr=70 req=1 stop=1 rs
+18927 i2c.rd.resp len=1 data=00
+19196 i2c.req addr=70 data=F2 stop=0
+19196 i2c.resp status=0
+19394 i2c.rd.req addr=70 req=1 stop=1 rs
+19394 i2c.rd.resp len=1 data=01
+19657 i2c.req addr=70 data=F3 stop=0
+19657 i2c.resp status=0
+19855 i2c.rd.req addr=70 req=1 stop=1 rs
+19855 i2c.rd.resp len=1 data=00
+20118 i2c.req addr=70 data=F4 stop=0
+20118 i2c.resp status=0
+20315 i2c.rd.req addr=70 req=1 stop=1 rs
+20315 i2c.rd.resp len=1 data=00
+20578 i2c.req addr=70 data=F5 stop=0
+20578 i2c.resp status=0
+20776 i2c.rd.req addr=70 req=1 stop=1 rs
+20776 i2c.rd.resp len=1 data=00
+29308 mark case=Default_Read phase=calibration
+29308 i2c.req addr=70 data=A0 stop=0
+29308 i2c.resp status=0
+29506 i2c.rd.req addr=70 req=25 stop=1 rs
+29506 i2c.rd.resp len=25 data=52DC0DA7F4820DDC0CD201E6FC86F9C9FAA2F72B0CBB03D8BB
+55602 mark case=Single_Measurement phase=forced-minimum
+55602 i2c.req addr=70 data=F425 stop=1
+55602 i2c.resp status=0
+55964 i2c.req addr=70 data=F3 stop=0
+55964 i2c.resp status=0
+56162 i2c.rd.req addr=70 req=1 stop=1 rs
+56162 i2c.rd.resp len=1 data=08
+56681 i2c.req addr=70 data=F3 stop=0
+56681 i2c.resp status=0
+56878 i2c.rd.req addr=70 req=1 stop=1 rs
+56878 i2c.rd.resp len=1 data=08
+57395 i2c.req addr=70 data=F3 stop=0
+57395 i2c.resp status=0
+57592 i2c.rd.req addr=70 req=1 stop=1 rs
+57592 i2c.rd.resp len=1 data=08
+58108 i2c.req addr=70 data=F3 stop=0
+58108 i2c.resp status=0
+58305 i2c.rd.req addr=70 req=1 stop=1 rs
+58305 i2c.rd.resp len=1 data=08
+58820 i2c.req addr=70 data=F3 stop=0
+58820 i2c.resp status=0
+59017 i2c.rd.req addr=70 req=1 stop=1 rs
+59017 i2c.rd.resp len=1 data=08
+59532 i2c.req addr=70 data=F3 stop=0
+59532 i2c.resp status=0
+59730 i2c.rd.req addr=70 req=1 stop=1 rs
+59730 i2c.rd.resp len=1 data=08
+60245 i2c.req addr=70 data=F3 stop=0
+60245 i2c.resp status=0
+60442 i2c.rd.req addr=70 req=1 stop=1 rs
+60442 i2c.rd.resp len=1 data=00
+60711 i2c.req addr=70 data=F7 stop=0
+60711 i2c.resp status=0
+60908 i2c.rd.req addr=70 req=6 stop=1 rs
+60908 i2c.rd.resp len=6 data=A1E5046A227C
+61625 i2c.req addr=70 data=F4 stop=0
+61625 i2c.resp status=0
+61822 i2c.rd.req addr=70 req=1 stop=1 rs
+61822 i2c.rd.resp len=1 data=25
+88016 mark case=Continuous_Measurement phase=normal-representative
+88016 i2c.req addr=70 data=F427 stop=1
+88016 i2c.resp status=0
+98234 i2c.req addr=70 data=F7 stop=0
+98234 i2c.resp status=0
+98431 i2c.rd.req addr=70 req=6 stop=1 rs
+98431 i2c.rd.resp len=6 data=A1E3546A2624
+109231 i2c.req addr=70 data=F7 stop=0
+109231 i2c.resp status=0
+109428 i2c.rd.req addr=70 req=6 stop=1 rs
+109428 i2c.rd.resp len=6 data=A1E3706A2660
+120232 i2c.req addr=70 data=F7 stop=0
+120232 i2c.resp status=0
+120430 i2c.rd.req addr=70 req=6 stop=1 rs
+120430 i2c.rd.resp len=6 data=A1E3086A25B0
+131229 i2c.req addr=70 data=F7 stop=0
+131229 i2c.resp status=0
+131427 i2c.rd.req addr=70 req=6 stop=1 rs
+131427 i2c.rd.resp len=6 data=A1E3B06A2420
+142233 i2c.req addr=70 data=F7 stop=0
+142233 i2c.resp status=0
+142431 i2c.rd.req addr=70 req=6 stop=1 rs
+142431 i2c.rd.resp len=6 data=A1E3686A2400
+153231 i2c.req addr=70 data=F7 stop=0
+153231 i2c.resp status=0
+153428 i2c.rd.req addr=70 req=6 stop=1 rs
+153428 i2c.rd.resp len=6 data=A1E3FC6A21BC
+164235 i2c.req addr=70 data=F7 stop=0
+164235 i2c.resp status=0
+164432 i2c.rd.req addr=70 req=6 stop=1 rs
+164432 i2c.rd.resp len=6 data=A1E3CC6A2254
+175232 i2c.req addr=70 data=F7 stop=0
+175232 i2c.resp status=0
+175430 i2c.rd.req addr=70 req=6 stop=1 rs
+175430 i2c.rd.resp len=6 data=A1E3DC6A211C
+186236 i2c.req addr=70 data=F7 stop=0
+186236 i2c.resp status=0
+186434 i2c.rd.req addr=70 req=6 stop=1 rs
+186434 i2c.rd.resp len=6 data=A1E2DC6A2134
+197234 i2c.req addr=70 data=F7 stop=0
+197234 i2c.resp status=0
+197432 i2c.rd.req addr=70 req=6 stop=1 rs
+197432 i2c.rd.resp len=6 data=A1E2EC6A1FAC
+198281 i2c.req addr=70 data=F424 stop=1
+198281 i2c.resp status=0

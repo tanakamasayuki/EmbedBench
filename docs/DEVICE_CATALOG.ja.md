@@ -78,6 +78,8 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
 | `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
 | `unit_sdcard_model` | SD/TFカード | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **ブロックデバイス**（512バイト×8）。FATは載せない——それはアプリの仕事 |
+| `qmp6988_model` | ENV III（U001-C）の気圧 | I2C（`regtable_model` の派生）、`requestWake`、channel | **実物の記録から作った最初の模型**（X68）。表は pilot の記録、フックは forced / normal の変換時間、読出しはバイト単位でアドレスが進む。実データ 3 本と一致 |
+| `sht30_model` | ENV III（U001-C）の温湿度 | I2C、`diagnose`、channel | **コマンド型、実物の記録で確かめた**（X68）。測定中はアドレスを断る、clock stretch、CRC-8。stretch を待つ長さは controller の性質として channel で与える |
 | `regtable_model` | （汎用・表駆動） | I2C、`diagnose`、channel | **表とフックの分離**。register-mapを`RegTableSpec`の表で持ち、表で言えない振る舞いは派生クラスの`onRead`/`afterWrite`へ。キャプチャから表を生成する入口（下記） |
 | `tape_model` | （汎用・録画再生） | I2C、serial、SPI、`requestWake`、`diagnose` | **録画を1ステップずつ再生**。外れた要求を診断で名指しし、その後も応答を返し続ける。分岐は持たない（X64・X65） |
 
