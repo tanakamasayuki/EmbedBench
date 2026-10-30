@@ -20,6 +20,7 @@ void Sht30Model::reset() {
   // Power-on: alert pending and reset detected, the datasheet's default.
   status_ = kStatusAlert | kStatusReset;
   pending_ = kNothing;
+  holding_ = false;
   stretch_ = false;
   readyAtUs_ = 0;
   nextSample_ = 0;
@@ -37,6 +38,13 @@ bool Sht30Model::busy(uint64_t t) const { return t < readyAtUs_; }
 
 void Sht30Model::start(Repeatability r, bool stretch) {
   static const uint64_t kDuration[3] = {kHighUs, kMediumUs, kLowUs};
+  if (pending_ == kMeasurement) {
+    // The previous result was never read: the part keeps it and hands it
+    // to the next read, even while the new measurement runs (OEP run
+    // sht30-ready-idf: a read 4 us after the command got it).
+    memcpy(held_, result_, 4);
+    holding_ = true;
+  }
   if (sampleCount_ > 0) {
     memcpy(result_, &samples_[nextSample_ * 4], 4);
     nextSample_ = (nextSample_ + 1) % sampleCount_;
@@ -53,7 +61,10 @@ uint8_t Sht30Model::i2cWrite(const uint8_t* data, size_t len,
   const uint64_t t = now();
   if (busy(t)) {
     ++refused_;
-    return ebdev::kI2cAddressNack;
+    // Measuring, the part refuses its address. Just after a soft reset it
+    // takes the address and refuses the command (a write 340 us after
+    // 30A2 ended in a data NACK, and nothing was measured).
+    return pending_ == kReset ? ebdev::kI2cDataNack : ebdev::kI2cAddressNack;
   }
   if (len == 0) return ebdev::kI2cAck;  // address probe
   if (len != 2) {
@@ -77,8 +88,11 @@ uint8_t Sht30Model::i2cWrite(const uint8_t* data, size_t len,
     case 0x30A2:
       // Soft reset: back to the power-on status. The OEP run read 8010
       // right after one; the I2CDeviceDB pilot read 0000 (unexplained).
+      // Whether an unread result survives it has not been recorded; here
+      // it does not.
       status_ = kStatusAlert | kStatusReset;
-      pending_ = kNothing;
+      pending_ = kReset;
+      holding_ = false;
       readyAtUs_ = t + kSoftResetUs;
       break;
     default: {
@@ -101,7 +115,6 @@ size_t Sht30Model::answer(uint8_t* data, size_t len, const uint8_t* words,
     if (n < len) data[n++] = word[1];
     if (n < len) data[n++] = crc8(word, 2);
   }
-  pending_ = kNothing;
   return n;
 }
 
@@ -109,6 +122,10 @@ size_t Sht30Model::i2cRead(uint8_t* data, size_t len,
                            const ebdev::I2cTransfer& xfer) {
   (void)xfer;
   const uint64_t t = now();
+  if (busy(t) && holding_ && len > 0) {
+    holding_ = false;
+    return answer(data, len, held_, 2);
+  }
   if (busy(t)) {
     if (pending_ != kMeasurement || !stretch_) {
       ++refused_;
@@ -122,10 +139,15 @@ size_t Sht30Model::i2cRead(uint8_t* data, size_t len,
     ++stretched_;
   }
   if (len == 0) return 0;
-  if (pending_ == kMeasurement) return answer(data, len, result_, 2);
+  if (pending_ == kMeasurement) {
+    pending_ = kNothing;
+    holding_ = false;
+    return answer(data, len, result_, 2);
+  }
   if (pending_ == kStatus) {
     const uint8_t word[2] = {static_cast<uint8_t>(status_ >> 8),
                              static_cast<uint8_t>(status_)};
+    pending_ = kNothing;
     return answer(data, len, word, 1);
   }
   return 0;  // nothing to read: the part does not acknowledge

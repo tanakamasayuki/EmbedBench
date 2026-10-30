@@ -46,8 +46,11 @@ uint32_t averaged(uint8_t field) {
   return field == 0 ? 0 : (1u << (field - 1));
 }
 
-// IO_SETUP bits 7:5, from the datasheet.
-const uint64_t kStandbyUs[8] = {1000,   5000,    50000,   250000,
+// IO_SETUP bits 7:5. The first four are measured on the part (the normal
+// period minus the conversion, at T x1, P x8; OEP runs of 2 s each) and
+// are not the datasheet's 1 / 5 / 50 / 250 ms in any fixed ratio. The rest
+// are the datasheet's, unmeasured.
+const uint64_t kStandbyUs[8] = {1000,   5394,    44575,   212036,
                                 500000, 1000000, 2000000, 4000000};
 
 }  // namespace

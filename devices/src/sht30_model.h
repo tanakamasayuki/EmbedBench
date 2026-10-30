@@ -9,7 +9,11 @@
 //     reads (the NACK polling a library does) and to commands alike.
 //   - A finished result is read once: six bytes, temperature then
 //     humidity, each word followed by its CRC-8. A second read answers
-//     nothing until the next command.
+//     nothing until the next command. A result nobody read is kept and
+//     handed to the first read after the next command, at once, while
+//     the new measurement runs (what looked like "answers immediately").
+//   - Just after a soft reset the part takes its address and refuses the
+//     command (a data NACK).
 //   - Status (F32D), clear status (3041), soft reset (30A2), heater.
 //     Periodic mode is not modelled: its commands are refused and set the
 //     status's "command not processed" bit, with a diagnostic.
@@ -66,7 +70,7 @@ class Sht30Model : public ebdev::Device {
   size_t dump(char* out, size_t cap) override;
 
  private:
-  enum Pending : uint8_t { kNothing, kMeasurement, kStatus };
+  enum Pending : uint8_t { kNothing, kMeasurement, kStatus, kReset };
   uint64_t now() const;
   bool busy(uint64_t t) const;
   void start(Repeatability r, bool stretch);
@@ -80,6 +84,8 @@ class Sht30Model : public ebdev::Device {
   size_t sampleCount_ = 0;
   size_t nextSample_ = 0;
   uint8_t result_[4] = {0, 0, 0, 0};
+  uint8_t held_[4] = {0, 0, 0, 0};  // a finished result nobody read
+  bool holding_ = false;
   uint32_t stretchLimitUs_ = 0;  // 0: the master waits as long as it takes
   uint32_t measurements_ = 0;
   uint32_t refused_ = 0;

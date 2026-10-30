@@ -73,6 +73,28 @@ def test_qmp6988_matches_every_recording():
         assert (compared, diffs) == (count, []), (name, diffs)
 
 
+def test_qmp6988_standby_is_measured_not_nominal():
+    # Normal mode for 2 s at each of three standby settings, read every
+    # 5 ms (401 reads, 125 / 37 / 9 new samples). Period = conversion +
+    # standby, with the standby the part keeps: 5.39, 44.6 and 212.0 ms for
+    # the nominal 5, 50 and 250. Every read lands on the right side of
+    # every sample.
+    for name in ("qmp6988_standby_5ms_p4x.trace", "qmp6988_standby_50ms_p4x.trace",
+                 "qmp6988_standby_250ms_p4x.trace"):
+        compared, diffs = tracecmp(HERE / name, QMP, ["--only-addr"])
+        assert (compared, diffs) == (807, []), (name, diffs[:3])
+
+
+def test_sht30_hands_an_unread_result_to_the_next_read():
+    # ESP-IDF's master puts every transfer on the bus. A command 340 us after
+    # a soft reset is refused at its data byte; 2, 10 and 100 ms after, it
+    # measures. A result left unread is handed over 4 us after the next
+    # command, and the new one comes 12.4 ms later. A read with no command
+    # gets nothing.
+    run = HERE / "sht30_ready_idf_p4x.trace"
+    assert tracecmp(run, sht30(words(run)), ["--only-addr"]) == (260, [])
+
+
 def test_qmp6988_timing_is_what_is_checked(tmp_path):
     # Start the pilot's forced conversion 200 us later and keep every poll
     # where it was: the poll that saw the conversion finished (190 us after
@@ -96,16 +118,21 @@ def test_sht30_matches_with_two_known_differences():
 
     # The OEP characterization: soft reset, status, three repeatabilities by
     # polling and by stretching. Every poll is refused or answered when the
-    # part did. The one difference: the controller gave up on the high
-    # stretch after one byte had crossed the bus (the library got 0); the
-    # interface has no partly-answered read. The failed measurement takes a
-    # sample of its own.
+    # part did. The differences are one event: the controller gave up on the
+    # high stretch, then clocked the bus clear through the part, which sent
+    # its result out (one byte reaches the decode; the library got 0). The
+    # interface has neither a partly-answered read nor a way to say the
+    # master clocked on after giving up, so the model still holds the result
+    # and hands it to the first poll of the next measurement. The failed
+    # measurement takes a sample of its own.
     run = HERE / "sht30_modes_p4x.trace"
     samples = "62CA9F41" + "00000000" + "62D59F2362EF9F3A62DA9F6262D09F28"
     compared, diffs = tracecmp(run, sht30(samples), [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 45
     assert diffs == ["97650048 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=62, "
-                     "model len=0 data="], diffs
+                     "model len=0 data=",
+                     "97662728 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+                     "model len=6 data=000081000081"], diffs
 
     # The same at 400 kHz: the controller gave up at the same point.
     run = HERE / "sht30_modes_p4x_400k.trace"
@@ -114,10 +141,14 @@ def test_sht30_matches_with_two_known_differences():
                                [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 49
     assert diffs == ["10420851 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=63, "
-                     "model len=0 data="], diffs
+                     "model len=0 data=",
+                     "10433274 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+                     "model len=6 data=000081000081"], diffs
 
-    # The pilot: the same, except that it read status 0000 after a soft
-    # reset where the OEP run (and the datasheet) has 8010.
+    # The pilot: its controller gave up without clocking on, and the result
+    # was there for a read 24 ms later, as the model has it. The one
+    # difference: it read status 0000 after a soft reset where the OEP run
+    # (and the datasheet) has 8010.
     compared, diffs = tracecmp(PILOT_SHT30, sht30(words(PILOT_SHT30)), STRETCH_LIMIT)
     assert compared == 54
     assert diffs == ["10359 i2c.rd.req addr=44 req=3 stop=1: recorded len=3 data=000081, "
