@@ -21,6 +21,7 @@ void Sht30Model::reset() {
   status_ = kStatusAlert | kStatusReset;
   pending_ = kNothing;
   holding_ = false;
+  afterReset_ = false;
   stretch_ = false;
   readyAtUs_ = 0;
   nextSample_ = 0;
@@ -59,6 +60,7 @@ uint8_t Sht30Model::i2cWrite(const uint8_t* data, size_t len,
                              const ebdev::I2cTransfer& xfer) {
   (void)xfer;
   const uint64_t t = now();
+  afterReset_ = false;  // any command, even a refused one, ends it
   if (busy(t)) {
     ++refused_;
     // Measuring, the part refuses its address. Just after a soft reset it
@@ -88,11 +90,16 @@ uint8_t Sht30Model::i2cWrite(const uint8_t* data, size_t len,
     case 0x30A2:
       // Soft reset: back to the power-on status. The OEP run read 8010
       // right after one; the I2CDeviceDB pilot read 0000 (unexplained).
-      // Whether an unread result survives it has not been recorded; here
-      // it does not.
+      // An unread result survives it and goes to the first read after the
+      // next command (OEP run sht30-unread-reset). Until a command comes,
+      // reads get 0000, its CRC and FF.
+      if (pending_ == kMeasurement) {
+        memcpy(held_, result_, 4);
+        holding_ = true;
+      }
       status_ = kStatusAlert | kStatusReset;
       pending_ = kReset;
-      holding_ = false;
+      afterReset_ = true;
       readyAtUs_ = t + kSoftResetUs;
       break;
     default: {
@@ -139,6 +146,13 @@ size_t Sht30Model::i2cRead(uint8_t* data, size_t len,
     ++stretched_;
   }
   if (len == 0) return 0;
+  if (afterReset_) {
+    // Not consumed: every read until the next command gets the same.
+    static const uint8_t kZero[2] = {0, 0};
+    const size_t n = answer(data, len, kZero, 1);
+    for (size_t k = n; k < len; ++k) data[k] = 0xFF;
+    return len;
+  }
   if (pending_ == kMeasurement) {
     pending_ = kNothing;
     holding_ = false;

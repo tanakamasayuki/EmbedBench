@@ -76,9 +76,10 @@ def test_qmp6988_matches_every_recording():
 def test_qmp6988_standby_is_measured_not_nominal():
     # Normal mode for 2 s at each of three standby settings, read every
     # 5 ms (401 reads, 125 / 37 / 9 new samples). Period = conversion +
-    # standby, with the standby the part keeps: 5.39, 44.6 and 212.0 ms for
+    # standby, with the standby the part keeps: 5.41, 44.6 and 212.0 ms for
     # the nominal 5, 50 and 250. Every read lands on the right side of
-    # every sample.
+    # every sample. (An earlier 5 ms run fitted 5.39 ms: the period moves by
+    # about 0.07 % between runs, and no one value fits 2 s of both.)
     for name in ("qmp6988_standby_5ms_p4x.trace", "qmp6988_standby_50ms_p4x.trace",
                  "qmp6988_standby_250ms_p4x.trace"):
         compared, diffs = tracecmp(HERE / name, QMP, ["--only-addr"])
@@ -93,6 +94,16 @@ def test_sht30_hands_an_unread_result_to_the_next_read():
     # gets nothing.
     run = HERE / "sht30_ready_idf_p4x.trace"
     assert tracecmp(run, sht30(words(run)), ["--only-addr"]) == (260, [])
+
+
+def test_sht30_unread_result_survives_a_soft_reset():
+    # A measurement left unread, then a soft reset. Reads with no command
+    # get 0000, its CRC and FF, every time; the first read after the next
+    # command gets the unread result. Measurements whose result was never
+    # read take placeholder samples.
+    run = HERE / "sht30_unread_reset_p4x.trace"
+    samples = "00000000" * 3 + "631F9DF7631F9DF763199E0F63299E02631F9DFF63199DFC63249E14"
+    assert tracecmp(run, sht30(samples), ["--only-addr"]) == (206, [])
 
 
 def test_qmp6988_timing_is_what_is_checked(tmp_path):

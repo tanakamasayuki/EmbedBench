@@ -9,7 +9,7 @@
 //     next sample. CTRL_MEAS reads back what was written, forced mode bits
 //     and all, after the conversion (seen on the part).
 //   - Normal mode converts once per conversion time + standby (IO_SETUP,
-//     as measured: 5.39, 44.6 and 212.0 ms for the nominal 5, 50, 250);
+//     as measured: 5.41, 44.6 and 212.0 ms for the nominal 5, 50, 250);
 //     F3 bit 3 is set during each conversion.
 //   - Reads are byte-addressed: a pointer inside a register (A1, the
 //     calibration's second byte) answers from there, and a read longer than

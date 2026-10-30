@@ -13,7 +13,9 @@
 //     handed to the first read after the next command, at once, while
 //     the new measurement runs (what looked like "answers immediately").
 //   - Just after a soft reset the part takes its address and refuses the
-//     command (a data NACK).
+//     command (a data NACK). After a soft reset and before any command,
+//     every read gets 0000 with its CRC, then FF. An unread result
+//     survives the reset.
 //   - Status (F32D), clear status (3041), soft reset (30A2), heater.
 //     Periodic mode is not modelled: its commands are refused and set the
 //     status's "command not processed" bit, with a diagnostic.
@@ -86,6 +88,7 @@ class Sht30Model : public ebdev::Device {
   uint8_t result_[4] = {0, 0, 0, 0};
   uint8_t held_[4] = {0, 0, 0, 0};  // a finished result nobody read
   bool holding_ = false;
+  bool afterReset_ = false;  // soft reset, no command since
   uint32_t stretchLimitUs_ = 0;  // 0: the master waits as long as it takes
   uint32_t measurements_ = 0;
   uint32_t refused_ = 0;
