@@ -161,3 +161,86 @@ Gate Aの未決2で「拒否も完全性の対象」を選ぶ場合に依頼す�
 - hostは拒否の判断自体を変えない（通知のみを追加する）
 
 「hostが受理した外部作用」に完全性を限定する場合（未決2の(b)）は依頼しない。
+
+## 9. H5 — CH32 のコアの API（L8。依頼案、保留）
+
+2026-11-03。`REAL_DEVICE_ROADMAP` の L8（ArduinoCore-CH32RV の API を使うライブラリを host で動かす）のための洗い出し。
+**依頼するかは保留**（利用者の判断待ち）。ここは、依頼するときにそのまま渡せる中身。
+
+比べたもの: ArduinoCore-CH32RV（公開 API は同リポジトリの `docs/public-api.ja.md`、土台は ArduinoCore-API 1.5.2）と
+host-arduino-core 1.7.1。部品のドライバが触る面（Wire・SPI・割込みの禁止・時間の換算・ポートのレジスタ・Servo）に絞った。
+CH32 だけの物（`setRoute`、USB、DMA の ADC、flash、timer の貸し出し、`CH32RV` のシステムの物）は、部品のドライバが
+使わないので外した。
+
+「確認」の列: **ビルド** は host 1.7.1 で下の確かめのスケッチをビルドした結果、**読み** はソースを読んだだけ。
+
+### 9.1 不具合（ArduinoCore-API の決まりと違う。追加とは分けて扱う）
+
+| # | 現象 | 確認 | 直し方（案） |
+| --- | --- | --- | --- |
+| H5-B1 | `Wire.requestFrom(uint8_t addr, size_t len, bool stop)` が曖昧でビルドできない。`(int, size_t, bool)` も同じ。ArduinoCore-API の `HardwareI2C` の形そのもの | ビルド | `(uint16_t, size_t, bool)` と `(uint8_t, uint8_t, bool)` が、別々の引数で 1 回ずつ変換を要して並ぶ（`libraries/Wire/src/Wire.h:112-118`）。`size_t requestFrom(uint8_t, size_t, bool)` と `(int, size_t, bool)` を足す。足した後、2 引数の `(uint8_t, size_t)` が `(uint8_t, uint8_t)` に解決されて 255 を超える長さが切れないことも確かめる |
+| H5-B2 | `Wire.begin(uint8_t addr)`（スレーブとして始める）が、`begin(int sda = -1, int scl = -1, uint32_t f = 0)` に解決され、`sda = addr` のマスタとして始まる。エラーにならない | 読み（ビルドは通る） | `begin(uint8_t address)`（と arduino-esp32 と同じ `begin(int address)` の扱い）を足す。スレーブの模型が無いうちは、受け付けたことを診断で知らせるだけでもよい |
+
+### 9.2 足りないもの（小さい。マクロ・空の関数・別名）
+
+| # | 物 | 確認 | 中身（案） |
+| --- | --- | --- | --- |
+| H5-1 | `interrupts()` / `noInterrupts()` | ビルド | 標準の API。多くのライブラリが呼ぶ。host は割込みが 1 本の実行の中なので、空でよい（入れ子を数えて診断に出せればなおよい） |
+| H5-2 | `SPI_HAS_TRANSACTION`、`WIRE_HAS_END`、`WIRE_HAS_TIMEOUT` | ビルド | ドライバが `#ifdef` で見る。`SPI.h` / `Wire.h` で定義する（`WIRE_HAS_TIMEOUT` は H5-3 と一緒に） |
+| H5-3 | `Wire.setWireTimeout(uint32_t us = 25000, bool reset = false)`、`getWireTimeoutFlag()`、`clearWireTimeoutFlag()` | ビルド | AVR 由来の形。今の `setTimeOut(ms)` に寄せる。フラグは、模型が答えなかったときに立てる |
+| H5-4 | `BUFFER_LENGTH`、`WIRE_INTERFACES_COUNT` | ビルド | `BUFFER_LENGTH` は `I2C_BUFFER_LENGTH` の別名（CH32 は 32、host は 128。値は host のままでよい） |
+| H5-5 | `SPI.setPins(int sck, int miso, int mosi)`、`SPI_CLOCK_DIV2`〜`SPI_CLOCK_DIV128`、`SPI_INTERFACES_COUNT` | ビルド | `setPins` は `begin(sck, miso, mosi, -1)` と同じ扱い。`SPI_CLOCK_DIVn` は AVR の値 |
+| H5-6 | `NOT_AN_INTERRUPT`、`F_CPU`、`clockCyclesPerMicrosecond()`、`clockCyclesToMicroseconds()`、`microsecondsToClockCycles()` | ビルド | DHT 型のドライバが使う。`F_CPU` は仮想の値（例: 48 MHz）に固定 |
+| H5-7 | `IRAM_ATTR`（CH32 の `CH32RV_RAMFUNC` に当たる） | 読み | 空のマクロ |
+| H5-8 | `OUTPUT_OPENDRAIN`（ArduinoCore-API の綴り。host は `OUTPUT_OPEN_DRAIN` だけ）、`attachInterruptParam` | 読み | 別名 |
+| H5-9 | `<Servo.h>`（`attach`、`write`、`writeMicroseconds`、`read`、`attached`、`detach`） | ビルド | 動きの部品のライブラリが使う。PWM の書込みの hook（既にある）に載せる |
+
+### 9.3 型の階層（大きい。ArduinoCore-API の型で書いたライブラリだけが要る）
+
+| # | 物 | 確認 | 備考 |
+| --- | --- | --- | --- |
+| H5-10 | `arduino::HardwareI2C`、`arduino::HardwareSPI` の基底と `arduino::` 名前空間 | ビルド（`arduino` が無い） | `HardwareI2C&` / `HardwareSPI&` を受け取るライブラリ（SoftWire・SoftSPI もこれを継ぐ）がビルドできない |
+| H5-11 | `PinStatus`、`BitOrder`、`SPIMode` などの enum | 読み | `SPISettings(f, MSBFIRST, SPI_MODE0)` は今でも通る（ビルド）。enum の型名を書いたコードだけが困る |
+
+### 9.4 模型が要るもの（依頼ではなく、EmbedBench の側の仕事と一緒に決める）
+
+- ポートのレジスタ（`digitalPinToPort`、`digitalPinToBitMask`、`portOutputRegister`、`portInputRegister`。ビルドで無いことを確認）:
+  OneWire・DHT のような速い bit-bang が使う。ポインタの先を、模擬したピンの状態につなぐ必要がある。
+- Wire のスレーブ（H5-B2 の先）: 今は `onReceive` / `onRequest` を持つだけで、呼ぶ口が無い。
+
+### 9.5 確かめ方
+
+1 つのスケッチを、機能ごとの `-D` を変えてビルドし、通るかを見る。
+
+```sh
+arduino-cli compile --profile host --build-property "build.extra_flags=-DPROBE_X" .
+```
+
+試した呼び方（どれも `setup()` の中に置く。`#include <Wire.h>` と `<SPI.h>` は先頭に）:
+
+| -D | 中身 | host 1.7.1 |
+| --- | --- | --- |
+| `PROBE_INTERRUPTS` | `noInterrupts(); interrupts();` | 宣言が無い |
+| `PROBE_RF_SIZE` | `Wire.requestFrom(uint8_t(0x44), size_t(6), true);` | 曖昧 |
+| `PROBE_RF_INT` | `Wire.requestFrom(0x44, size_t(6), true);` | 曖昧 |
+| `PROBE_RF_U8` | `Wire.requestFrom(uint8_t(0x44), uint8_t(6), uint8_t(1));` | 通る |
+| `PROBE_SLAVE` | `Wire.begin(uint8_t(0x08));` | 通る（マスタになる） |
+| `PROBE_SPI_TX` / `PROBE_WIRE_HAS` | `#ifndef SPI_HAS_TRANSACTION` / `WIRE_HAS_TIMEOUT` で `#error` | 無い |
+| `P_WIRE_TIMEOUT` | `Wire.setWireTimeout(25000, true); Wire.getWireTimeoutFlag(); Wire.clearWireTimeoutFlag();` | 無い |
+| `P_BUFLEN` | `uint8_t b[BUFFER_LENGTH];` | 無い |
+| `P_HW_I2C` | `arduino::HardwareI2C* h = &Wire;` | 無い |
+| `P_SPI_PINS` / `P_SPI_DIV` | `SPI.setPins(1, 2, 3);` / `SPI.setClockDivider(SPI_CLOCK_DIV4);` | 無い |
+| `P_SPI_SETTINGS` | `SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));` | 通る |
+| `P_SERVO` | `#include <Servo.h>` | 無い |
+| `P_CYCLES` | `microsecondsToClockCycles(1); clockCyclesPerMicrosecond();` | 無い |
+| `P_PORTREG` | `portOutputRegister(digitalPinToPort(2)); digitalPinToBitMask(2);` | 無い |
+| `P_NOTINT` | `NOT_AN_INTERRUPT` | 無い |
+
+依頼して直ったら、同じ表がすべて「通る」になることと、`PROBE_SLAVE` がスレーブとして始まることを確かめる。
+
+### 9.6 実際のドライバについて
+
+DeviceData に run がある M5Unit-ENV 1.7.3 は、host でも CH32 でもこの面の外で止まる。依存の M5UnitUnified 0.6.4 が
+`#if defined(ARDUINO)` で `esp32-hal-i2c.h`（`i2cIsInit`）と ESP32 の GPIO のレジスタを読む（ESP32 専用）。host は
+`esp32-hal-i2c.h` が無くて止まる（ESP32 の API を名乗る host の core としては、これも不足の候補）。CH32 のドライバを
+host で動かす確かめには、ESP32 に縛られないドライバ（Adafruit SHT31 など）を使う。
