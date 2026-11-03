@@ -183,7 +183,7 @@ def test_qmp6988_reset_byte_decodes_as_an_address():
     # E0 = E6 resets the part, and the wire then shows a START with E6 as
     # the address: 0x73 written. Both decoders show it, rightly; there is
     # no part at 0x73 (X67's open question). The pilot (sigrok) kept it, an
-    # ACKed 0x73; the OEP runs went through skein2trace.py --knowledge,
+    # ACKed 0x73; the OEP runs went through skein2trace.py --provenance,
     # which folds what QMP6988's knowledge names as a decode artefact
     # (EmbedBenchDeviceData knowledge/qmp6988.yaml), and the model then
     # answers every transfer with nothing left out.

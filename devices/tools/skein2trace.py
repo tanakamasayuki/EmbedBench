@@ -51,7 +51,9 @@ that the decode shows right after a given write to the part, and that is
 that write's own doing rather than a transfer of its own (QMP6988's reset
 byte E6, read by the decoder as an address: 0x73 written). It becomes
 `mark folded=<key> addr=<addr>`. The decode is right to show it; knowing
-it is not a transfer is knowledge of the part.
+it is not a transfer is knowledge of the part. For a run, --provenance
+provenance.yaml --knowledge-dir knowledge/ finds the files and addresses
+from the run's targets; --knowledge is for input with no provenance.
 
 Marker values are reduced to [A-Za-z0-9_-] (anything else becomes `_`),
 and the application's text is percent-encoded, so no marker can read as
@@ -59,6 +61,7 @@ an event. Checked against a P4X capture of a real bus (X66).
 
 Usage:
     skein2trace.py i2c.json --capture c0001.wireskein [--run run.json]
+        [--provenance provenance.yaml --knowledge-dir knowledge/]
         [--knowledge knowledge/qmp6988.yaml@0x70]
 """
 
@@ -118,6 +121,19 @@ def load_folds(specs):
                           bytes.fromhex(then.get("bytes") or ""),
                           slug(item["key"])))
     return rules
+
+
+def folds_from_provenance(provenance, knowledge_dir):
+    """The run's provenance.yaml names each part as {chip, addr}: fold what
+    knowledge/<chip>.yaml says, at that address."""
+    import yaml
+    data = yaml.safe_load(Path(provenance).read_text(encoding="utf-8"))
+    specs = []
+    for target in data.get("targets") or []:
+        path = Path(knowledge_dir) / ("%s.yaml" % target["chip"])
+        if path.exists():
+            specs.append("%s@%s" % (path, target["addr"]))
+    return load_folds(specs)
 
 
 def folded(transactions, rules):
@@ -246,10 +262,20 @@ def main():
                     metavar="FILE@ADDR",
                     help="a part's knowledge file and the part's I2C address (0x70): "
                     "fold the decode artefacts it names")
+    ap.add_argument("--provenance", type=Path,
+                    help="the run's provenance.yaml: fold what the knowledge "
+                    "of each of its targets says, at the target's address")
+    ap.add_argument("--knowledge-dir", type=Path,
+                    help="EmbedBenchDeviceData knowledge/, for --provenance")
     args = ap.parse_args()
     run = json.loads(args.run.read_text()) if args.run else None
+    rules = load_folds(args.knowledge)
+    if args.provenance:
+        if not args.knowledge_dir:
+            raise SystemExit("--provenance needs --knowledge-dir")
+        rules += folds_from_provenance(args.provenance, args.knowledge_dir)
     for line in convert(json.loads(args.i2c.read_text()), args.capture, run,
-                        load_folds(args.knowledge)):
+                        rules):
         print(line)
 
 

@@ -138,3 +138,21 @@ def test_knowledge_folds_a_decode_artefact(tmp_path):
     assert len(folds) == 1 and folds[0].endswith(
         "mark folded=reset-byte-as-address addr=73")
     assert sum("i2c.req addr=73" in l for l in lines) == 2
+
+
+def test_provenance_names_the_knowledge(tmp_path):
+    # A run's provenance names its parts as {chip, addr}: the knowledge
+    # file and the address come from there, not from the command line.
+    tool = load("skein2trace")
+    (tmp_path / "qmp6988.yaml").write_text(
+        "decode_artefacts:\n"
+        "  - key: reset-byte-as-address\n"
+        "    write: \"E0E6\"\n"
+        "    then: {addr: \"0x73\", rw: write, bytes: \"\"}\n")
+    provenance = tmp_path / "provenance.yaml"
+    provenance.write_text(
+        "targets:\n"
+        "  - {chip: qmp6988, bus: i2c, addr: \"0x56\"}\n"
+        "  - {chip: sht30, bus: i2c, addr: \"0x44\"}\n")
+    assert tool.folds_from_provenance(provenance, tmp_path) == [
+        (0x56, bytes.fromhex("E0E6"), 0x73, "write", b"", "reset-byte-as-address")]
