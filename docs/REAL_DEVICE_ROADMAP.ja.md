@@ -204,9 +204,28 @@ OEP からの提案。急ぎではない。
 | # | 内容 | どこの仕事か | 見立て |
 | --- | --- | --- | --- |
 | L7 | arduino-pico の API（PIO、マルチコア、RP2 固有の API）を使うライブラリを host で動かす | 主に **host の core**（今は ESP32 の API の host-arduino-core）。EmbedBench の模型は純粋 C++ で `HostPort` 越しにつながるので、その core に port の実装があれば流用できる | `Wire` / `SPI` は arduino-pico も `HardwareI2C` / `HardwareSPI` で形が近い。PIO は命令の模倣まで要るので大きい。マルチコアは host の core の実行モデル（今は 1 本）に関わる。どこまで要るかを使う側のライブラリで決めてから |
-| L8 | CH32 の core（ArduinoCore-CH32RV）の API を使うライブラリを host で動かす | 同上 | Arduino の標準の API だけなら今の host の core で足りる見込み。固有の API が何かを洗うのが先 |
+| L8 | CH32 の core（ArduinoCore-CH32RV）の API を使うライブラリを host で動かす | 同上 | **洗った（2026-11-03、下）。** 部品のドライバが触るのは標準の API とその周りだけで、host の core に足りないものはほとんど小さい。OEP の希望で L7 より先 |
 | L9 | どの模型にも被せられる故障（n バイト目で NACK、k 回 busy を返してから答える） | EmbedBench | 模型を包む故障の層（凍結 IF の `Device` を包んで `Device` として見せる）にすれば、凍結 IF を変えずに作れる見込み。書込みの n バイト目の NACK は「中の模型に n バイトまで渡し、status 3 を返す」。k 回 busy は tape の `kBusy` と同じ考え（回数でなく時間でも選べるようにする）。今ある `unit_faulty_model`（不在・拒否・短い読出し）はこの部分集合になる |
 | L10 | 進行役が時刻を決めて出す線のパターン | EmbedBench（シナリオの側） | 模型への `lineIn` を時刻の列で与える形。OEP の §3.2「パターンの出力」と同じ言葉（level の列、繰り返し、出来事で始める）にそろえれば、同じシナリオを層 1 と層 4 で動かせる |
+
+**L8 の洗い出し（2026-11-03）。** ArduinoCore-CH32RV（公開 API は `docs/public-api.ja.md`、土台は ArduinoCore-API 1.5.2）と
+host の core（lang-ship:host 1.7.1）を突き合わせた。部品のドライバが実際に触るのは Wire・SPI、`interrupts()` / `noInterrupts()`、
+`clockCycles*`、ポートのレジスタ（OneWire・DHT のような速い bit-bang）、Servo くらい。host で試しにビルドして確かめたもの:
+
+| 呼び方 | host 1.7.1 |
+| --- | --- |
+| `noInterrupts()` / `interrupts()` | **宣言が無い**（標準の API。多くのライブラリが呼ぶ） |
+| `Wire.requestFrom(uint8_t, size_t, bool)`（ArduinoCore-API の形） | **曖昧でビルドできない**。`(int, size_t, bool)` も同じ。`(uint8_t, uint8_t, uint8_t)` は通る |
+| `SPI_HAS_TRANSACTION`、`WIRE_HAS_TIMEOUT` | **定義が無い**（ドライバが `#ifdef` で見る） |
+| `Wire.begin(uint8_t)`（スレーブ） | ビルドは通るが、`begin(int sda, ...)` に解決されてマスタになる（読んだだけ） |
+
+ほかに足りないもの:
+- 小さいもの: `NOT_AN_INTERRUPT`、`clockCycles*` と `F_CPU`、`IRAM_ATTR` 相当、`setWireTimeout` 一式、`BUFFER_LENGTH`、`SPI_CLOCK_DIVn`、`SPI.setPins`。
+- 型の階層: `arduino::HardwareI2C` / `HardwareSPI` の基底と `arduino::` の enum。ArduinoCore-API の型で書いたライブラリだけが要る。
+- 模型が要るもの: ポートのレジスタ、`ch32rv_flash_*`、`ch32rv_timer_*`、`CH32RV` のシステムの物（sleep・watchdog）、Wire のスレーブ。
+- CH32 だけの物（`setRoute`、USB、DMA の ADC など）は、部品のドライバは使わない。
+
+直すのは host の core（lang-ship）の側。EmbedBench は直さない。
 
 L9・L10 の言葉（パラメータの名前と意味）は OEP の `oep-spec` の `docs/peripheral-testing.ja.md` §3.2 にそろえる。
 L7・L8 は host の core の持ち主と、どの API が要るかを決めてから。
