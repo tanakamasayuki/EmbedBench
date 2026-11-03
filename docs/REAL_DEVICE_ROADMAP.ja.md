@@ -218,6 +218,10 @@ host の core（lang-ship:host 1.7.1）を突き合わせた。部品のドラ�
 | `Wire.requestFrom(uint8_t, size_t, bool)`（ArduinoCore-API の形） | **曖昧でビルドできない**。`(int, size_t, bool)` も同じ。`(uint8_t, uint8_t, uint8_t)` は通る |
 | `SPI_HAS_TRANSACTION`、`WIRE_HAS_TIMEOUT` | **定義が無い**（ドライバが `#ifdef` で見る） |
 | `Wire.begin(uint8_t)`（スレーブ） | ビルドは通るが、`begin(int sda, ...)` に解決されてマスタになる（読んだだけ） |
+| `setWireTimeout` 一式、`BUFFER_LENGTH`、`arduino::HardwareI2C` | 無い |
+| `SPI.setPins(sck, miso, mosi)`、`SPI_CLOCK_DIV4` | 無い（`SPISettings(f, MSBFIRST, SPI_MODE0)` は通る） |
+| `<Servo.h>` | 無い |
+| `clockCycles*`、`NOT_AN_INTERRUPT`、`digitalPinToPort` / `portOutputRegister` | 無い |
 
 ほかに足りないもの:
 - 小さいもの: `NOT_AN_INTERRUPT`、`clockCycles*` と `F_CPU`、`IRAM_ATTR` 相当、`setWireTimeout` 一式、`BUFFER_LENGTH`、`SPI_CLOCK_DIVn`、`SPI.setPins`。
@@ -225,7 +229,13 @@ host の core（lang-ship:host 1.7.1）を突き合わせた。部品のドラ�
 - 模型が要るもの: ポートのレジスタ、`ch32rv_flash_*`、`ch32rv_timer_*`、`CH32RV` のシステムの物（sleep・watchdog）、Wire のスレーブ。
 - CH32 だけの物（`setRoute`、USB、DMA の ADC など）は、部品のドライバは使わない。
 
-直すのは host の core（lang-ship）の側。EmbedBench は直さない。
+実際のドライバ（OEP の提案で、DeviceData に run がある M5Unit-ENV 1.7.3）は、host でも CH32 でも使えない。依存の
+M5UnitUnified 0.6.4 が `#if defined(ARDUINO)` で `esp32-hal-i2c.h`（`i2cIsInit`）と ESP32 の GPIO のレジスタを読む
+（ESP32 専用）。host は `esp32-hal-i2c.h` が無くて止まる。CH32 のドライバを host で動かす確かめには、ESP32 に縛られない
+ドライバを選ぶ必要がある。
+
+直すのは host の core（lang-ship）の側。EmbedBench は直さない。ArduinoCore-API の決まりと違う不具合（`requestFrom` の
+曖昧さ、`begin(uint8_t)` がマスタになる）と、足りないものの追加は分けて扱う。
 
 L9・L10 の言葉（パラメータの名前と意味）は OEP の `oep-spec` の `docs/peripheral-testing.ja.md` §3.2 にそろえる。
 L7・L8 は host の core の持ち主と、どの API が要るかを決めてから。
