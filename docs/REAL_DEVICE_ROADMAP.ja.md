@@ -29,6 +29,8 @@
 | データリポジトリ | 骨組み・validate・run の名前、カタログの移行（D1〜D3。2026-10-30） | EmbedBenchDeviceData |
 | 最初の実データ | OEP が U001-C の run を 100 / 400 kHz で 8 本（D4・L4。2026-10-30） | EmbedBenchDeviceData の runs/ |
 | 模型と照合 | QMP6988・SHT30 の模型、`tracecmp.py`（L1〜L3）。実データで確かめた | X68 |
+| 取り直し | run を wireskein-run/1 で 19 本取り直し、模型を合わせ直した（2026-11-03） | X68、EmbedBenchDeviceData |
+| knowledge | qmp6988（レジスタ型）・sht30（コマンド型）。decode の作り物（E6 → 0x73）は knowledge に書き、`skein2trace.py --provenance` が畳む | EmbedBenchDeviceData、X68 |
 
 ---
 
@@ -101,7 +103,7 @@ EmbedBenchDeviceData/
 | D2 | chips・products・libraries・surveys・guides を移す。`addresses` と `components` を組み直す | 不要 | **済み**（I2CDeviceDB 38f1d82 から。chip のキーはそのまま） |
 | D3 | run の manifest（`provenance.yaml`）の形と validate | 不要 | **済み** |
 | D4 | 最初の実データの run（L3 と同時） | 要 | **済み**（OEP。100 / 400 kHz で 8 本） |
-| D5 | `knowledge/` と、そこからの生成（wireskein の識別の表、EmbedBench の雛形の初期値） | 不要 | **雛形は済み**（`knowledge/qmp6988.yaml` → `tools/knowledge_table.py` が X68 の模型と同じ表を出す）。wireskein の識別の表は未着手 |
+| D5 | `knowledge/` と、そこからの生成（wireskein の識別の表、EmbedBench の雛形の初期値） | 不要 | **済み**。雛形は `tools/knowledge_table.py`（X68 の模型と同じ表）。wireskein の識別の表は `tools/knowledge_decl.py` が `decl/devices/<bus>/<メーカー>/<chip>.toml` を書き出す（形は wireskein と決めた。取り込みは wireskein） |
 
 ---
 
