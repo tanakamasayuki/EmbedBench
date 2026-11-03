@@ -117,7 +117,7 @@ EmbedBenchDeviceData/
 | 項目 | 今の実装 | 出典 |
 | --- | --- | --- |
 | Wire の repeated start（書込み） | `endTransmission(false)` は STOP を出さず、次の START が repeated start になる | `libraries/Wire/src/Wire.cpp:545` |
-| **Wire の repeated start（読出し）** | **`requestFrom(addr, n, false)` でも STOP を出す。** 長さ 1・2・3 以上のどの分岐も `stop()` を呼び、`!stopBit` の分岐は中身が空 | `Wire.cpp:552-644`（2026-10-29 に読んで確認。**コアのバグ候補、未報告**） |
+| **Wire の repeated start（読出し）** | **`requestFrom(addr, n, false)` でも STOP を出す。** 長さ 1・2・3 以上のどの分岐も `stop()` を呼び、`!stopBit` の分岐は中身が空 | `Wire.cpp:552-644`（2026-10-29 に読んで確認）。**コアが直した（ba8dc851）。線ではまだ確かめていない**：ベンチの X035C8T6 は errata（ロット番号の後ろから 5 桁目が 0）に当たる個体で、ハードウェアの I2C ではどの相手も ACK できない |
 | clock stretch と timeout | ハードウェアが待つ。フラグごとの待ちに `_timeout_us`（既定 25 ms）。`setWireTimeout` / `getWireTimeoutFlag` / `clearWireTimeoutFlag` あり。0 で無効 | `Wire.h:51-53`、`Wire.cpp:214-255` |
 | `endTransmission` の戻り値 | 0 成功、1 バッファ超過（32 byte）、2 アドレス NACK、3 データ NACK、4 未開始・slave、5 timeout・バス異常・調停負け | `Wire.cpp:491-542` |
 | バスの回復 | NACK 以外の失敗で次の呼び出し時に周辺を SWRST（自動）。`clearBus()`（SCL を最大 9 回、STOP）は明示呼び出しだけ | `Wire.cpp:454-463`、`854-904` |
@@ -164,7 +164,7 @@ EmbedBenchDeviceData/
 | バスの詰まり（SDA / SCL が low のまま）、`recover()`・`clearBus()` | 線を low に保つ相手 | OEP 側で形を決める（§2.4）。GPIO fixture の open-drain low を同じピンに当てる手もあるが、plan の切り替えが要る |
 | レジスタポインタに応じた応答 | `preload_tx` は固定の列 | 期待する読出しごとに host が slot を積む（短い試験なら足りる）。足りなければ OEP 側で（§2.4） |
 | 調停負け・バス異常（戻り値 5、timeout 以外） | 起こす手段 | 未検討 |
-| `requestFrom(..., false)` | 相手は足りている | **コアが常に STOP を出す**（上）。キャプチャで確かめれば、それがそのまま試験になる |
+| `requestFrom(..., false)` | 相手は足りている | コアの修正（ba8dc851）は入った。キャプチャで確かめれば、それがそのまま試験になる。I2C の使える X035 か V シリーズを OEP のプローブにつなぐ配線が要る（利用者の判断待ち） |
 | 1 MHz を超える I2C | P4 の上限 | 対象外 |
 | 64 バイトを超える SPI の転送 | spi-target の `read_rx` と `arm` の上限が 64 バイト | MOSI と SCK はキャプチャ ＋ verify で判定できる。MISO の内容と `read_rx` は 64 バイトまで |
 | SPI の DMA | コアに無い | 対象外 |
@@ -262,4 +262,4 @@ L7・L8 は host の core の持ち主と、どの API が要るかを決めて�
 
 | 項目 | 誰が | 選択肢 |
 | --- | --- | --- |
-| `requestFrom(..., false)` の STOP をコアの不具合として扱うか | 利用者（ch32rv の持ち主） | 直す / 仕様として文書化する |
+| `requestFrom(..., false)` の修正を線で確かめる相手 | 利用者 | I2C の使える X035 か V シリーズを OEP のプローブにつなぐ |
