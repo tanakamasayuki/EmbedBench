@@ -63,8 +63,9 @@ def test_qmp6988_matches_every_recording():
     # forced conversion is still running when normal mode is written, and
     # every sample lands on its schedule. A sweep reads status about 20 us
     # apart from 183 to 765 us after a forced write: the bit rises between
-    # 209 and 226 us. The address 0x73 transfer of a
-    # reset is left out (--only-addr; see the last test).
+    # 209 and 226 us. Other addresses are left out (--only-addr): the
+    # library run talks to SHT30 too, and the pilot keeps the reset's 0x73
+    # (see the last test).
     for name, count in (("qmp6988_u001c.trace", 57), ("qmp6988_modes_p4x.trace", 64),
                         ("qmp6988_modes_p4x_400k.trace", 44),
                         ("qmp6988_measure_bit_p4x_400k.trace", 94),
@@ -179,15 +180,20 @@ def test_sht30_stretch_limit_belongs_to_the_controller():
 
 
 def test_qmp6988_reset_byte_decodes_as_an_address():
-    # E0 = E6 resets the part while the E6 byte is still on the bus, and the
-    # decoder reads that byte as a new address: E6 is 0x73 written. The
-    # pilot (sigrok) kept E6 as data and then saw an ACKed 0x73; the OEP run
-    # (wireskein) keeps E6 as data too and sees a refused 0x73. Neither is
-    # a part at 0x73 (X67's open question).
+    # E0 = E6 resets the part, and the wire then shows a START with E6 as
+    # the address: 0x73 written. Both decoders show it, rightly; there is
+    # no part at 0x73 (X67's open question). The pilot (sigrok) kept it, an
+    # ACKed 0x73; the OEP runs went through skein2trace.py --knowledge,
+    # which folds what QMP6988's knowledge names as a decode artefact
+    # (EmbedBenchDeviceData knowledge/qmp6988.yaml), and the model then
+    # answers every transfer with nothing left out.
     pilot = (HERE / "qmp6988_u001c.trace").read_text()
     assert "7876 i2c.req addr=70 data=E0E6 stop=1\n7876 i2c.resp status=0\n" \
            "8163 i2c.req addr=73 data= stop=1\n8163 i2c.resp status=0" in pilot
-    oep = (HERE / "qmp6988_modes_p4x.trace").read_text()
-    assert "37769582 i2c.req addr=70 data=E0E6 stop=1\n37769582 i2c.resp status=0\n" \
-           "37769869 i2c.req addr=73 data= stop=1\n37769869 i2c.resp status=2" in oep
     assert 0xE6 >> 1 == 0x73
+    for name, count in (("qmp6988_modes_p4x.trace", 64), ("qmp6988_modes_p4x_400k.trace", 44)):
+        oep = (HERE / name).read_text()
+        assert re.search(r"i2c\.req addr=70 data=E0E6 stop=1\n.*\n"
+                         r"\d+ mark folded=reset-byte-as-address addr=73\n", oep), name
+        assert "addr=73" not in oep.replace("addr=73\n", "", 1)
+        assert tracecmp(HERE / name, QMP) == (count, []), name

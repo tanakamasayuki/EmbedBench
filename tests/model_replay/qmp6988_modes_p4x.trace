@@ -1,5 +1,5 @@
 # M5Stack U001-C at 100 kHz, an ESP32-P4 controller (OEP P4X, arduino-esp32 3.3.12): EmbedBenchDeviceData run
-# qmp6988-modes__i2c-100k__b85bde517b61bfb7 (2026-11-03), through skein2trace.py.
+# qmp6988-modes__i2c-100k__b85bde517b61bfb7 (2026-11-03), through skein2trace.py --knowledge qmp6988.yaml:70.
 37768716 mark case=qmp6988-modes
 37768725 mark case=qmp6988-modes phase=chip-id
 37768958 i2c.req addr=70 data=D1 stop=0
@@ -11,8 +11,7 @@
 37769516 mark case=qmp6988-modes phase=reset
 37769582 i2c.req addr=70 data=E0E6 stop=1
 37769582 i2c.resp status=0
-37769869 i2c.req addr=73 data= stop=1
-37769869 i2c.resp status=2
+37769869 mark folded=reset-byte-as-address addr=73
 37769885 mark src=dut text=end%3D0
 37829737 mark src=dut text=iir%3Dff
 37829890 i2c.req addr=70 data=F3 stop=0

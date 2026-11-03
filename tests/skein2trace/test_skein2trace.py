@@ -111,3 +111,30 @@ def test_marker_values_never_read_as_events():
     assert lines == ["6061908 mark case=i2c_req",
                      "6061909 mark src=dut text=x%20i2c.rd.resp%20y"]
     assert load("trace2regtable").parse(lines) == []
+
+
+def test_knowledge_folds_a_decode_artefact(tmp_path):
+    # A part's knowledge names a transfer the decode shows right after a
+    # given write, that is not a transfer of its own (QMP6988's reset byte
+    # read as an address). Only that one, right after that write, folds.
+    tool = load("skein2trace")
+    knowledge = tmp_path / "part.yaml"
+    knowledge.write_text(
+        "decode_artefacts:\n"
+        "  - key: reset-byte-as-address\n"
+        "    write: \"E0E6\"\n"
+        "    then: {addr: \"0x73\", rw: write, bytes: \"\"}\n")
+
+    def write(s, addr, data, ack=True):
+        return {"s": s, "e": s + 10, "addr": addr, "rw": "write", "addr_ack": ack,
+                "bytes": data, "acks": [True] * (len(data) // 2),
+                "start_cond": "S", "end_cond": "P", "scl_waits": []}
+    i2c = {"transactions": [write(0, 0x70, "e0e6"), write(100, 0x73, "", False),
+                            write(200, 0x73, "", False), write(300, 0x70, "e0e5"),
+                            write(400, 0x73, "", False)]}
+    lines = tool.convert(i2c, SAMPLE / "c0001.wireskein", None,
+                         tool.load_folds(["%s:70" % knowledge]))
+    folds = [l for l in lines if "folded" in l]
+    assert len(folds) == 1 and folds[0].endswith(
+        "mark folded=reset-byte-as-address addr=73")
+    assert sum("i2c.req addr=73" in l for l in lines) == 2

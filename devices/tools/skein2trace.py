@@ -45,12 +45,21 @@ closed (end_cond null) is written with stop=1 and reported on stderr.
 (wireskein's scl_waits); the line level cannot tell who held SCL low, so
 it is a wait, not a stretch.
 
+--knowledge FILE:ADDR (EmbedBenchDeviceData knowledge/<chip>.yaml and the
+part's address) folds what the file's decode_artefacts name: a transfer
+that the decode shows right after a given write to the part, and that is
+that write's own doing rather than a transfer of its own (QMP6988's reset
+byte E6, read by the decoder as an address: 0x73 written). It becomes
+`mark folded=<key> addr=<addr>`. The decode is right to show it; knowing
+it is not a transfer is knowledge of the part.
+
 Marker values are reduced to [A-Za-z0-9_-] (anything else becomes `_`),
 and the application's text is percent-encoded, so no marker can read as
 an event. Checked against a P4X capture of a real bus (X66).
 
 Usage:
     skein2trace.py i2c.json --capture c0001.wireskein [--run run.json]
+        [--knowledge knowledge/qmp6988.yaml:70]
 """
 
 from __future__ import annotations
@@ -91,11 +100,47 @@ def tick_us(tick, hz, start_ns, tick0):
                      (Fraction(tick) - tick0) * 1_000_000 / hz))
 
 
-def transfer_lines(transactions, hz, start_ns, tick0):
+def load_folds(specs):
+    """--knowledge FILE:ADDR: the decode artefacts a part's knowledge file
+    names, for the part at ADDR (hex)."""
+    import yaml
+    rules = []
+    for spec in specs:
+        path, _, addr = spec.rpartition(":")
+        data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        for item in data.get("decode_artefacts") or []:
+            then = item["then"]
+            rules.append((int(addr, 16), bytes.fromhex(item["write"]),
+                          int(str(then["addr"]), 16), then["rw"],
+                          bytes.fromhex(then.get("bytes") or ""),
+                          slug(item["key"])))
+    return rules
+
+
+def folded(transactions, rules):
+    """Indexes of transfers that are a known artefact of the transfer just
+    before them, by key."""
+    out = {}
+    for i in range(1, len(transactions)):
+        x, before = transactions[i], transactions[i - 1]
+        for part, write, addr, rw, data, key in rules:
+            if (before["addr"] == part and before["rw"] == "write" and
+                    bytes.fromhex(before.get("bytes") or "") == write and
+                    x["addr"] == addr and x["rw"] == rw and
+                    bytes.fromhex(x.get("bytes") or "") == data):
+                out[i] = key
+    return out
+
+
+def transfer_lines(transactions, hz, start_ns, tick0, rules=()):
     out = []
     last = None
-    for x in transactions:
+    folds = folded(transactions, rules)
+    for index, x in enumerate(transactions):
         time = tick_us(x["s"], hz, start_ns, tick0)
+        if index in folds:
+            out.append((time, "mark folded=%s addr=%02X" % (folds[index], x["addr"])))
+            continue
         if x.get("end_cond") is None:
             print("warning: transfer at %d us still open at the window's "
                   "end" % time, file=sys.stderr)
@@ -176,9 +221,10 @@ def mark_lines(run, capture_file, start_ns):
     return out
 
 
-def convert(i2c, capture_path, run=None):
+def convert(i2c, capture_path, run=None, rules=()):
     hz, start_ns, tick0 = load_capture(capture_path)
-    lines = transfer_lines(i2c.get("transactions", []), hz, start_ns, tick0)
+    lines = transfer_lines(i2c.get("transactions", []), hz, start_ns, tick0,
+                           rules)
     if run is not None:
         lines += mark_lines(run, Path(capture_path).name, start_ns)
     # Stable: a transfer and a marker at the same microsecond keep the
@@ -193,9 +239,14 @@ def main():
     ap.add_argument("--capture", type=Path, required=True,
                     help="the .wireskein capture the transactions came from")
     ap.add_argument("--run", type=Path, help="run.json, for the markers")
+    ap.add_argument("--knowledge", action="append", default=[],
+                    metavar="FILE:ADDR",
+                    help="a part's knowledge file and its address (hex): "
+                    "fold the decode artefacts it names")
     args = ap.parse_args()
     run = json.loads(args.run.read_text()) if args.run else None
-    for line in convert(json.loads(args.i2c.read_text()), args.capture, run):
+    for line in convert(json.loads(args.i2c.read_text()), args.capture, run,
+                        load_folds(args.knowledge)):
         print(line)
 
 

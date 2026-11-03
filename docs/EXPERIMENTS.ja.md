@@ -2671,10 +2671,12 @@ P×8・T×1 は OEP の run で 10.646〜10.728 ms に絞れ（下端は 400 kHz
 無かったこと、上端は 5 ms の standby の run の最初の値）、模型は 10.665 ms。P×1・T×1 の 4.68 ms は pilot の
 4.13〜4.84 ms に入る。
 
-**X67 の「0x73 への ACK」は、リセットのバイトそのものだった。** E0=E6 で部品は E6 を受けている最中にリセットし、
-復号器はその E6 を新しいアドレス（0x73 への書込み）と読む。pilot（sigrok）は E6 をデータとして残したうえで ACK の
-0x73 を、OEP（wireskein）も E6 をデータとして残したうえで NACK の 0x73 を出した。0x73 の部品はいない。変換で吸収するか、
-wireskein の側で印を付けるかは未決（照合は `--only-addr` で外している）。
+**X67 の「0x73 への ACK」は、リセットのバイトの後に線に出るもの。** E0=E6 の直後、線には E6 をアドレスとする START が
+出て、復号器はそれを 0x73 への書込みと読む。pilot（sigrok）は ACK の 0x73、OEP（wireskein）は NACK の 0x73 を出した。
+0x73 の部品はいない。部品（E6 を受けている最中のリセット）と controller のどちらが出すかは、まだ分けていない。
+復号器は線のとおりに出すのが正しいので、畳むのは読む側にした（OEP・wireskein と相談）: knowledge/qmp6988.yaml の
+`decode_artefacts` に書き、`skein2trace.py --knowledge knowledge/qmp6988.yaml:70` が `mark folded=...` に替える。
+OEP の 2 本はこれを通し、`--only-addr` 無しでも差 0。
 
 **SHT30: 記録 4 本で、差は説明の付くものだけ。**
 
@@ -2717,7 +2719,7 @@ wireskein の側で印を付けるかは未決（照合は `--only-addr` で外�
   いて、模型と合う。
 - sht30-ready（Wire）の run は使っていない。アドレスで断られた読出しにも、Wire が 6 バイト（000000000000 や
   bebebebebebe）を「読めた」と返す（arduino-esp32 3.3.12、P4）。線の答えは ESP-IDF の run で取った。
-- **clock stretch を待つ長さ。** ESP-IDF の `scl_wait_us` を 20000 にすると、11.7 ms 待って 6 バイトが返った。Wire は
+- **clock stretch を待つ長さ。** ESP-IDF の `scl_wait_us` を 20000 にすると、コマンドから 13.0 ms で 6 バイトが返った。Wire は
   `setTimeOut(1000)` でも 6.7 ms であきらめる。あきらめるのは Wire の timeout ではなく、SCL を待つ上限（arduino-esp32 は
   ハードウェアの既定）。`kChannelStretchLimit` は「controller の性質」という置き方で合っている。
 - **途中であきらめた読出しの後、SHT30 が SCL を low に握ったまま離さないことがある**（P4 のリセットでも戻らず、
