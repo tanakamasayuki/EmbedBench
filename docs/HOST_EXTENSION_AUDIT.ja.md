@@ -179,6 +179,7 @@ CH32 だけの物（`setRoute`、USB、DMA の ADC、flash、timer の貸し出�
 | # | 現象 | 確認 | 直し方（案） |
 | --- | --- | --- | --- |
 | H5-B1 | `Wire.requestFrom(uint8_t addr, size_t len, bool stop)` が曖昧でビルドできない。`(int, size_t, bool)` も同じ。ArduinoCore-API の `HardwareI2C` の形そのもの | ビルド | `(uint16_t, size_t, bool)` と `(uint8_t, uint8_t, bool)` が、別々の引数で 1 回ずつ変換を要して並ぶ（`libraries/Wire/src/Wire.h:112-118`）。`size_t requestFrom(uint8_t, size_t, bool)` と `(int, size_t, bool)` を足す。足した後、2 引数の `(uint8_t, size_t)` が `(uint8_t, uint8_t)` に解決されて 255 を超える長さが切れないことも確かめる |
+| H5-B3 | ライブラリのディレクトリ名に空白があると（`Adafruit SHT31 Library`、`Adafruit BusIO` をプロファイルで入れたとき）、`-I` が引用されず `g++: cannot specify '-o' with ... multiple files` でビルドが止まる | ビルド | `platform.txt` の include の並びを引用する（ほかの core と同じ `"-I{...}"` の形） |
 | H5-B2 | `Wire.begin(uint8_t addr)`（スレーブとして始める）が、`begin(int sda = -1, int scl = -1, uint32_t f = 0)` に解決され、`sda = addr` のマスタとして始まる。エラーにならない | 読み（ビルドは通る） | `begin(uint8_t address)`（と arduino-esp32 と同じ `begin(int address)` の扱い）を足す。スレーブの模型が無いうちは、受け付けたことを診断で知らせるだけでもよい |
 
 ### 9.2 足りないもの（小さい。マクロ・空の関数・別名）
@@ -200,7 +201,7 @@ CH32 だけの物（`setRoute`、USB、DMA の ADC、flash、timer の貸し出�
 | # | 物 | 確認 | 備考 |
 | --- | --- | --- | --- |
 | H5-10 | `arduino::HardwareI2C`、`arduino::HardwareSPI` の基底と `arduino::` 名前空間 | ビルド（`arduino` が無い） | `HardwareI2C&` / `HardwareSPI&` を受け取るライブラリ（SoftWire・SoftSPI もこれを継ぐ）がビルドできない |
-| H5-11 | `PinStatus`、`BitOrder`、`SPIMode` などの enum | 読み | `SPISettings(f, MSBFIRST, SPI_MODE0)` は今でも通る（ビルド）。enum の型名を書いたコードだけが困る |
+| H5-11 | `PinStatus`、`BitOrder`、`SPIMode` などの enum | ビルド | **`BitOrder` は Adafruit BusIO（Adafruit の多くのドライバの土台）が要る。** BusIO は AVR・ESP32 などを名前で見分け、どれでもなければ `typedef BitOrder BusIOBitOrder;` とする。host は `ESP32` も `BitOrder` も無いので止まる。`SPISettings(f, MSBFIRST, SPI_MODE0)` 自体は通る |
 
 ### 9.4 模型が要るもの（依頼ではなく、EmbedBench の側の仕事と一緒に決める）
 
@@ -243,4 +244,11 @@ arduino-cli compile --profile host --build-property "build.extra_flags=-DPROBE_X
 DeviceData に run がある M5Unit-ENV 1.7.3 は、host でも CH32 でもこの面の外で止まる。依存の M5UnitUnified 0.6.4 が
 `#if defined(ARDUINO)` で `esp32-hal-i2c.h`（`i2cIsInit`）と ESP32 の GPIO のレジスタを読む（ESP32 専用）。host は
 `esp32-hal-i2c.h` が無くて止まる（ESP32 の API を名乗る host の core としては、これも不足の候補）。CH32 のドライバを
-host で動かす確かめには、ESP32 に縛られないドライバ（Adafruit SHT31 など）を使う。
+host で動かす確かめには、ESP32 に縛られないドライバを使う。
+
+Adafruit SHT31 Library 2.2.2（＋ Adafruit BusIO 1.17.4）で確かめた（2026-11-03、利用者の了承のもと。DeviceData に run は無い）:
+
+- host 1.7.1: H5-B3（空白のあるディレクトリ）を避けても、H5-11（`BitOrder`）で止まる。
+- CH32 の core（作業ツリー 8f67590e、CH32V103）: `Adafruit_SHT31.h` の `extern TwoWire Wire;` が、core の
+  `extern arduino::CH32RVTwoWire Wire;` とぶつかって止まる。この 1 行を除いた写しでは最後まで通る（flash 10,340 byte）。
+  `Wire` の型が `TwoWire` でないことによるもので、CH32 の core の側の件（[core] に伝えた）。
