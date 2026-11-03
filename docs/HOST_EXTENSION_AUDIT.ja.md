@@ -251,4 +251,6 @@ Adafruit SHT31 Library 2.2.2（＋ Adafruit BusIO 1.17.4）で確かめた（202
 - host 1.7.1: H5-B3（空白のあるディレクトリ）を避けても、H5-11（`BitOrder`）で止まる。
 - CH32 の core（作業ツリー 8f67590e、CH32V103）: `Adafruit_SHT31.h` の `extern TwoWire Wire;` が、core の
   `extern arduino::CH32RVTwoWire Wire;` とぶつかって止まる。この 1 行を除いた写しでは最後まで通る（flash 10,340 byte）。
-  `Wire` の型が `TwoWire` でないことによるもので、CH32 の core の側の件（[core] に伝えた）。
+  コアの不具合ではなく、型の違いでビルドできないライブラリ。CH32 の core は、`HardwareSerial` と同じく `TwoWire` /
+  `SPIClass` を共通の型とし、`Wire` の型は具体的な `CH32RVTwoWire` にする（利用者の判断、[core] 2026-11-03）。
+  SHT31 2.2.2 はこのままではビルドできず、同等のライブラリを使うか作る。

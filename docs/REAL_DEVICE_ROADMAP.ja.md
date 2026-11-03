@@ -232,7 +232,9 @@ host の core（lang-ship:host 1.7.1）を突き合わせた。部品のドラ�
 実際のドライバ（OEP の提案で、DeviceData に run がある M5Unit-ENV 1.7.3）は、host でも CH32 でも使えない。依存の
 M5UnitUnified 0.6.4 が `#if defined(ARDUINO)` で `esp32-hal-i2c.h`（`i2cIsInit`）と ESP32 の GPIO のレジスタを読む
 （ESP32 専用）。host は `esp32-hal-i2c.h` が無くて止まる。CH32 のドライバを host で動かす確かめには、ESP32 に縛られない
-ドライバを選ぶ必要がある。
+ドライバを選ぶ必要がある。Adafruit SHT31 2.2.2 は、CH32 では `extern TwoWire Wire;` が core の `Wire`（型は
+`CH32RVTwoWire`）とぶつかって止まる。コアの不具合ではなく、型の違いでビルドできないライブラリとして扱う（core は
+`TwoWire` を共通の型のままにする。利用者の判断）。詳しくは `HOST_EXTENSION_AUDIT.ja.md` §9.6。
 
 直すのは host の core（lang-ship）の側。EmbedBench は直さない。ArduinoCore-API の決まりと違う不具合（`requestFrom` の
 曖昧さ、`begin(uint8_t)` がマスタになる）と、足りないものの追加は分けて扱う。
