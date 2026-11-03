@@ -1,1662 +1,1661 @@
 # M5Stack U001-C at 100 kHz, an ESP32-P4 controller (OEP P4X): EmbedBenchDeviceData run
-# qmp6988-standby-long-50ms__i2c-100k__a7d3b53b29d4a91a (2026-10-30), through skein2trace.py.
-49372187 mark case=qmp6988-standby-long-50ms
-49372192 mark case=qmp6988-standby-long-50ms phase=setup
-49372667 i2c.req addr=70 data=F400 stop=1
-49372667 i2c.resp status=0
-49372992 i2c.req addr=70 data=F102 stop=1
-49372992 i2c.resp status=0
-49373312 i2c.req addr=70 data=F540 stop=1
-49373312 i2c.resp status=0
-49572708 mark case=qmp6988-standby-long-50ms phase=setup end=1
-49572712 mark case=qmp6988-standby-long-50ms phase=normal
-49572758 i2c.req addr=70 data=F433 stop=1
-49572758 i2c.resp status=0
-49573094 mark src=dut text=end%3D0
-49573195 i2c.req addr=70 data=F7 stop=0
-49573195 i2c.resp status=0
-49573392 i2c.rd.req addr=70 req=6 stop=1 rs
-49573392 i2c.rd.resp len=6 data=A20B596BD7B2
-49574139 mark src=dut text=t_us%3D6%20data%3Da20b596bd7b2
-49578136 i2c.req addr=70 data=F7 stop=0
-49578136 i2c.resp status=0
-49578333 i2c.rd.req addr=70 req=6 stop=1 rs
-49578333 i2c.rd.resp len=6 data=A20B596BD7B2
-49583135 i2c.req addr=70 data=F7 stop=0
-49583135 i2c.resp status=0
-49583332 i2c.rd.req addr=70 req=6 stop=1 rs
-49583332 i2c.rd.resp len=6 data=A20B596BD7B2
-49588135 i2c.req addr=70 data=F7 stop=0
-49588135 i2c.resp status=0
-49588332 i2c.rd.req addr=70 req=6 stop=1 rs
-49588332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49589007 mark src=dut text=t_us%3D15001%20data%3Da20dfd6bee64
-49593136 i2c.req addr=70 data=F7 stop=0
-49593136 i2c.resp status=0
-49593333 i2c.rd.req addr=70 req=6 stop=1 rs
-49593333 i2c.rd.resp len=6 data=A20DFD6BEE64
-49598135 i2c.req addr=70 data=F7 stop=0
-49598135 i2c.resp status=0
-49598332 i2c.rd.req addr=70 req=6 stop=1 rs
-49598332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49603135 i2c.req addr=70 data=F7 stop=0
-49603135 i2c.resp status=0
-49603332 i2c.rd.req addr=70 req=6 stop=1 rs
-49603332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49608135 i2c.req addr=70 data=F7 stop=0
-49608135 i2c.resp status=0
-49608332 i2c.rd.req addr=70 req=6 stop=1 rs
-49608332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49613135 i2c.req addr=70 data=F7 stop=0
-49613135 i2c.resp status=0
-49613332 i2c.rd.req addr=70 req=6 stop=1 rs
-49613332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49618135 i2c.req addr=70 data=F7 stop=0
-49618135 i2c.resp status=0
-49618332 i2c.rd.req addr=70 req=6 stop=1 rs
-49618332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49623134 i2c.req addr=70 data=F7 stop=0
-49623134 i2c.resp status=0
-49623332 i2c.rd.req addr=70 req=6 stop=1 rs
-49623332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49628135 i2c.req addr=70 data=F7 stop=0
-49628135 i2c.resp status=0
-49628332 i2c.rd.req addr=70 req=6 stop=1 rs
-49628332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49633135 i2c.req addr=70 data=F7 stop=0
-49633135 i2c.resp status=0
-49633332 i2c.rd.req addr=70 req=6 stop=1 rs
-49633332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49638135 i2c.req addr=70 data=F7 stop=0
-49638135 i2c.resp status=0
-49638332 i2c.rd.req addr=70 req=6 stop=1 rs
-49638332 i2c.rd.resp len=6 data=A20DFD6BEE64
-49643135 i2c.req addr=70 data=F7 stop=0
-49643135 i2c.resp status=0
-49643332 i2c.rd.req addr=70 req=6 stop=1 rs
-49643332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49644020 mark src=dut text=t_us%3D70001%20data%3Da20def6bedda
-49648138 i2c.req addr=70 data=F7 stop=0
-49648138 i2c.resp status=0
-49648335 i2c.rd.req addr=70 req=6 stop=1 rs
-49648335 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49653135 i2c.req addr=70 data=F7 stop=0
-49653135 i2c.resp status=0
-49653332 i2c.rd.req addr=70 req=6 stop=1 rs
-49653332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49658135 i2c.req addr=70 data=F7 stop=0
-49658135 i2c.resp status=0
-49658332 i2c.rd.req addr=70 req=6 stop=1 rs
-49658332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49663135 i2c.req addr=70 data=F7 stop=0
-49663135 i2c.resp status=0
-49663332 i2c.rd.req addr=70 req=6 stop=1 rs
-49663332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49668135 i2c.req addr=70 data=F7 stop=0
-49668135 i2c.resp status=0
-49668332 i2c.rd.req addr=70 req=6 stop=1 rs
-49668332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49673135 i2c.req addr=70 data=F7 stop=0
-49673135 i2c.resp status=0
-49673332 i2c.rd.req addr=70 req=6 stop=1 rs
-49673332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49678135 i2c.req addr=70 data=F7 stop=0
-49678135 i2c.resp status=0
-49678332 i2c.rd.req addr=70 req=6 stop=1 rs
-49678332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49683135 i2c.req addr=70 data=F7 stop=0
-49683135 i2c.resp status=0
-49683332 i2c.rd.req addr=70 req=6 stop=1 rs
-49683332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49688135 i2c.req addr=70 data=F7 stop=0
-49688135 i2c.resp status=0
-49688332 i2c.rd.req addr=70 req=6 stop=1 rs
-49688332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49693135 i2c.req addr=70 data=F7 stop=0
-49693135 i2c.resp status=0
-49693332 i2c.rd.req addr=70 req=6 stop=1 rs
-49693332 i2c.rd.resp len=6 data=A20DEF6BEDDA
-49698134 i2c.req addr=70 data=F7 stop=0
-49698134 i2c.resp status=0
-49698332 i2c.rd.req addr=70 req=6 stop=1 rs
-49698332 i2c.rd.resp len=6 data=A20DBA6BED61
-49699015 mark src=dut text=t_us%3D125000%20data%3Da20dba6bed61
-49703136 i2c.req addr=70 data=F7 stop=0
-49703136 i2c.resp status=0
-49703333 i2c.rd.req addr=70 req=6 stop=1 rs
-49703333 i2c.rd.resp len=6 data=A20DBA6BED61
-49708134 i2c.req addr=70 data=F7 stop=0
-49708134 i2c.resp status=0
-49708332 i2c.rd.req addr=70 req=6 stop=1 rs
-49708332 i2c.rd.resp len=6 data=A20DBA6BED61
-49713134 i2c.req addr=70 data=F7 stop=0
-49713134 i2c.resp status=0
-49713332 i2c.rd.req addr=70 req=6 stop=1 rs
-49713332 i2c.rd.resp len=6 data=A20DBA6BED61
-49718135 i2c.req addr=70 data=F7 stop=0
-49718135 i2c.resp status=0
-49718332 i2c.rd.req addr=70 req=6 stop=1 rs
-49718332 i2c.rd.resp len=6 data=A20DBA6BED61
-49723135 i2c.req addr=70 data=F7 stop=0
-49723135 i2c.resp status=0
-49723332 i2c.rd.req addr=70 req=6 stop=1 rs
-49723332 i2c.rd.resp len=6 data=A20DBA6BED61
-49728135 i2c.req addr=70 data=F7 stop=0
-49728135 i2c.resp status=0
-49728332 i2c.rd.req addr=70 req=6 stop=1 rs
-49728332 i2c.rd.resp len=6 data=A20DBA6BED61
-49733135 i2c.req addr=70 data=F7 stop=0
-49733135 i2c.resp status=0
-49733332 i2c.rd.req addr=70 req=6 stop=1 rs
-49733332 i2c.rd.resp len=6 data=A20DBA6BED61
-49738135 i2c.req addr=70 data=F7 stop=0
-49738135 i2c.resp status=0
-49738332 i2c.rd.req addr=70 req=6 stop=1 rs
-49738332 i2c.rd.resp len=6 data=A20DBA6BED61
-49743134 i2c.req addr=70 data=F7 stop=0
-49743134 i2c.resp status=0
-49743332 i2c.rd.req addr=70 req=6 stop=1 rs
-49743332 i2c.rd.resp len=6 data=A20DBA6BED61
-49748134 i2c.req addr=70 data=F7 stop=0
-49748134 i2c.resp status=0
-49748332 i2c.rd.req addr=70 req=6 stop=1 rs
-49748332 i2c.rd.resp len=6 data=A20DBA6BED61
-49753135 i2c.req addr=70 data=F7 stop=0
-49753135 i2c.resp status=0
-49753332 i2c.rd.req addr=70 req=6 stop=1 rs
-49753332 i2c.rd.resp len=6 data=A20DA86BED08
-49754014 mark src=dut text=t_us%3D180000%20data%3Da20da86bed08
-49758138 i2c.req addr=70 data=F7 stop=0
-49758138 i2c.resp status=0
-49758336 i2c.rd.req addr=70 req=6 stop=1 rs
-49758336 i2c.rd.resp len=6 data=A20DA86BED08
-49763135 i2c.req addr=70 data=F7 stop=0
-49763135 i2c.resp status=0
-49763332 i2c.rd.req addr=70 req=6 stop=1 rs
-49763332 i2c.rd.resp len=6 data=A20DA86BED08
-49768135 i2c.req addr=70 data=F7 stop=0
-49768135 i2c.resp status=0
-49768332 i2c.rd.req addr=70 req=6 stop=1 rs
-49768332 i2c.rd.resp len=6 data=A20DA86BED08
-49773135 i2c.req addr=70 data=F7 stop=0
-49773135 i2c.resp status=0
-49773332 i2c.rd.req addr=70 req=6 stop=1 rs
-49773332 i2c.rd.resp len=6 data=A20DA86BED08
-49778135 i2c.req addr=70 data=F7 stop=0
-49778135 i2c.resp status=0
-49778332 i2c.rd.req addr=70 req=6 stop=1 rs
-49778332 i2c.rd.resp len=6 data=A20DA86BED08
-49783135 i2c.req addr=70 data=F7 stop=0
-49783135 i2c.resp status=0
-49783333 i2c.rd.req addr=70 req=6 stop=1 rs
-49783333 i2c.rd.resp len=6 data=A20DA86BED08
-49788135 i2c.req addr=70 data=F7 stop=0
-49788135 i2c.resp status=0
-49788332 i2c.rd.req addr=70 req=6 stop=1 rs
-49788332 i2c.rd.resp len=6 data=A20DA86BED08
-49793135 i2c.req addr=70 data=F7 stop=0
-49793135 i2c.resp status=0
-49793332 i2c.rd.req addr=70 req=6 stop=1 rs
-49793332 i2c.rd.resp len=6 data=A20DA86BED08
-49798135 i2c.req addr=70 data=F7 stop=0
-49798135 i2c.resp status=0
-49798332 i2c.rd.req addr=70 req=6 stop=1 rs
-49798332 i2c.rd.resp len=6 data=A20DA86BED08
-49803135 i2c.req addr=70 data=F7 stop=0
-49803135 i2c.resp status=0
-49803332 i2c.rd.req addr=70 req=6 stop=1 rs
-49803332 i2c.rd.resp len=6 data=A20DA86BED08
-49808135 i2c.req addr=70 data=F7 stop=0
-49808135 i2c.resp status=0
-49808332 i2c.rd.req addr=70 req=6 stop=1 rs
-49808332 i2c.rd.resp len=6 data=A20D976BECA1
-49809012 mark src=dut text=t_us%3D235000%20data%3Da20d976beca1
-49813135 i2c.req addr=70 data=F7 stop=0
-49813135 i2c.resp status=0
-49813333 i2c.rd.req addr=70 req=6 stop=1 rs
-49813333 i2c.rd.resp len=6 data=A20D976BECA1
-49818135 i2c.req addr=70 data=F7 stop=0
-49818135 i2c.resp status=0
-49818332 i2c.rd.req addr=70 req=6 stop=1 rs
-49818332 i2c.rd.resp len=6 data=A20D976BECA1
-49823135 i2c.req addr=70 data=F7 stop=0
-49823135 i2c.resp status=0
-49823332 i2c.rd.req addr=70 req=6 stop=1 rs
-49823332 i2c.rd.resp len=6 data=A20D976BECA1
-49828135 i2c.req addr=70 data=F7 stop=0
-49828135 i2c.resp status=0
-49828333 i2c.rd.req addr=70 req=6 stop=1 rs
-49828333 i2c.rd.resp len=6 data=A20D976BECA1
-49833135 i2c.req addr=70 data=F7 stop=0
-49833135 i2c.resp status=0
-49833332 i2c.rd.req addr=70 req=6 stop=1 rs
-49833332 i2c.rd.resp len=6 data=A20D976BECA1
-49838135 i2c.req addr=70 data=F7 stop=0
-49838135 i2c.resp status=0
-49838333 i2c.rd.req addr=70 req=6 stop=1 rs
-49838333 i2c.rd.resp len=6 data=A20D976BECA1
-49843135 i2c.req addr=70 data=F7 stop=0
-49843135 i2c.resp status=0
-49843332 i2c.rd.req addr=70 req=6 stop=1 rs
-49843332 i2c.rd.resp len=6 data=A20D976BECA1
-49848135 i2c.req addr=70 data=F7 stop=0
-49848135 i2c.resp status=0
-49848332 i2c.rd.req addr=70 req=6 stop=1 rs
-49848332 i2c.rd.resp len=6 data=A20D976BECA1
-49853135 i2c.req addr=70 data=F7 stop=0
-49853135 i2c.resp status=0
-49853332 i2c.rd.req addr=70 req=6 stop=1 rs
-49853332 i2c.rd.resp len=6 data=A20D976BECA1
-49858135 i2c.req addr=70 data=F7 stop=0
-49858135 i2c.resp status=0
-49858333 i2c.rd.req addr=70 req=6 stop=1 rs
-49858333 i2c.rd.resp len=6 data=A20D976BECA1
-49863134 i2c.req addr=70 data=F7 stop=0
-49863134 i2c.resp status=0
-49863332 i2c.rd.req addr=70 req=6 stop=1 rs
-49863332 i2c.rd.resp len=6 data=A20D856BEC86
-49864019 mark src=dut text=t_us%3D290000%20data%3Da20d856bec86
-49868137 i2c.req addr=70 data=F7 stop=0
-49868137 i2c.resp status=0
-49868335 i2c.rd.req addr=70 req=6 stop=1 rs
-49868335 i2c.rd.resp len=6 data=A20D856BEC86
-49873135 i2c.req addr=70 data=F7 stop=0
-49873135 i2c.resp status=0
-49873332 i2c.rd.req addr=70 req=6 stop=1 rs
-49873332 i2c.rd.resp len=6 data=A20D856BEC86
-49878135 i2c.req addr=70 data=F7 stop=0
-49878135 i2c.resp status=0
-49878333 i2c.rd.req addr=70 req=6 stop=1 rs
-49878333 i2c.rd.resp len=6 data=A20D856BEC86
-49883135 i2c.req addr=70 data=F7 stop=0
-49883135 i2c.resp status=0
-49883332 i2c.rd.req addr=70 req=6 stop=1 rs
-49883332 i2c.rd.resp len=6 data=A20D856BEC86
-49888135 i2c.req addr=70 data=F7 stop=0
-49888135 i2c.resp status=0
-49888333 i2c.rd.req addr=70 req=6 stop=1 rs
-49888333 i2c.rd.resp len=6 data=A20D856BEC86
-49893135 i2c.req addr=70 data=F7 stop=0
-49893135 i2c.resp status=0
-49893333 i2c.rd.req addr=70 req=6 stop=1 rs
-49893333 i2c.rd.resp len=6 data=A20D856BEC86
-49898136 i2c.req addr=70 data=F7 stop=0
-49898136 i2c.resp status=0
-49898333 i2c.rd.req addr=70 req=6 stop=1 rs
-49898333 i2c.rd.resp len=6 data=A20D856BEC86
-49903135 i2c.req addr=70 data=F7 stop=0
-49903135 i2c.resp status=0
-49903332 i2c.rd.req addr=70 req=6 stop=1 rs
-49903332 i2c.rd.resp len=6 data=A20D856BEC86
-49908135 i2c.req addr=70 data=F7 stop=0
-49908135 i2c.resp status=0
-49908332 i2c.rd.req addr=70 req=6 stop=1 rs
-49908332 i2c.rd.resp len=6 data=A20D856BEC86
-49913139 i2c.req addr=70 data=F7 stop=0
-49913139 i2c.resp status=0
-49913336 i2c.rd.req addr=70 req=6 stop=1 rs
-49913336 i2c.rd.resp len=6 data=A20D856BEC86
-49918141 i2c.req addr=70 data=F7 stop=0
-49918141 i2c.resp status=0
-49918339 i2c.rd.req addr=70 req=6 stop=1 rs
-49918339 i2c.rd.resp len=6 data=A20D716BEBFB
-49919020 mark src=dut text=t_us%3D345001%20data%3Da20d716bebfb
-49923136 i2c.req addr=70 data=F7 stop=0
-49923136 i2c.resp status=0
-49923333 i2c.rd.req addr=70 req=6 stop=1 rs
-49923333 i2c.rd.resp len=6 data=A20D716BEBFB
-49928135 i2c.req addr=70 data=F7 stop=0
-49928135 i2c.resp status=0
-49928332 i2c.rd.req addr=70 req=6 stop=1 rs
-49928332 i2c.rd.resp len=6 data=A20D716BEBFB
-49933135 i2c.req addr=70 data=F7 stop=0
-49933135 i2c.resp status=0
-49933332 i2c.rd.req addr=70 req=6 stop=1 rs
-49933332 i2c.rd.resp len=6 data=A20D716BEBFB
-49938135 i2c.req addr=70 data=F7 stop=0
-49938135 i2c.resp status=0
-49938332 i2c.rd.req addr=70 req=6 stop=1 rs
-49938332 i2c.rd.resp len=6 data=A20D716BEBFB
-49943135 i2c.req addr=70 data=F7 stop=0
-49943135 i2c.resp status=0
-49943333 i2c.rd.req addr=70 req=6 stop=1 rs
-49943333 i2c.rd.resp len=6 data=A20D716BEBFB
-49948135 i2c.req addr=70 data=F7 stop=0
-49948135 i2c.resp status=0
-49948332 i2c.rd.req addr=70 req=6 stop=1 rs
-49948332 i2c.rd.resp len=6 data=A20D716BEBFB
-49953135 i2c.req addr=70 data=F7 stop=0
-49953135 i2c.resp status=0
-49953332 i2c.rd.req addr=70 req=6 stop=1 rs
-49953332 i2c.rd.resp len=6 data=A20D716BEBFB
-49958135 i2c.req addr=70 data=F7 stop=0
-49958135 i2c.resp status=0
-49958332 i2c.rd.req addr=70 req=6 stop=1 rs
-49958332 i2c.rd.resp len=6 data=A20D716BEBFB
-49963135 i2c.req addr=70 data=F7 stop=0
-49963135 i2c.resp status=0
-49963332 i2c.rd.req addr=70 req=6 stop=1 rs
-49963332 i2c.rd.resp len=6 data=A20D716BEBFB
-49968135 i2c.req addr=70 data=F7 stop=0
-49968135 i2c.resp status=0
-49968332 i2c.rd.req addr=70 req=6 stop=1 rs
-49968332 i2c.rd.resp len=6 data=A20D716BEBFB
-49973135 i2c.req addr=70 data=F7 stop=0
-49973135 i2c.resp status=0
-49973332 i2c.rd.req addr=70 req=6 stop=1 rs
-49973332 i2c.rd.resp len=6 data=A20D756BEB9F
-49974016 mark src=dut text=t_us%3D400001%20data%3Da20d756beb9f
-49978140 i2c.req addr=70 data=F7 stop=0
-49978140 i2c.resp status=0
-49978337 i2c.rd.req addr=70 req=6 stop=1 rs
-49978337 i2c.rd.resp len=6 data=A20D756BEB9F
-49983135 i2c.req addr=70 data=F7 stop=0
-49983135 i2c.resp status=0
-49983332 i2c.rd.req addr=70 req=6 stop=1 rs
-49983332 i2c.rd.resp len=6 data=A20D756BEB9F
-49988135 i2c.req addr=70 data=F7 stop=0
-49988135 i2c.resp status=0
-49988333 i2c.rd.req addr=70 req=6 stop=1 rs
-49988333 i2c.rd.resp len=6 data=A20D756BEB9F
-49993135 i2c.req addr=70 data=F7 stop=0
-49993135 i2c.resp status=0
-49993332 i2c.rd.req addr=70 req=6 stop=1 rs
-49993332 i2c.rd.resp len=6 data=A20D756BEB9F
-49998135 i2c.req addr=70 data=F7 stop=0
-49998135 i2c.resp status=0
-49998333 i2c.rd.req addr=70 req=6 stop=1 rs
-49998333 i2c.rd.resp len=6 data=A20D756BEB9F
-50003135 i2c.req addr=70 data=F7 stop=0
-50003135 i2c.resp status=0
-50003332 i2c.rd.req addr=70 req=6 stop=1 rs
-50003332 i2c.rd.resp len=6 data=A20D756BEB9F
-50008135 i2c.req addr=70 data=F7 stop=0
-50008135 i2c.resp status=0
-50008332 i2c.rd.req addr=70 req=6 stop=1 rs
-50008332 i2c.rd.resp len=6 data=A20D756BEB9F
-50013135 i2c.req addr=70 data=F7 stop=0
-50013135 i2c.resp status=0
-50013332 i2c.rd.req addr=70 req=6 stop=1 rs
-50013332 i2c.rd.resp len=6 data=A20D756BEB9F
-50018134 i2c.req addr=70 data=F7 stop=0
-50018134 i2c.resp status=0
-50018332 i2c.rd.req addr=70 req=6 stop=1 rs
-50018332 i2c.rd.resp len=6 data=A20D756BEB9F
-50023135 i2c.req addr=70 data=F7 stop=0
-50023135 i2c.resp status=0
-50023332 i2c.rd.req addr=70 req=6 stop=1 rs
-50023332 i2c.rd.resp len=6 data=A20D756BEB9F
-50028135 i2c.req addr=70 data=F7 stop=0
-50028135 i2c.resp status=0
-50028332 i2c.rd.req addr=70 req=6 stop=1 rs
-50028332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50029011 mark src=dut text=t_us%3D455000%20data%3Da20d6c6beb77
-50033136 i2c.req addr=70 data=F7 stop=0
-50033136 i2c.resp status=0
-50033333 i2c.rd.req addr=70 req=6 stop=1 rs
-50033333 i2c.rd.resp len=6 data=A20D6C6BEB77
-50038135 i2c.req addr=70 data=F7 stop=0
-50038135 i2c.resp status=0
-50038332 i2c.rd.req addr=70 req=6 stop=1 rs
-50038332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50043135 i2c.req addr=70 data=F7 stop=0
-50043135 i2c.resp status=0
-50043332 i2c.rd.req addr=70 req=6 stop=1 rs
-50043332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50048135 i2c.req addr=70 data=F7 stop=0
-50048135 i2c.resp status=0
-50048332 i2c.rd.req addr=70 req=6 stop=1 rs
-50048332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50053134 i2c.req addr=70 data=F7 stop=0
-50053134 i2c.resp status=0
-50053332 i2c.rd.req addr=70 req=6 stop=1 rs
-50053332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50058135 i2c.req addr=70 data=F7 stop=0
-50058135 i2c.resp status=0
-50058333 i2c.rd.req addr=70 req=6 stop=1 rs
-50058333 i2c.rd.resp len=6 data=A20D6C6BEB77
-50063135 i2c.req addr=70 data=F7 stop=0
-50063135 i2c.resp status=0
-50063332 i2c.rd.req addr=70 req=6 stop=1 rs
-50063332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50068135 i2c.req addr=70 data=F7 stop=0
-50068135 i2c.resp status=0
-50068332 i2c.rd.req addr=70 req=6 stop=1 rs
-50068332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50073135 i2c.req addr=70 data=F7 stop=0
-50073135 i2c.resp status=0
-50073332 i2c.rd.req addr=70 req=6 stop=1 rs
-50073332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50078135 i2c.req addr=70 data=F7 stop=0
-50078135 i2c.resp status=0
-50078332 i2c.rd.req addr=70 req=6 stop=1 rs
-50078332 i2c.rd.resp len=6 data=A20D6C6BEB77
-50083135 i2c.req addr=70 data=F7 stop=0
-50083135 i2c.resp status=0
-50083332 i2c.rd.req addr=70 req=6 stop=1 rs
-50083332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50084014 mark src=dut text=t_us%3D510001%20data%3Da20d4b6beb0c
-50088138 i2c.req addr=70 data=F7 stop=0
-50088138 i2c.resp status=0
-50088335 i2c.rd.req addr=70 req=6 stop=1 rs
-50088335 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50093135 i2c.req addr=70 data=F7 stop=0
-50093135 i2c.resp status=0
-50093332 i2c.rd.req addr=70 req=6 stop=1 rs
-50093332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50098134 i2c.req addr=70 data=F7 stop=0
-50098134 i2c.resp status=0
-50098332 i2c.rd.req addr=70 req=6 stop=1 rs
-50098332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50103134 i2c.req addr=70 data=F7 stop=0
-50103134 i2c.resp status=0
-50103332 i2c.rd.req addr=70 req=6 stop=1 rs
-50103332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50108135 i2c.req addr=70 data=F7 stop=0
-50108135 i2c.resp status=0
-50108332 i2c.rd.req addr=70 req=6 stop=1 rs
-50108332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50113136 i2c.req addr=70 data=F7 stop=0
-50113136 i2c.resp status=0
-50113333 i2c.rd.req addr=70 req=6 stop=1 rs
-50113333 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50118134 i2c.req addr=70 data=F7 stop=0
-50118134 i2c.resp status=0
-50118332 i2c.rd.req addr=70 req=6 stop=1 rs
-50118332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50123135 i2c.req addr=70 data=F7 stop=0
-50123135 i2c.resp status=0
-50123332 i2c.rd.req addr=70 req=6 stop=1 rs
-50123332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50128135 i2c.req addr=70 data=F7 stop=0
-50128135 i2c.resp status=0
-50128332 i2c.rd.req addr=70 req=6 stop=1 rs
-50128332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50133135 i2c.req addr=70 data=F7 stop=0
-50133135 i2c.resp status=0
-50133332 i2c.rd.req addr=70 req=6 stop=1 rs
-50133332 i2c.rd.resp len=6 data=A20D4B6BEB0C
-50138135 i2c.req addr=70 data=F7 stop=0
-50138135 i2c.resp status=0
-50138332 i2c.rd.req addr=70 req=6 stop=1 rs
-50138332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50139014 mark src=dut text=t_us%3D565000%20data%3Da20d3f6beabf
-50143136 i2c.req addr=70 data=F7 stop=0
-50143136 i2c.resp status=0
-50143333 i2c.rd.req addr=70 req=6 stop=1 rs
-50143333 i2c.rd.resp len=6 data=A20D3F6BEABF
-50148135 i2c.req addr=70 data=F7 stop=0
-50148135 i2c.resp status=0
-50148332 i2c.rd.req addr=70 req=6 stop=1 rs
-50148332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50153135 i2c.req addr=70 data=F7 stop=0
-50153135 i2c.resp status=0
-50153332 i2c.rd.req addr=70 req=6 stop=1 rs
-50153332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50158135 i2c.req addr=70 data=F7 stop=0
-50158135 i2c.resp status=0
-50158332 i2c.rd.req addr=70 req=6 stop=1 rs
-50158332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50163135 i2c.req addr=70 data=F7 stop=0
-50163135 i2c.resp status=0
-50163332 i2c.rd.req addr=70 req=6 stop=1 rs
-50163332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50168135 i2c.req addr=70 data=F7 stop=0
-50168135 i2c.resp status=0
-50168332 i2c.rd.req addr=70 req=6 stop=1 rs
-50168332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50173135 i2c.req addr=70 data=F7 stop=0
-50173135 i2c.resp status=0
-50173332 i2c.rd.req addr=70 req=6 stop=1 rs
-50173332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50178135 i2c.req addr=70 data=F7 stop=0
-50178135 i2c.resp status=0
-50178333 i2c.rd.req addr=70 req=6 stop=1 rs
-50178333 i2c.rd.resp len=6 data=A20D3F6BEABF
-50183135 i2c.req addr=70 data=F7 stop=0
-50183135 i2c.resp status=0
-50183333 i2c.rd.req addr=70 req=6 stop=1 rs
-50183333 i2c.rd.resp len=6 data=A20D3F6BEABF
-50188135 i2c.req addr=70 data=F7 stop=0
-50188135 i2c.resp status=0
-50188332 i2c.rd.req addr=70 req=6 stop=1 rs
-50188332 i2c.rd.resp len=6 data=A20D3F6BEABF
-50193135 i2c.req addr=70 data=F7 stop=0
-50193135 i2c.resp status=0
-50193333 i2c.rd.req addr=70 req=6 stop=1 rs
-50193333 i2c.rd.resp len=6 data=A20D366BEA5A
-50194012 mark src=dut text=t_us%3D620001%20data%3Da20d366bea5a
-50198135 i2c.req addr=70 data=F7 stop=0
-50198135 i2c.resp status=0
-50198333 i2c.rd.req addr=70 req=6 stop=1 rs
-50198333 i2c.rd.resp len=6 data=A20D366BEA5A
-50203135 i2c.req addr=70 data=F7 stop=0
-50203135 i2c.resp status=0
-50203333 i2c.rd.req addr=70 req=6 stop=1 rs
-50203333 i2c.rd.resp len=6 data=A20D366BEA5A
-50208135 i2c.req addr=70 data=F7 stop=0
-50208135 i2c.resp status=0
-50208332 i2c.rd.req addr=70 req=6 stop=1 rs
-50208332 i2c.rd.resp len=6 data=A20D366BEA5A
-50213135 i2c.req addr=70 data=F7 stop=0
-50213135 i2c.resp status=0
-50213332 i2c.rd.req addr=70 req=6 stop=1 rs
-50213332 i2c.rd.resp len=6 data=A20D366BEA5A
-50218135 i2c.req addr=70 data=F7 stop=0
-50218135 i2c.resp status=0
-50218332 i2c.rd.req addr=70 req=6 stop=1 rs
-50218332 i2c.rd.resp len=6 data=A20D366BEA5A
-50223135 i2c.req addr=70 data=F7 stop=0
-50223135 i2c.resp status=0
-50223332 i2c.rd.req addr=70 req=6 stop=1 rs
-50223332 i2c.rd.resp len=6 data=A20D366BEA5A
-50228135 i2c.req addr=70 data=F7 stop=0
-50228135 i2c.resp status=0
-50228333 i2c.rd.req addr=70 req=6 stop=1 rs
-50228333 i2c.rd.resp len=6 data=A20D366BEA5A
-50233135 i2c.req addr=70 data=F7 stop=0
-50233135 i2c.resp status=0
-50233333 i2c.rd.req addr=70 req=6 stop=1 rs
-50233333 i2c.rd.resp len=6 data=A20D366BEA5A
-50238135 i2c.req addr=70 data=F7 stop=0
-50238135 i2c.resp status=0
-50238333 i2c.rd.req addr=70 req=6 stop=1 rs
-50238333 i2c.rd.resp len=6 data=A20D366BEA5A
-50243135 i2c.req addr=70 data=F7 stop=0
-50243135 i2c.resp status=0
-50243332 i2c.rd.req addr=70 req=6 stop=1 rs
-50243332 i2c.rd.resp len=6 data=A20D366BEA5A
-50248135 i2c.req addr=70 data=F7 stop=0
-50248135 i2c.resp status=0
-50248333 i2c.rd.req addr=70 req=6 stop=1 rs
-50248333 i2c.rd.resp len=6 data=A20D576BEA3D
-50249010 mark src=dut text=t_us%3D675001%20data%3Da20d576bea3d
-50253136 i2c.req addr=70 data=F7 stop=0
-50253136 i2c.resp status=0
-50253334 i2c.rd.req addr=70 req=6 stop=1 rs
-50253334 i2c.rd.resp len=6 data=A20D576BEA3D
-50258135 i2c.req addr=70 data=F7 stop=0
-50258135 i2c.resp status=0
-50258332 i2c.rd.req addr=70 req=6 stop=1 rs
-50258332 i2c.rd.resp len=6 data=A20D576BEA3D
-50263135 i2c.req addr=70 data=F7 stop=0
-50263135 i2c.resp status=0
-50263332 i2c.rd.req addr=70 req=6 stop=1 rs
-50263332 i2c.rd.resp len=6 data=A20D576BEA3D
-50268135 i2c.req addr=70 data=F7 stop=0
-50268135 i2c.resp status=0
-50268332 i2c.rd.req addr=70 req=6 stop=1 rs
-50268332 i2c.rd.resp len=6 data=A20D576BEA3D
-50273135 i2c.req addr=70 data=F7 stop=0
-50273135 i2c.resp status=0
-50273333 i2c.rd.req addr=70 req=6 stop=1 rs
-50273333 i2c.rd.resp len=6 data=A20D576BEA3D
-50278135 i2c.req addr=70 data=F7 stop=0
-50278135 i2c.resp status=0
-50278332 i2c.rd.req addr=70 req=6 stop=1 rs
-50278332 i2c.rd.resp len=6 data=A20D576BEA3D
-50283135 i2c.req addr=70 data=F7 stop=0
-50283135 i2c.resp status=0
-50283333 i2c.rd.req addr=70 req=6 stop=1 rs
-50283333 i2c.rd.resp len=6 data=A20D576BEA3D
-50288135 i2c.req addr=70 data=F7 stop=0
-50288135 i2c.resp status=0
-50288332 i2c.rd.req addr=70 req=6 stop=1 rs
-50288332 i2c.rd.resp len=6 data=A20D576BEA3D
-50293134 i2c.req addr=70 data=F7 stop=0
-50293134 i2c.resp status=0
-50293332 i2c.rd.req addr=70 req=6 stop=1 rs
-50293332 i2c.rd.resp len=6 data=A20D576BEA3D
-50298135 i2c.req addr=70 data=F7 stop=0
-50298135 i2c.resp status=0
-50298332 i2c.rd.req addr=70 req=6 stop=1 rs
-50298332 i2c.rd.resp len=6 data=A20D576BEA3D
-50303135 i2c.req addr=70 data=F7 stop=0
-50303135 i2c.resp status=0
-50303332 i2c.rd.req addr=70 req=6 stop=1 rs
-50303332 i2c.rd.resp len=6 data=A20D446BEA33
-50304010 mark src=dut text=t_us%3D730001%20data%3Da20d446bea33
-50308135 i2c.req addr=70 data=F7 stop=0
-50308135 i2c.resp status=0
-50308333 i2c.rd.req addr=70 req=6 stop=1 rs
-50308333 i2c.rd.resp len=6 data=A20D446BEA33
-50313135 i2c.req addr=70 data=F7 stop=0
-50313135 i2c.resp status=0
-50313332 i2c.rd.req addr=70 req=6 stop=1 rs
-50313332 i2c.rd.resp len=6 data=A20D446BEA33
-50318135 i2c.req addr=70 data=F7 stop=0
-50318135 i2c.resp status=0
-50318332 i2c.rd.req addr=70 req=6 stop=1 rs
-50318332 i2c.rd.resp len=6 data=A20D446BEA33
-50323135 i2c.req addr=70 data=F7 stop=0
-50323135 i2c.resp status=0
-50323333 i2c.rd.req addr=70 req=6 stop=1 rs
-50323333 i2c.rd.resp len=6 data=A20D446BEA33
-50328135 i2c.req addr=70 data=F7 stop=0
-50328135 i2c.resp status=0
-50328332 i2c.rd.req addr=70 req=6 stop=1 rs
-50328332 i2c.rd.resp len=6 data=A20D446BEA33
-50333134 i2c.req addr=70 data=F7 stop=0
-50333134 i2c.resp status=0
-50333332 i2c.rd.req addr=70 req=6 stop=1 rs
-50333332 i2c.rd.resp len=6 data=A20D446BEA33
-50338135 i2c.req addr=70 data=F7 stop=0
-50338135 i2c.resp status=0
-50338332 i2c.rd.req addr=70 req=6 stop=1 rs
-50338332 i2c.rd.resp len=6 data=A20D446BEA33
-50343135 i2c.req addr=70 data=F7 stop=0
-50343135 i2c.resp status=0
-50343332 i2c.rd.req addr=70 req=6 stop=1 rs
-50343332 i2c.rd.resp len=6 data=A20D446BEA33
-50348135 i2c.req addr=70 data=F7 stop=0
-50348135 i2c.resp status=0
-50348332 i2c.rd.req addr=70 req=6 stop=1 rs
-50348332 i2c.rd.resp len=6 data=A20D446BEA33
-50353135 i2c.req addr=70 data=F7 stop=0
-50353135 i2c.resp status=0
-50353332 i2c.rd.req addr=70 req=6 stop=1 rs
-50353332 i2c.rd.resp len=6 data=A20D446BEA33
-50358135 i2c.req addr=70 data=F7 stop=0
-50358135 i2c.resp status=0
-50358332 i2c.rd.req addr=70 req=6 stop=1 rs
-50358332 i2c.rd.resp len=6 data=A20D576BE9FC
-50359009 mark src=dut text=t_us%3D785000%20data%3Da20d576be9fc
-50363135 i2c.req addr=70 data=F7 stop=0
-50363135 i2c.resp status=0
-50363333 i2c.rd.req addr=70 req=6 stop=1 rs
-50363333 i2c.rd.resp len=6 data=A20D576BE9FC
-50368135 i2c.req addr=70 data=F7 stop=0
-50368135 i2c.resp status=0
-50368332 i2c.rd.req addr=70 req=6 stop=1 rs
-50368332 i2c.rd.resp len=6 data=A20D576BE9FC
-50373135 i2c.req addr=70 data=F7 stop=0
-50373135 i2c.resp status=0
-50373332 i2c.rd.req addr=70 req=6 stop=1 rs
-50373332 i2c.rd.resp len=6 data=A20D576BE9FC
-50378135 i2c.req addr=70 data=F7 stop=0
-50378135 i2c.resp status=0
-50378332 i2c.rd.req addr=70 req=6 stop=1 rs
-50378332 i2c.rd.resp len=6 data=A20D576BE9FC
-50383135 i2c.req addr=70 data=F7 stop=0
-50383135 i2c.resp status=0
-50383333 i2c.rd.req addr=70 req=6 stop=1 rs
-50383333 i2c.rd.resp len=6 data=A20D576BE9FC
-50388135 i2c.req addr=70 data=F7 stop=0
-50388135 i2c.resp status=0
-50388332 i2c.rd.req addr=70 req=6 stop=1 rs
-50388332 i2c.rd.resp len=6 data=A20D576BE9FC
-50393135 i2c.req addr=70 data=F7 stop=0
-50393135 i2c.resp status=0
-50393333 i2c.rd.req addr=70 req=6 stop=1 rs
-50393333 i2c.rd.resp len=6 data=A20D576BE9FC
-50398135 i2c.req addr=70 data=F7 stop=0
-50398135 i2c.resp status=0
-50398332 i2c.rd.req addr=70 req=6 stop=1 rs
-50398332 i2c.rd.resp len=6 data=A20D576BE9FC
-50403136 i2c.req addr=70 data=F7 stop=0
-50403136 i2c.resp status=0
-50403333 i2c.rd.req addr=70 req=6 stop=1 rs
-50403333 i2c.rd.resp len=6 data=A20D576BE9FC
-50408134 i2c.req addr=70 data=F7 stop=0
-50408134 i2c.resp status=0
-50408332 i2c.rd.req addr=70 req=6 stop=1 rs
-50408332 i2c.rd.resp len=6 data=A20D576BE9FC
-50413135 i2c.req addr=70 data=F7 stop=0
-50413135 i2c.resp status=0
-50413332 i2c.rd.req addr=70 req=6 stop=1 rs
-50413332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50414009 mark src=dut text=t_us%3D840001%20data%3Da20d4e6be9d9
-50418138 i2c.req addr=70 data=F7 stop=0
-50418138 i2c.resp status=0
-50418335 i2c.rd.req addr=70 req=6 stop=1 rs
-50418335 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50423135 i2c.req addr=70 data=F7 stop=0
-50423135 i2c.resp status=0
-50423332 i2c.rd.req addr=70 req=6 stop=1 rs
-50423332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50428135 i2c.req addr=70 data=F7 stop=0
-50428135 i2c.resp status=0
-50428332 i2c.rd.req addr=70 req=6 stop=1 rs
-50428332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50433135 i2c.req addr=70 data=F7 stop=0
-50433135 i2c.resp status=0
-50433332 i2c.rd.req addr=70 req=6 stop=1 rs
-50433332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50438136 i2c.req addr=70 data=F7 stop=0
-50438136 i2c.resp status=0
-50438333 i2c.rd.req addr=70 req=6 stop=1 rs
-50438333 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50443135 i2c.req addr=70 data=F7 stop=0
-50443135 i2c.resp status=0
-50443332 i2c.rd.req addr=70 req=6 stop=1 rs
-50443332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50448135 i2c.req addr=70 data=F7 stop=0
-50448135 i2c.resp status=0
-50448333 i2c.rd.req addr=70 req=6 stop=1 rs
-50448333 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50453135 i2c.req addr=70 data=F7 stop=0
-50453135 i2c.resp status=0
-50453332 i2c.rd.req addr=70 req=6 stop=1 rs
-50453332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50458135 i2c.req addr=70 data=F7 stop=0
-50458135 i2c.resp status=0
-50458332 i2c.rd.req addr=70 req=6 stop=1 rs
-50458332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50463135 i2c.req addr=70 data=F7 stop=0
-50463135 i2c.resp status=0
-50463332 i2c.rd.req addr=70 req=6 stop=1 rs
-50463332 i2c.rd.resp len=6 data=A20D4E6BE9D9
-50468135 i2c.req addr=70 data=F7 stop=0
-50468135 i2c.resp status=0
-50468333 i2c.rd.req addr=70 req=6 stop=1 rs
-50468333 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50469006 mark src=dut text=t_us%3D895001%20data%3Da20d4e6be9e4
-50473136 i2c.req addr=70 data=F7 stop=0
-50473136 i2c.resp status=0
-50473333 i2c.rd.req addr=70 req=6 stop=1 rs
-50473333 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50478135 i2c.req addr=70 data=F7 stop=0
-50478135 i2c.resp status=0
-50478332 i2c.rd.req addr=70 req=6 stop=1 rs
-50478332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50483135 i2c.req addr=70 data=F7 stop=0
-50483135 i2c.resp status=0
-50483332 i2c.rd.req addr=70 req=6 stop=1 rs
-50483332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50488135 i2c.req addr=70 data=F7 stop=0
-50488135 i2c.resp status=0
-50488332 i2c.rd.req addr=70 req=6 stop=1 rs
-50488332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50493135 i2c.req addr=70 data=F7 stop=0
-50493135 i2c.resp status=0
-50493332 i2c.rd.req addr=70 req=6 stop=1 rs
-50493332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50498135 i2c.req addr=70 data=F7 stop=0
-50498135 i2c.resp status=0
-50498332 i2c.rd.req addr=70 req=6 stop=1 rs
-50498332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50503135 i2c.req addr=70 data=F7 stop=0
-50503135 i2c.resp status=0
-50503332 i2c.rd.req addr=70 req=6 stop=1 rs
-50503332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50508135 i2c.req addr=70 data=F7 stop=0
-50508135 i2c.resp status=0
-50508332 i2c.rd.req addr=70 req=6 stop=1 rs
-50508332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50513134 i2c.req addr=70 data=F7 stop=0
-50513134 i2c.resp status=0
-50513332 i2c.rd.req addr=70 req=6 stop=1 rs
-50513332 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50518135 i2c.req addr=70 data=F7 stop=0
-50518135 i2c.resp status=0
-50518333 i2c.rd.req addr=70 req=6 stop=1 rs
-50518333 i2c.rd.resp len=6 data=A20D4E6BE9E4
-50523135 i2c.req addr=70 data=F7 stop=0
-50523135 i2c.resp status=0
-50523332 i2c.rd.req addr=70 req=6 stop=1 rs
-50523332 i2c.rd.resp len=6 data=A20D3E6BEA08
-50524003 mark src=dut text=t_us%3D950001%20data%3Da20d3e6bea08
-50528138 i2c.req addr=70 data=F7 stop=0
-50528138 i2c.resp status=0
-50528335 i2c.rd.req addr=70 req=6 stop=1 rs
-50528335 i2c.rd.resp len=6 data=A20D3E6BEA08
-50533135 i2c.req addr=70 data=F7 stop=0
-50533135 i2c.resp status=0
-50533333 i2c.rd.req addr=70 req=6 stop=1 rs
-50533333 i2c.rd.resp len=6 data=A20D3E6BEA08
-50538135 i2c.req addr=70 data=F7 stop=0
-50538135 i2c.resp status=0
-50538332 i2c.rd.req addr=70 req=6 stop=1 rs
-50538332 i2c.rd.resp len=6 data=A20D3E6BEA08
-50543135 i2c.req addr=70 data=F7 stop=0
-50543135 i2c.resp status=0
-50543332 i2c.rd.req addr=70 req=6 stop=1 rs
-50543332 i2c.rd.resp len=6 data=A20D3E6BEA08
-50548135 i2c.req addr=70 data=F7 stop=0
-50548135 i2c.resp status=0
-50548333 i2c.rd.req addr=70 req=6 stop=1 rs
-50548333 i2c.rd.resp len=6 data=A20D3E6BEA08
-50553135 i2c.req addr=70 data=F7 stop=0
-50553135 i2c.resp status=0
-50553333 i2c.rd.req addr=70 req=6 stop=1 rs
-50553333 i2c.rd.resp len=6 data=A20D3E6BEA08
-50558134 i2c.req addr=70 data=F7 stop=0
-50558134 i2c.resp status=0
-50558332 i2c.rd.req addr=70 req=6 stop=1 rs
-50558332 i2c.rd.resp len=6 data=A20D3E6BEA08
-50563135 i2c.req addr=70 data=F7 stop=0
-50563135 i2c.resp status=0
-50563332 i2c.rd.req addr=70 req=6 stop=1 rs
-50563332 i2c.rd.resp len=6 data=A20D3E6BEA08
-50568135 i2c.req addr=70 data=F7 stop=0
-50568135 i2c.resp status=0
-50568333 i2c.rd.req addr=70 req=6 stop=1 rs
-50568333 i2c.rd.resp len=6 data=A20D3E6BEA08
-50573135 i2c.req addr=70 data=F7 stop=0
-50573135 i2c.resp status=0
-50573333 i2c.rd.req addr=70 req=6 stop=1 rs
-50573333 i2c.rd.resp len=6 data=A20D3E6BEA08
-50578135 i2c.req addr=70 data=F7 stop=0
-50578135 i2c.resp status=0
-50578332 i2c.rd.req addr=70 req=6 stop=1 rs
-50578332 i2c.rd.resp len=6 data=A20D506BE9C9
-50579011 mark src=dut text=t_us%3D1005000%20data%3Da20d506be9c9
-50583136 i2c.req addr=70 data=F7 stop=0
-50583136 i2c.resp status=0
-50583333 i2c.rd.req addr=70 req=6 stop=1 rs
-50583333 i2c.rd.resp len=6 data=A20D506BE9C9
-50588135 i2c.req addr=70 data=F7 stop=0
-50588135 i2c.resp status=0
-50588332 i2c.rd.req addr=70 req=6 stop=1 rs
-50588332 i2c.rd.resp len=6 data=A20D506BE9C9
-50593135 i2c.req addr=70 data=F7 stop=0
-50593135 i2c.resp status=0
-50593332 i2c.rd.req addr=70 req=6 stop=1 rs
-50593332 i2c.rd.resp len=6 data=A20D506BE9C9
-50598135 i2c.req addr=70 data=F7 stop=0
-50598135 i2c.resp status=0
-50598332 i2c.rd.req addr=70 req=6 stop=1 rs
-50598332 i2c.rd.resp len=6 data=A20D506BE9C9
-50603135 i2c.req addr=70 data=F7 stop=0
-50603135 i2c.resp status=0
-50603332 i2c.rd.req addr=70 req=6 stop=1 rs
-50603332 i2c.rd.resp len=6 data=A20D506BE9C9
-50608135 i2c.req addr=70 data=F7 stop=0
-50608135 i2c.resp status=0
-50608332 i2c.rd.req addr=70 req=6 stop=1 rs
-50608332 i2c.rd.resp len=6 data=A20D506BE9C9
-50613135 i2c.req addr=70 data=F7 stop=0
-50613135 i2c.resp status=0
-50613333 i2c.rd.req addr=70 req=6 stop=1 rs
-50613333 i2c.rd.resp len=6 data=A20D506BE9C9
-50618134 i2c.req addr=70 data=F7 stop=0
-50618134 i2c.resp status=0
-50618332 i2c.rd.req addr=70 req=6 stop=1 rs
-50618332 i2c.rd.resp len=6 data=A20D506BE9C9
-50623135 i2c.req addr=70 data=F7 stop=0
-50623135 i2c.resp status=0
-50623332 i2c.rd.req addr=70 req=6 stop=1 rs
-50623332 i2c.rd.resp len=6 data=A20D506BE9C9
-50628135 i2c.req addr=70 data=F7 stop=0
-50628135 i2c.resp status=0
-50628333 i2c.rd.req addr=70 req=6 stop=1 rs
-50628333 i2c.rd.resp len=6 data=A20D506BE9C9
-50633135 i2c.req addr=70 data=F7 stop=0
-50633135 i2c.resp status=0
-50633332 i2c.rd.req addr=70 req=6 stop=1 rs
-50633332 i2c.rd.resp len=6 data=A20D4F6BE995
-50634012 mark src=dut text=t_us%3D1060001%20data%3Da20d4f6be995
-50638137 i2c.req addr=70 data=F7 stop=0
-50638137 i2c.resp status=0
-50638335 i2c.rd.req addr=70 req=6 stop=1 rs
-50638335 i2c.rd.resp len=6 data=A20D4F6BE995
-50643135 i2c.req addr=70 data=F7 stop=0
-50643135 i2c.resp status=0
-50643333 i2c.rd.req addr=70 req=6 stop=1 rs
-50643333 i2c.rd.resp len=6 data=A20D4F6BE995
-50648135 i2c.req addr=70 data=F7 stop=0
-50648135 i2c.resp status=0
-50648332 i2c.rd.req addr=70 req=6 stop=1 rs
-50648332 i2c.rd.resp len=6 data=A20D4F6BE995
-50653134 i2c.req addr=70 data=F7 stop=0
-50653134 i2c.resp status=0
-50653332 i2c.rd.req addr=70 req=6 stop=1 rs
-50653332 i2c.rd.resp len=6 data=A20D4F6BE995
-50658135 i2c.req addr=70 data=F7 stop=0
-50658135 i2c.resp status=0
-50658332 i2c.rd.req addr=70 req=6 stop=1 rs
-50658332 i2c.rd.resp len=6 data=A20D4F6BE995
-50663135 i2c.req addr=70 data=F7 stop=0
-50663135 i2c.resp status=0
-50663333 i2c.rd.req addr=70 req=6 stop=1 rs
-50663333 i2c.rd.resp len=6 data=A20D4F6BE995
-50668135 i2c.req addr=70 data=F7 stop=0
-50668135 i2c.resp status=0
-50668332 i2c.rd.req addr=70 req=6 stop=1 rs
-50668332 i2c.rd.resp len=6 data=A20D4F6BE995
-50673135 i2c.req addr=70 data=F7 stop=0
-50673135 i2c.resp status=0
-50673333 i2c.rd.req addr=70 req=6 stop=1 rs
-50673333 i2c.rd.resp len=6 data=A20D4F6BE995
-50678135 i2c.req addr=70 data=F7 stop=0
-50678135 i2c.resp status=0
-50678332 i2c.rd.req addr=70 req=6 stop=1 rs
-50678332 i2c.rd.resp len=6 data=A20D4F6BE995
-50683135 i2c.req addr=70 data=F7 stop=0
-50683135 i2c.resp status=0
-50683332 i2c.rd.req addr=70 req=6 stop=1 rs
-50683332 i2c.rd.resp len=6 data=A20D4F6BE995
-50688135 i2c.req addr=70 data=F7 stop=0
-50688135 i2c.resp status=0
-50688332 i2c.rd.req addr=70 req=6 stop=1 rs
-50688332 i2c.rd.resp len=6 data=A20D4A6BE865
-50689009 mark src=dut text=t_us%3D1115000%20data%3Da20d4a6be865
-50693136 i2c.req addr=70 data=F7 stop=0
-50693136 i2c.resp status=0
-50693333 i2c.rd.req addr=70 req=6 stop=1 rs
-50693333 i2c.rd.resp len=6 data=A20D4A6BE865
-50698135 i2c.req addr=70 data=F7 stop=0
-50698135 i2c.resp status=0
-50698333 i2c.rd.req addr=70 req=6 stop=1 rs
-50698333 i2c.rd.resp len=6 data=A20D4A6BE865
-50703135 i2c.req addr=70 data=F7 stop=0
-50703135 i2c.resp status=0
-50703332 i2c.rd.req addr=70 req=6 stop=1 rs
-50703332 i2c.rd.resp len=6 data=A20D4A6BE865
-50708135 i2c.req addr=70 data=F7 stop=0
-50708135 i2c.resp status=0
-50708332 i2c.rd.req addr=70 req=6 stop=1 rs
-50708332 i2c.rd.resp len=6 data=A20D4A6BE865
-50713135 i2c.req addr=70 data=F7 stop=0
-50713135 i2c.resp status=0
-50713332 i2c.rd.req addr=70 req=6 stop=1 rs
-50713332 i2c.rd.resp len=6 data=A20D4A6BE865
-50718135 i2c.req addr=70 data=F7 stop=0
-50718135 i2c.resp status=0
-50718333 i2c.rd.req addr=70 req=6 stop=1 rs
-50718333 i2c.rd.resp len=6 data=A20D4A6BE865
-50723135 i2c.req addr=70 data=F7 stop=0
-50723135 i2c.resp status=0
-50723332 i2c.rd.req addr=70 req=6 stop=1 rs
-50723332 i2c.rd.resp len=6 data=A20D4A6BE865
-50728135 i2c.req addr=70 data=F7 stop=0
-50728135 i2c.resp status=0
-50728333 i2c.rd.req addr=70 req=6 stop=1 rs
-50728333 i2c.rd.resp len=6 data=A20D4A6BE865
-50733135 i2c.req addr=70 data=F7 stop=0
-50733135 i2c.resp status=0
-50733332 i2c.rd.req addr=70 req=6 stop=1 rs
-50733332 i2c.rd.resp len=6 data=A20D4A6BE865
-50738135 i2c.req addr=70 data=F7 stop=0
-50738135 i2c.resp status=0
-50738332 i2c.rd.req addr=70 req=6 stop=1 rs
-50738332 i2c.rd.resp len=6 data=A20D4A6BE865
-50743135 i2c.req addr=70 data=F7 stop=0
-50743135 i2c.resp status=0
-50743332 i2c.rd.req addr=70 req=6 stop=1 rs
-50743332 i2c.rd.resp len=6 data=A20D2E6BE794
-50744011 mark src=dut text=t_us%3D1170001%20data%3Da20d2e6be794
-50748138 i2c.req addr=70 data=F7 stop=0
-50748138 i2c.resp status=0
-50748335 i2c.rd.req addr=70 req=6 stop=1 rs
-50748335 i2c.rd.resp len=6 data=A20D2E6BE794
-50753135 i2c.req addr=70 data=F7 stop=0
-50753135 i2c.resp status=0
-50753332 i2c.rd.req addr=70 req=6 stop=1 rs
-50753332 i2c.rd.resp len=6 data=A20D2E6BE794
-50758135 i2c.req addr=70 data=F7 stop=0
-50758135 i2c.resp status=0
-50758333 i2c.rd.req addr=70 req=6 stop=1 rs
-50758333 i2c.rd.resp len=6 data=A20D2E6BE794
-50763135 i2c.req addr=70 data=F7 stop=0
-50763135 i2c.resp status=0
-50763332 i2c.rd.req addr=70 req=6 stop=1 rs
-50763332 i2c.rd.resp len=6 data=A20D2E6BE794
-50768135 i2c.req addr=70 data=F7 stop=0
-50768135 i2c.resp status=0
-50768332 i2c.rd.req addr=70 req=6 stop=1 rs
-50768332 i2c.rd.resp len=6 data=A20D2E6BE794
-50773135 i2c.req addr=70 data=F7 stop=0
-50773135 i2c.resp status=0
-50773332 i2c.rd.req addr=70 req=6 stop=1 rs
-50773332 i2c.rd.resp len=6 data=A20D2E6BE794
-50778135 i2c.req addr=70 data=F7 stop=0
-50778135 i2c.resp status=0
-50778332 i2c.rd.req addr=70 req=6 stop=1 rs
-50778332 i2c.rd.resp len=6 data=A20D2E6BE794
-50783135 i2c.req addr=70 data=F7 stop=0
-50783135 i2c.resp status=0
-50783332 i2c.rd.req addr=70 req=6 stop=1 rs
-50783332 i2c.rd.resp len=6 data=A20D2E6BE794
-50788135 i2c.req addr=70 data=F7 stop=0
-50788135 i2c.resp status=0
-50788332 i2c.rd.req addr=70 req=6 stop=1 rs
-50788332 i2c.rd.resp len=6 data=A20D2E6BE794
-50793135 i2c.req addr=70 data=F7 stop=0
-50793135 i2c.resp status=0
-50793333 i2c.rd.req addr=70 req=6 stop=1 rs
-50793333 i2c.rd.resp len=6 data=A20D2E6BE794
-50798134 i2c.req addr=70 data=F7 stop=0
-50798134 i2c.resp status=0
-50798332 i2c.rd.req addr=70 req=6 stop=1 rs
-50798332 i2c.rd.resp len=6 data=A20D296BE801
-50799014 mark src=dut text=t_us%3D1225000%20data%3Da20d296be801
-50803138 i2c.req addr=70 data=F7 stop=0
-50803138 i2c.resp status=0
-50803335 i2c.rd.req addr=70 req=6 stop=1 rs
-50803335 i2c.rd.resp len=6 data=A20D296BE801
-50808135 i2c.req addr=70 data=F7 stop=0
-50808135 i2c.resp status=0
-50808332 i2c.rd.req addr=70 req=6 stop=1 rs
-50808332 i2c.rd.resp len=6 data=A20D296BE801
-50813135 i2c.req addr=70 data=F7 stop=0
-50813135 i2c.resp status=0
-50813332 i2c.rd.req addr=70 req=6 stop=1 rs
-50813332 i2c.rd.resp len=6 data=A20D296BE801
-50818134 i2c.req addr=70 data=F7 stop=0
-50818134 i2c.resp status=0
-50818332 i2c.rd.req addr=70 req=6 stop=1 rs
-50818332 i2c.rd.resp len=6 data=A20D296BE801
-50823135 i2c.req addr=70 data=F7 stop=0
-50823135 i2c.resp status=0
-50823333 i2c.rd.req addr=70 req=6 stop=1 rs
-50823333 i2c.rd.resp len=6 data=A20D296BE801
-50828134 i2c.req addr=70 data=F7 stop=0
-50828134 i2c.resp status=0
-50828332 i2c.rd.req addr=70 req=6 stop=1 rs
-50828332 i2c.rd.resp len=6 data=A20D296BE801
-50833135 i2c.req addr=70 data=F7 stop=0
-50833135 i2c.resp status=0
-50833333 i2c.rd.req addr=70 req=6 stop=1 rs
-50833333 i2c.rd.resp len=6 data=A20D296BE801
-50838134 i2c.req addr=70 data=F7 stop=0
-50838134 i2c.resp status=0
-50838332 i2c.rd.req addr=70 req=6 stop=1 rs
-50838332 i2c.rd.resp len=6 data=A20D296BE801
-50843135 i2c.req addr=70 data=F7 stop=0
-50843135 i2c.resp status=0
-50843332 i2c.rd.req addr=70 req=6 stop=1 rs
-50843332 i2c.rd.resp len=6 data=A20D296BE801
-50848135 i2c.req addr=70 data=F7 stop=0
-50848135 i2c.resp status=0
-50848332 i2c.rd.req addr=70 req=6 stop=1 rs
-50848332 i2c.rd.resp len=6 data=A20D296BE801
-50853134 i2c.req addr=70 data=F7 stop=0
-50853134 i2c.resp status=0
-50853331 i2c.rd.req addr=70 req=6 stop=1 rs
-50853331 i2c.rd.resp len=6 data=A20D316BE7F9
-50854006 mark src=dut text=t_us%3D1280000%20data%3Da20d316be7f9
-50858138 i2c.req addr=70 data=F7 stop=0
-50858138 i2c.resp status=0
-50858335 i2c.rd.req addr=70 req=6 stop=1 rs
-50858335 i2c.rd.resp len=6 data=A20D316BE7F9
-50863134 i2c.req addr=70 data=F7 stop=0
-50863134 i2c.resp status=0
-50863332 i2c.rd.req addr=70 req=6 stop=1 rs
-50863332 i2c.rd.resp len=6 data=A20D316BE7F9
-50868135 i2c.req addr=70 data=F7 stop=0
-50868135 i2c.resp status=0
-50868332 i2c.rd.req addr=70 req=6 stop=1 rs
-50868332 i2c.rd.resp len=6 data=A20D316BE7F9
-50873135 i2c.req addr=70 data=F7 stop=0
-50873135 i2c.resp status=0
-50873332 i2c.rd.req addr=70 req=6 stop=1 rs
-50873332 i2c.rd.resp len=6 data=A20D316BE7F9
-50878135 i2c.req addr=70 data=F7 stop=0
-50878135 i2c.resp status=0
-50878332 i2c.rd.req addr=70 req=6 stop=1 rs
-50878332 i2c.rd.resp len=6 data=A20D316BE7F9
-50883135 i2c.req addr=70 data=F7 stop=0
-50883135 i2c.resp status=0
-50883332 i2c.rd.req addr=70 req=6 stop=1 rs
-50883332 i2c.rd.resp len=6 data=A20D316BE7F9
-50888135 i2c.req addr=70 data=F7 stop=0
-50888135 i2c.resp status=0
-50888332 i2c.rd.req addr=70 req=6 stop=1 rs
-50888332 i2c.rd.resp len=6 data=A20D316BE7F9
-50893135 i2c.req addr=70 data=F7 stop=0
-50893135 i2c.resp status=0
-50893332 i2c.rd.req addr=70 req=6 stop=1 rs
-50893332 i2c.rd.resp len=6 data=A20D316BE7F9
-50898135 i2c.req addr=70 data=F7 stop=0
-50898135 i2c.resp status=0
-50898332 i2c.rd.req addr=70 req=6 stop=1 rs
-50898332 i2c.rd.resp len=6 data=A20D316BE7F9
-50903135 i2c.req addr=70 data=F7 stop=0
-50903135 i2c.resp status=0
-50903332 i2c.rd.req addr=70 req=6 stop=1 rs
-50903332 i2c.rd.resp len=6 data=A20D316BE7F9
-50908134 i2c.req addr=70 data=F7 stop=0
-50908134 i2c.resp status=0
-50908332 i2c.rd.req addr=70 req=6 stop=1 rs
-50908332 i2c.rd.resp len=6 data=A20D316BE7F9
-50913135 i2c.req addr=70 data=F7 stop=0
-50913135 i2c.resp status=0
-50913332 i2c.rd.req addr=70 req=6 stop=1 rs
-50913332 i2c.rd.resp len=6 data=A20D466BE811
-50914005 mark src=dut text=t_us%3D1340001%20data%3Da20d466be811
-50918136 i2c.req addr=70 data=F7 stop=0
-50918136 i2c.resp status=0
-50918333 i2c.rd.req addr=70 req=6 stop=1 rs
-50918333 i2c.rd.resp len=6 data=A20D466BE811
-50923135 i2c.req addr=70 data=F7 stop=0
-50923135 i2c.resp status=0
-50923333 i2c.rd.req addr=70 req=6 stop=1 rs
-50923333 i2c.rd.resp len=6 data=A20D466BE811
-50928135 i2c.req addr=70 data=F7 stop=0
-50928135 i2c.resp status=0
-50928332 i2c.rd.req addr=70 req=6 stop=1 rs
-50928332 i2c.rd.resp len=6 data=A20D466BE811
-50933135 i2c.req addr=70 data=F7 stop=0
-50933135 i2c.resp status=0
-50933333 i2c.rd.req addr=70 req=6 stop=1 rs
-50933333 i2c.rd.resp len=6 data=A20D466BE811
-50938135 i2c.req addr=70 data=F7 stop=0
-50938135 i2c.resp status=0
-50938332 i2c.rd.req addr=70 req=6 stop=1 rs
-50938332 i2c.rd.resp len=6 data=A20D466BE811
-50943135 i2c.req addr=70 data=F7 stop=0
-50943135 i2c.resp status=0
-50943332 i2c.rd.req addr=70 req=6 stop=1 rs
-50943332 i2c.rd.resp len=6 data=A20D466BE811
-50948135 i2c.req addr=70 data=F7 stop=0
-50948135 i2c.resp status=0
-50948332 i2c.rd.req addr=70 req=6 stop=1 rs
-50948332 i2c.rd.resp len=6 data=A20D466BE811
-50953135 i2c.req addr=70 data=F7 stop=0
-50953135 i2c.resp status=0
-50953332 i2c.rd.req addr=70 req=6 stop=1 rs
-50953332 i2c.rd.resp len=6 data=A20D466BE811
-50958155 i2c.req addr=70 data=F7 stop=0
-50958155 i2c.resp status=0
-50958353 i2c.rd.req addr=70 req=6 stop=1 rs
-50958353 i2c.rd.resp len=6 data=A20D466BE811
-50963135 i2c.req addr=70 data=F7 stop=0
-50963135 i2c.resp status=0
-50963332 i2c.rd.req addr=70 req=6 stop=1 rs
-50963332 i2c.rd.resp len=6 data=A20D466BE811
-50968135 i2c.req addr=70 data=F7 stop=0
-50968135 i2c.resp status=0
-50968333 i2c.rd.req addr=70 req=6 stop=1 rs
-50968333 i2c.rd.resp len=6 data=A20D426BE832
-50969008 mark src=dut text=t_us%3D1395001%20data%3Da20d426be832
-50973135 i2c.req addr=70 data=F7 stop=0
-50973135 i2c.resp status=0
-50973333 i2c.rd.req addr=70 req=6 stop=1 rs
-50973333 i2c.rd.resp len=6 data=A20D426BE832
-50978135 i2c.req addr=70 data=F7 stop=0
-50978135 i2c.resp status=0
-50978332 i2c.rd.req addr=70 req=6 stop=1 rs
-50978332 i2c.rd.resp len=6 data=A20D426BE832
-50983135 i2c.req addr=70 data=F7 stop=0
-50983135 i2c.resp status=0
-50983333 i2c.rd.req addr=70 req=6 stop=1 rs
-50983333 i2c.rd.resp len=6 data=A20D426BE832
-50988135 i2c.req addr=70 data=F7 stop=0
-50988135 i2c.resp status=0
-50988332 i2c.rd.req addr=70 req=6 stop=1 rs
-50988332 i2c.rd.resp len=6 data=A20D426BE832
-50993135 i2c.req addr=70 data=F7 stop=0
-50993135 i2c.resp status=0
-50993332 i2c.rd.req addr=70 req=6 stop=1 rs
-50993332 i2c.rd.resp len=6 data=A20D426BE832
-50998134 i2c.req addr=70 data=F7 stop=0
-50998134 i2c.resp status=0
-50998332 i2c.rd.req addr=70 req=6 stop=1 rs
-50998332 i2c.rd.resp len=6 data=A20D426BE832
-51003135 i2c.req addr=70 data=F7 stop=0
-51003135 i2c.resp status=0
-51003332 i2c.rd.req addr=70 req=6 stop=1 rs
-51003332 i2c.rd.resp len=6 data=A20D426BE832
-51008135 i2c.req addr=70 data=F7 stop=0
-51008135 i2c.resp status=0
-51008332 i2c.rd.req addr=70 req=6 stop=1 rs
-51008332 i2c.rd.resp len=6 data=A20D426BE832
-51013135 i2c.req addr=70 data=F7 stop=0
-51013135 i2c.resp status=0
-51013332 i2c.rd.req addr=70 req=6 stop=1 rs
-51013332 i2c.rd.resp len=6 data=A20D426BE832
-51018135 i2c.req addr=70 data=F7 stop=0
-51018135 i2c.resp status=0
-51018332 i2c.rd.req addr=70 req=6 stop=1 rs
-51018332 i2c.rd.resp len=6 data=A20D426BE832
-51023135 i2c.req addr=70 data=F7 stop=0
-51023135 i2c.resp status=0
-51023332 i2c.rd.req addr=70 req=6 stop=1 rs
-51023332 i2c.rd.resp len=6 data=A20D416BE852
-51024010 mark src=dut text=t_us%3D1450000%20data%3Da20d416be852
-51028138 i2c.req addr=70 data=F7 stop=0
-51028138 i2c.resp status=0
-51028335 i2c.rd.req addr=70 req=6 stop=1 rs
-51028335 i2c.rd.resp len=6 data=A20D416BE852
-51033134 i2c.req addr=70 data=F7 stop=0
-51033134 i2c.resp status=0
-51033332 i2c.rd.req addr=70 req=6 stop=1 rs
-51033332 i2c.rd.resp len=6 data=A20D416BE852
-51038147 i2c.req addr=70 data=F7 stop=0
-51038147 i2c.resp status=0
-51038345 i2c.rd.req addr=70 req=6 stop=1 rs
-51038345 i2c.rd.resp len=6 data=A20D416BE852
-51043135 i2c.req addr=70 data=F7 stop=0
-51043135 i2c.resp status=0
-51043332 i2c.rd.req addr=70 req=6 stop=1 rs
-51043332 i2c.rd.resp len=6 data=A20D416BE852
-51048135 i2c.req addr=70 data=F7 stop=0
-51048135 i2c.resp status=0
-51048333 i2c.rd.req addr=70 req=6 stop=1 rs
-51048333 i2c.rd.resp len=6 data=A20D416BE852
-51053135 i2c.req addr=70 data=F7 stop=0
-51053135 i2c.resp status=0
-51053332 i2c.rd.req addr=70 req=6 stop=1 rs
-51053332 i2c.rd.resp len=6 data=A20D416BE852
-51058135 i2c.req addr=70 data=F7 stop=0
-51058135 i2c.resp status=0
-51058333 i2c.rd.req addr=70 req=6 stop=1 rs
-51058333 i2c.rd.resp len=6 data=A20D416BE852
-51063135 i2c.req addr=70 data=F7 stop=0
-51063135 i2c.resp status=0
-51063332 i2c.rd.req addr=70 req=6 stop=1 rs
-51063332 i2c.rd.resp len=6 data=A20D416BE852
-51068135 i2c.req addr=70 data=F7 stop=0
-51068135 i2c.resp status=0
-51068332 i2c.rd.req addr=70 req=6 stop=1 rs
-51068332 i2c.rd.resp len=6 data=A20D416BE852
-51073135 i2c.req addr=70 data=F7 stop=0
-51073135 i2c.resp status=0
-51073332 i2c.rd.req addr=70 req=6 stop=1 rs
-51073332 i2c.rd.resp len=6 data=A20D416BE852
-51078135 i2c.req addr=70 data=F7 stop=0
-51078135 i2c.resp status=0
-51078332 i2c.rd.req addr=70 req=6 stop=1 rs
-51078332 i2c.rd.resp len=6 data=A20D466BE88D
-51079008 mark src=dut text=t_us%3D1505001%20data%3Da20d466be88d
-51083138 i2c.req addr=70 data=F7 stop=0
-51083138 i2c.resp status=0
-51083336 i2c.rd.req addr=70 req=6 stop=1 rs
-51083336 i2c.rd.resp len=6 data=A20D466BE88D
-51088135 i2c.req addr=70 data=F7 stop=0
-51088135 i2c.resp status=0
-51088332 i2c.rd.req addr=70 req=6 stop=1 rs
-51088332 i2c.rd.resp len=6 data=A20D466BE88D
-51093135 i2c.req addr=70 data=F7 stop=0
-51093135 i2c.resp status=0
-51093332 i2c.rd.req addr=70 req=6 stop=1 rs
-51093332 i2c.rd.resp len=6 data=A20D466BE88D
-51098135 i2c.req addr=70 data=F7 stop=0
-51098135 i2c.resp status=0
-51098332 i2c.rd.req addr=70 req=6 stop=1 rs
-51098332 i2c.rd.resp len=6 data=A20D466BE88D
-51103135 i2c.req addr=70 data=F7 stop=0
-51103135 i2c.resp status=0
-51103333 i2c.rd.req addr=70 req=6 stop=1 rs
-51103333 i2c.rd.resp len=6 data=A20D466BE88D
-51108135 i2c.req addr=70 data=F7 stop=0
-51108135 i2c.resp status=0
-51108332 i2c.rd.req addr=70 req=6 stop=1 rs
-51108332 i2c.rd.resp len=6 data=A20D466BE88D
-51113135 i2c.req addr=70 data=F7 stop=0
-51113135 i2c.resp status=0
-51113332 i2c.rd.req addr=70 req=6 stop=1 rs
-51113332 i2c.rd.resp len=6 data=A20D466BE88D
-51118134 i2c.req addr=70 data=F7 stop=0
-51118134 i2c.resp status=0
-51118332 i2c.rd.req addr=70 req=6 stop=1 rs
-51118332 i2c.rd.resp len=6 data=A20D466BE88D
-51123135 i2c.req addr=70 data=F7 stop=0
-51123135 i2c.resp status=0
-51123332 i2c.rd.req addr=70 req=6 stop=1 rs
-51123332 i2c.rd.resp len=6 data=A20D466BE88D
-51128135 i2c.req addr=70 data=F7 stop=0
-51128135 i2c.resp status=0
-51128332 i2c.rd.req addr=70 req=6 stop=1 rs
-51128332 i2c.rd.resp len=6 data=A20D466BE88D
-51133135 i2c.req addr=70 data=F7 stop=0
-51133135 i2c.resp status=0
-51133332 i2c.rd.req addr=70 req=6 stop=1 rs
-51133332 i2c.rd.resp len=6 data=A20D526BE8B3
-51134008 mark src=dut text=t_us%3D1560001%20data%3Da20d526be8b3
-51138136 i2c.req addr=70 data=F7 stop=0
-51138136 i2c.resp status=0
-51138333 i2c.rd.req addr=70 req=6 stop=1 rs
-51138333 i2c.rd.resp len=6 data=A20D526BE8B3
-51143135 i2c.req addr=70 data=F7 stop=0
-51143135 i2c.resp status=0
-51143332 i2c.rd.req addr=70 req=6 stop=1 rs
-51143332 i2c.rd.resp len=6 data=A20D526BE8B3
-51148135 i2c.req addr=70 data=F7 stop=0
-51148135 i2c.resp status=0
-51148332 i2c.rd.req addr=70 req=6 stop=1 rs
-51148332 i2c.rd.resp len=6 data=A20D526BE8B3
-51153135 i2c.req addr=70 data=F7 stop=0
-51153135 i2c.resp status=0
-51153333 i2c.rd.req addr=70 req=6 stop=1 rs
-51153333 i2c.rd.resp len=6 data=A20D526BE8B3
-51158135 i2c.req addr=70 data=F7 stop=0
-51158135 i2c.resp status=0
-51158332 i2c.rd.req addr=70 req=6 stop=1 rs
-51158332 i2c.rd.resp len=6 data=A20D526BE8B3
-51163135 i2c.req addr=70 data=F7 stop=0
-51163135 i2c.resp status=0
-51163332 i2c.rd.req addr=70 req=6 stop=1 rs
-51163332 i2c.rd.resp len=6 data=A20D526BE8B3
-51168135 i2c.req addr=70 data=F7 stop=0
-51168135 i2c.resp status=0
-51168332 i2c.rd.req addr=70 req=6 stop=1 rs
-51168332 i2c.rd.resp len=6 data=A20D526BE8B3
-51173134 i2c.req addr=70 data=F7 stop=0
-51173134 i2c.resp status=0
-51173332 i2c.rd.req addr=70 req=6 stop=1 rs
-51173332 i2c.rd.resp len=6 data=A20D526BE8B3
-51178135 i2c.req addr=70 data=F7 stop=0
-51178135 i2c.resp status=0
-51178333 i2c.rd.req addr=70 req=6 stop=1 rs
-51178333 i2c.rd.resp len=6 data=A20D526BE8B3
-51183135 i2c.req addr=70 data=F7 stop=0
-51183135 i2c.resp status=0
-51183332 i2c.rd.req addr=70 req=6 stop=1 rs
-51183332 i2c.rd.resp len=6 data=A20D526BE8B3
-51188134 i2c.req addr=70 data=F7 stop=0
-51188134 i2c.resp status=0
-51188332 i2c.rd.req addr=70 req=6 stop=1 rs
-51188332 i2c.rd.resp len=6 data=A20D236BE8F0
-51189009 mark src=dut text=t_us%3D1615000%20data%3Da20d236be8f0
-51193138 i2c.req addr=70 data=F7 stop=0
-51193138 i2c.resp status=0
-51193335 i2c.rd.req addr=70 req=6 stop=1 rs
-51193335 i2c.rd.resp len=6 data=A20D236BE8F0
-51198135 i2c.req addr=70 data=F7 stop=0
-51198135 i2c.resp status=0
-51198333 i2c.rd.req addr=70 req=6 stop=1 rs
-51198333 i2c.rd.resp len=6 data=A20D236BE8F0
-51203135 i2c.req addr=70 data=F7 stop=0
-51203135 i2c.resp status=0
-51203332 i2c.rd.req addr=70 req=6 stop=1 rs
-51203332 i2c.rd.resp len=6 data=A20D236BE8F0
-51208135 i2c.req addr=70 data=F7 stop=0
-51208135 i2c.resp status=0
-51208332 i2c.rd.req addr=70 req=6 stop=1 rs
-51208332 i2c.rd.resp len=6 data=A20D236BE8F0
-51213135 i2c.req addr=70 data=F7 stop=0
-51213135 i2c.resp status=0
-51213332 i2c.rd.req addr=70 req=6 stop=1 rs
-51213332 i2c.rd.resp len=6 data=A20D236BE8F0
-51218135 i2c.req addr=70 data=F7 stop=0
-51218135 i2c.resp status=0
-51218332 i2c.rd.req addr=70 req=6 stop=1 rs
-51218332 i2c.rd.resp len=6 data=A20D236BE8F0
-51223135 i2c.req addr=70 data=F7 stop=0
-51223135 i2c.resp status=0
-51223332 i2c.rd.req addr=70 req=6 stop=1 rs
-51223332 i2c.rd.resp len=6 data=A20D236BE8F0
-51228135 i2c.req addr=70 data=F7 stop=0
-51228135 i2c.resp status=0
-51228332 i2c.rd.req addr=70 req=6 stop=1 rs
-51228332 i2c.rd.resp len=6 data=A20D236BE8F0
-51233134 i2c.req addr=70 data=F7 stop=0
-51233134 i2c.resp status=0
-51233332 i2c.rd.req addr=70 req=6 stop=1 rs
-51233332 i2c.rd.resp len=6 data=A20D236BE8F0
-51238135 i2c.req addr=70 data=F7 stop=0
-51238135 i2c.resp status=0
-51238333 i2c.rd.req addr=70 req=6 stop=1 rs
-51238333 i2c.rd.resp len=6 data=A20D236BE8F0
-51243135 i2c.req addr=70 data=F7 stop=0
-51243135 i2c.resp status=0
-51243332 i2c.rd.req addr=70 req=6 stop=1 rs
-51243332 i2c.rd.resp len=6 data=A20D476BE8C5
-51244004 mark src=dut text=t_us%3D1670001%20data%3Da20d476be8c5
-51248136 i2c.req addr=70 data=F7 stop=0
-51248136 i2c.resp status=0
-51248334 i2c.rd.req addr=70 req=6 stop=1 rs
-51248334 i2c.rd.resp len=6 data=A20D476BE8C5
-51253135 i2c.req addr=70 data=F7 stop=0
-51253135 i2c.resp status=0
-51253333 i2c.rd.req addr=70 req=6 stop=1 rs
-51253333 i2c.rd.resp len=6 data=A20D476BE8C5
-51258135 i2c.req addr=70 data=F7 stop=0
-51258135 i2c.resp status=0
-51258332 i2c.rd.req addr=70 req=6 stop=1 rs
-51258332 i2c.rd.resp len=6 data=A20D476BE8C5
-51263135 i2c.req addr=70 data=F7 stop=0
-51263135 i2c.resp status=0
-51263332 i2c.rd.req addr=70 req=6 stop=1 rs
-51263332 i2c.rd.resp len=6 data=A20D476BE8C5
-51268136 i2c.req addr=70 data=F7 stop=0
-51268136 i2c.resp status=0
-51268333 i2c.rd.req addr=70 req=6 stop=1 rs
-51268333 i2c.rd.resp len=6 data=A20D476BE8C5
-51273135 i2c.req addr=70 data=F7 stop=0
-51273135 i2c.resp status=0
-51273333 i2c.rd.req addr=70 req=6 stop=1 rs
-51273333 i2c.rd.resp len=6 data=A20D476BE8C5
-51278135 i2c.req addr=70 data=F7 stop=0
-51278135 i2c.resp status=0
-51278332 i2c.rd.req addr=70 req=6 stop=1 rs
-51278332 i2c.rd.resp len=6 data=A20D476BE8C5
-51283135 i2c.req addr=70 data=F7 stop=0
-51283135 i2c.resp status=0
-51283332 i2c.rd.req addr=70 req=6 stop=1 rs
-51283332 i2c.rd.resp len=6 data=A20D476BE8C5
-51288135 i2c.req addr=70 data=F7 stop=0
-51288135 i2c.resp status=0
-51288332 i2c.rd.req addr=70 req=6 stop=1 rs
-51288332 i2c.rd.resp len=6 data=A20D476BE8C5
-51293135 i2c.req addr=70 data=F7 stop=0
-51293135 i2c.resp status=0
-51293332 i2c.rd.req addr=70 req=6 stop=1 rs
-51293332 i2c.rd.resp len=6 data=A20D476BE8C5
-51298134 i2c.req addr=70 data=F7 stop=0
-51298134 i2c.resp status=0
-51298332 i2c.rd.req addr=70 req=6 stop=1 rs
-51298332 i2c.rd.resp len=6 data=A20D476BE8BC
-51299012 mark src=dut text=t_us%3D1725001%20data%3Da20d476be8bc
-51303136 i2c.req addr=70 data=F7 stop=0
-51303136 i2c.resp status=0
-51303333 i2c.rd.req addr=70 req=6 stop=1 rs
-51303333 i2c.rd.resp len=6 data=A20D476BE8BC
-51308134 i2c.req addr=70 data=F7 stop=0
-51308134 i2c.resp status=0
-51308332 i2c.rd.req addr=70 req=6 stop=1 rs
-51308332 i2c.rd.resp len=6 data=A20D476BE8BC
-51313134 i2c.req addr=70 data=F7 stop=0
-51313134 i2c.resp status=0
-51313332 i2c.rd.req addr=70 req=6 stop=1 rs
-51313332 i2c.rd.resp len=6 data=A20D476BE8BC
-51318135 i2c.req addr=70 data=F7 stop=0
-51318135 i2c.resp status=0
-51318332 i2c.rd.req addr=70 req=6 stop=1 rs
-51318332 i2c.rd.resp len=6 data=A20D476BE8BC
-51323135 i2c.req addr=70 data=F7 stop=0
-51323135 i2c.resp status=0
-51323333 i2c.rd.req addr=70 req=6 stop=1 rs
-51323333 i2c.rd.resp len=6 data=A20D476BE8BC
-51328135 i2c.req addr=70 data=F7 stop=0
-51328135 i2c.resp status=0
-51328332 i2c.rd.req addr=70 req=6 stop=1 rs
-51328332 i2c.rd.resp len=6 data=A20D476BE8BC
-51333135 i2c.req addr=70 data=F7 stop=0
-51333135 i2c.resp status=0
-51333332 i2c.rd.req addr=70 req=6 stop=1 rs
-51333332 i2c.rd.resp len=6 data=A20D476BE8BC
-51338135 i2c.req addr=70 data=F7 stop=0
-51338135 i2c.resp status=0
-51338332 i2c.rd.req addr=70 req=6 stop=1 rs
-51338332 i2c.rd.resp len=6 data=A20D476BE8BC
-51343135 i2c.req addr=70 data=F7 stop=0
-51343135 i2c.resp status=0
-51343332 i2c.rd.req addr=70 req=6 stop=1 rs
-51343332 i2c.rd.resp len=6 data=A20D476BE8BC
-51348156 i2c.req addr=70 data=F7 stop=0
-51348156 i2c.resp status=0
-51348353 i2c.rd.req addr=70 req=6 stop=1 rs
-51348353 i2c.rd.resp len=6 data=A20D476BE8BC
-51353135 i2c.req addr=70 data=F7 stop=0
-51353135 i2c.resp status=0
-51353332 i2c.rd.req addr=70 req=6 stop=1 rs
-51353332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51354012 mark src=dut text=t_us%3D1780000%20data%3Da20d4b6be90f
-51358136 i2c.req addr=70 data=F7 stop=0
-51358136 i2c.resp status=0
-51358333 i2c.rd.req addr=70 req=6 stop=1 rs
-51358333 i2c.rd.resp len=6 data=A20D4B6BE90F
-51363134 i2c.req addr=70 data=F7 stop=0
-51363134 i2c.resp status=0
-51363332 i2c.rd.req addr=70 req=6 stop=1 rs
-51363332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51368135 i2c.req addr=70 data=F7 stop=0
-51368135 i2c.resp status=0
-51368332 i2c.rd.req addr=70 req=6 stop=1 rs
-51368332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51373135 i2c.req addr=70 data=F7 stop=0
-51373135 i2c.resp status=0
-51373332 i2c.rd.req addr=70 req=6 stop=1 rs
-51373332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51378135 i2c.req addr=70 data=F7 stop=0
-51378135 i2c.resp status=0
-51378332 i2c.rd.req addr=70 req=6 stop=1 rs
-51378332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51383135 i2c.req addr=70 data=F7 stop=0
-51383135 i2c.resp status=0
-51383332 i2c.rd.req addr=70 req=6 stop=1 rs
-51383332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51388135 i2c.req addr=70 data=F7 stop=0
-51388135 i2c.resp status=0
-51388332 i2c.rd.req addr=70 req=6 stop=1 rs
-51388332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51393135 i2c.req addr=70 data=F7 stop=0
-51393135 i2c.resp status=0
-51393332 i2c.rd.req addr=70 req=6 stop=1 rs
-51393332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51398135 i2c.req addr=70 data=F7 stop=0
-51398135 i2c.resp status=0
-51398332 i2c.rd.req addr=70 req=6 stop=1 rs
-51398332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51403135 i2c.req addr=70 data=F7 stop=0
-51403135 i2c.resp status=0
-51403332 i2c.rd.req addr=70 req=6 stop=1 rs
-51403332 i2c.rd.resp len=6 data=A20D4B6BE90F
-51408135 i2c.req addr=70 data=F7 stop=0
-51408135 i2c.resp status=0
-51408332 i2c.rd.req addr=70 req=6 stop=1 rs
-51408332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51409014 mark src=dut text=t_us%3D1835001%20data%3Da20d5a6be91e
-51413137 i2c.req addr=70 data=F7 stop=0
-51413137 i2c.resp status=0
-51413335 i2c.rd.req addr=70 req=6 stop=1 rs
-51413335 i2c.rd.resp len=6 data=A20D5A6BE91E
-51418135 i2c.req addr=70 data=F7 stop=0
-51418135 i2c.resp status=0
-51418332 i2c.rd.req addr=70 req=6 stop=1 rs
-51418332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51423135 i2c.req addr=70 data=F7 stop=0
-51423135 i2c.resp status=0
-51423332 i2c.rd.req addr=70 req=6 stop=1 rs
-51423332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51428135 i2c.req addr=70 data=F7 stop=0
-51428135 i2c.resp status=0
-51428332 i2c.rd.req addr=70 req=6 stop=1 rs
-51428332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51433135 i2c.req addr=70 data=F7 stop=0
-51433135 i2c.resp status=0
-51433332 i2c.rd.req addr=70 req=6 stop=1 rs
-51433332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51438135 i2c.req addr=70 data=F7 stop=0
-51438135 i2c.resp status=0
-51438332 i2c.rd.req addr=70 req=6 stop=1 rs
-51438332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51443135 i2c.req addr=70 data=F7 stop=0
-51443135 i2c.resp status=0
-51443332 i2c.rd.req addr=70 req=6 stop=1 rs
-51443332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51448135 i2c.req addr=70 data=F7 stop=0
-51448135 i2c.resp status=0
-51448333 i2c.rd.req addr=70 req=6 stop=1 rs
-51448333 i2c.rd.resp len=6 data=A20D5A6BE91E
-51453135 i2c.req addr=70 data=F7 stop=0
-51453135 i2c.resp status=0
-51453332 i2c.rd.req addr=70 req=6 stop=1 rs
-51453332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51458135 i2c.req addr=70 data=F7 stop=0
-51458135 i2c.resp status=0
-51458332 i2c.rd.req addr=70 req=6 stop=1 rs
-51458332 i2c.rd.resp len=6 data=A20D5A6BE91E
-51463135 i2c.req addr=70 data=F7 stop=0
-51463135 i2c.resp status=0
-51463332 i2c.rd.req addr=70 req=6 stop=1 rs
-51463332 i2c.rd.resp len=6 data=A20D666BE907
-51464014 mark src=dut text=t_us%3D1890001%20data%3Da20d666be907
-51468136 i2c.req addr=70 data=F7 stop=0
-51468136 i2c.resp status=0
-51468333 i2c.rd.req addr=70 req=6 stop=1 rs
-51468333 i2c.rd.resp len=6 data=A20D666BE907
-51473135 i2c.req addr=70 data=F7 stop=0
-51473135 i2c.resp status=0
-51473332 i2c.rd.req addr=70 req=6 stop=1 rs
-51473332 i2c.rd.resp len=6 data=A20D666BE907
-51478135 i2c.req addr=70 data=F7 stop=0
-51478135 i2c.resp status=0
-51478332 i2c.rd.req addr=70 req=6 stop=1 rs
-51478332 i2c.rd.resp len=6 data=A20D666BE907
-51483135 i2c.req addr=70 data=F7 stop=0
-51483135 i2c.resp status=0
-51483332 i2c.rd.req addr=70 req=6 stop=1 rs
-51483332 i2c.rd.resp len=6 data=A20D666BE907
-51488135 i2c.req addr=70 data=F7 stop=0
-51488135 i2c.resp status=0
-51488333 i2c.rd.req addr=70 req=6 stop=1 rs
-51488333 i2c.rd.resp len=6 data=A20D666BE907
-51493135 i2c.req addr=70 data=F7 stop=0
-51493135 i2c.resp status=0
-51493332 i2c.rd.req addr=70 req=6 stop=1 rs
-51493332 i2c.rd.resp len=6 data=A20D666BE907
-51498134 i2c.req addr=70 data=F7 stop=0
-51498134 i2c.resp status=0
-51498332 i2c.rd.req addr=70 req=6 stop=1 rs
-51498332 i2c.rd.resp len=6 data=A20D666BE907
-51503134 i2c.req addr=70 data=F7 stop=0
-51503134 i2c.resp status=0
-51503332 i2c.rd.req addr=70 req=6 stop=1 rs
-51503332 i2c.rd.resp len=6 data=A20D666BE907
-51508135 i2c.req addr=70 data=F7 stop=0
-51508135 i2c.resp status=0
-51508332 i2c.rd.req addr=70 req=6 stop=1 rs
-51508332 i2c.rd.resp len=6 data=A20D666BE907
-51513135 i2c.req addr=70 data=F7 stop=0
-51513135 i2c.resp status=0
-51513332 i2c.rd.req addr=70 req=6 stop=1 rs
-51513332 i2c.rd.resp len=6 data=A20D666BE907
-51518135 i2c.req addr=70 data=F7 stop=0
-51518135 i2c.resp status=0
-51518332 i2c.rd.req addr=70 req=6 stop=1 rs
-51518332 i2c.rd.resp len=6 data=A20D736BE910
-51519011 mark src=dut text=t_us%3D1945000%20data%3Da20d736be910
-51523137 i2c.req addr=70 data=F7 stop=0
-51523137 i2c.resp status=0
-51523335 i2c.rd.req addr=70 req=6 stop=1 rs
-51523335 i2c.rd.resp len=6 data=A20D736BE910
-51528134 i2c.req addr=70 data=F7 stop=0
-51528134 i2c.resp status=0
-51528332 i2c.rd.req addr=70 req=6 stop=1 rs
-51528332 i2c.rd.resp len=6 data=A20D736BE910
-51533135 i2c.req addr=70 data=F7 stop=0
-51533135 i2c.resp status=0
-51533333 i2c.rd.req addr=70 req=6 stop=1 rs
-51533333 i2c.rd.resp len=6 data=A20D736BE910
-51538134 i2c.req addr=70 data=F7 stop=0
-51538134 i2c.resp status=0
-51538332 i2c.rd.req addr=70 req=6 stop=1 rs
-51538332 i2c.rd.resp len=6 data=A20D736BE910
-51543135 i2c.req addr=70 data=F7 stop=0
-51543135 i2c.resp status=0
-51543332 i2c.rd.req addr=70 req=6 stop=1 rs
-51543332 i2c.rd.resp len=6 data=A20D736BE910
-51548135 i2c.req addr=70 data=F7 stop=0
-51548135 i2c.resp status=0
-51548332 i2c.rd.req addr=70 req=6 stop=1 rs
-51548332 i2c.rd.resp len=6 data=A20D736BE910
-51553135 i2c.req addr=70 data=F7 stop=0
-51553135 i2c.resp status=0
-51553333 i2c.rd.req addr=70 req=6 stop=1 rs
-51553333 i2c.rd.resp len=6 data=A20D736BE910
-51558135 i2c.req addr=70 data=F7 stop=0
-51558135 i2c.resp status=0
-51558332 i2c.rd.req addr=70 req=6 stop=1 rs
-51558332 i2c.rd.resp len=6 data=A20D736BE910
-51563135 i2c.req addr=70 data=F7 stop=0
-51563135 i2c.resp status=0
-51563332 i2c.rd.req addr=70 req=6 stop=1 rs
-51563332 i2c.rd.resp len=6 data=A20D736BE910
-51568134 i2c.req addr=70 data=F7 stop=0
-51568134 i2c.resp status=0
-51568332 i2c.rd.req addr=70 req=6 stop=1 rs
-51568332 i2c.rd.resp len=6 data=A20D736BE910
-51573135 i2c.req addr=70 data=F7 stop=0
-51573135 i2c.resp status=0
-51573333 i2c.rd.req addr=70 req=6 stop=1 rs
-51573333 i2c.rd.resp len=6 data=A20D736BE90B
-51574010 mark src=dut text=t_us%3D2000001%20data%3Da20d736be90b
-51574040 mark src=dut text=reads%3D401%20changes%3D38
-51574098 i2c.req addr=70 data=F400 stop=1
-51574098 i2c.resp status=0
-51574390 mark case=qmp6988-standby-long-50ms phase=normal end=1
-51574393 mark case=qmp6988-standby-long-50ms end=1
+# qmp6988-standby-long-50ms__i2c-100k__e2bc048e50fc2277 (2026-11-03), through skein2trace.py.
+44635650 mark case=qmp6988-standby-long-50ms
+44635655 mark case=qmp6988-standby-long-50ms phase=setup
+44635855 i2c.req addr=70 data=F400 stop=1
+44635855 i2c.resp status=0
+44636181 i2c.req addr=70 data=F102 stop=1
+44636181 i2c.resp status=0
+44636501 i2c.req addr=70 data=F540 stop=1
+44636501 i2c.resp status=0
+44836706 mark case=qmp6988-standby-long-50ms phase=setup end=1
+44836708 mark case=qmp6988-standby-long-50ms phase=normal
+44836775 i2c.req addr=70 data=F433 stop=1
+44836775 i2c.resp status=0
+44837128 mark src=dut text=end%3D0
+44837236 i2c.req addr=70 data=F7 stop=0
+44837236 i2c.resp status=0
+44837433 i2c.rd.req addr=70 req=6 stop=1 rs
+44837433 i2c.rd.resp len=6 data=A252DA6CC3B2
+44838174 mark src=dut text=t_us%3D6%20data%3Da252da6cc3b2
+44842174 i2c.req addr=70 data=F7 stop=0
+44842174 i2c.resp status=0
+44842371 i2c.rd.req addr=70 req=6 stop=1 rs
+44842371 i2c.rd.resp len=6 data=A252DA6CC3B2
+44847172 i2c.req addr=70 data=F7 stop=0
+44847172 i2c.resp status=0
+44847369 i2c.rd.req addr=70 req=6 stop=1 rs
+44847369 i2c.rd.resp len=6 data=A252DA6CC3B2
+44852172 i2c.req addr=70 data=F7 stop=0
+44852172 i2c.resp status=0
+44852369 i2c.rd.req addr=70 req=6 stop=1 rs
+44852369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44853046 mark src=dut text=t_us%3D15001%20data%3Da2535a6cc7b4
+44857172 i2c.req addr=70 data=F7 stop=0
+44857172 i2c.resp status=0
+44857370 i2c.rd.req addr=70 req=6 stop=1 rs
+44857370 i2c.rd.resp len=6 data=A2535A6CC7B4
+44862172 i2c.req addr=70 data=F7 stop=0
+44862172 i2c.resp status=0
+44862369 i2c.rd.req addr=70 req=6 stop=1 rs
+44862369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44867171 i2c.req addr=70 data=F7 stop=0
+44867171 i2c.resp status=0
+44867369 i2c.rd.req addr=70 req=6 stop=1 rs
+44867369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44872171 i2c.req addr=70 data=F7 stop=0
+44872171 i2c.resp status=0
+44872369 i2c.rd.req addr=70 req=6 stop=1 rs
+44872369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44877172 i2c.req addr=70 data=F7 stop=0
+44877172 i2c.resp status=0
+44877369 i2c.rd.req addr=70 req=6 stop=1 rs
+44877369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44882172 i2c.req addr=70 data=F7 stop=0
+44882172 i2c.resp status=0
+44882370 i2c.rd.req addr=70 req=6 stop=1 rs
+44882370 i2c.rd.resp len=6 data=A2535A6CC7B4
+44887171 i2c.req addr=70 data=F7 stop=0
+44887171 i2c.resp status=0
+44887369 i2c.rd.req addr=70 req=6 stop=1 rs
+44887369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44892172 i2c.req addr=70 data=F7 stop=0
+44892172 i2c.resp status=0
+44892369 i2c.rd.req addr=70 req=6 stop=1 rs
+44892369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44897172 i2c.req addr=70 data=F7 stop=0
+44897172 i2c.resp status=0
+44897370 i2c.rd.req addr=70 req=6 stop=1 rs
+44897370 i2c.rd.resp len=6 data=A2535A6CC7B4
+44902172 i2c.req addr=70 data=F7 stop=0
+44902172 i2c.resp status=0
+44902369 i2c.rd.req addr=70 req=6 stop=1 rs
+44902369 i2c.rd.resp len=6 data=A2535A6CC7B4
+44907171 i2c.req addr=70 data=F7 stop=0
+44907171 i2c.resp status=0
+44907368 i2c.rd.req addr=70 req=6 stop=1 rs
+44907368 i2c.rd.resp len=6 data=A2532C6CC69C
+44908049 mark src=dut text=t_us%3D70000%20data%3Da2532c6cc69c
+44912175 i2c.req addr=70 data=F7 stop=0
+44912175 i2c.resp status=0
+44912372 i2c.rd.req addr=70 req=6 stop=1 rs
+44912372 i2c.rd.resp len=6 data=A2532C6CC69C
+44917172 i2c.req addr=70 data=F7 stop=0
+44917172 i2c.resp status=0
+44917369 i2c.rd.req addr=70 req=6 stop=1 rs
+44917369 i2c.rd.resp len=6 data=A2532C6CC69C
+44922172 i2c.req addr=70 data=F7 stop=0
+44922172 i2c.resp status=0
+44922369 i2c.rd.req addr=70 req=6 stop=1 rs
+44922369 i2c.rd.resp len=6 data=A2532C6CC69C
+44927172 i2c.req addr=70 data=F7 stop=0
+44927172 i2c.resp status=0
+44927369 i2c.rd.req addr=70 req=6 stop=1 rs
+44927369 i2c.rd.resp len=6 data=A2532C6CC69C
+44932171 i2c.req addr=70 data=F7 stop=0
+44932171 i2c.resp status=0
+44932369 i2c.rd.req addr=70 req=6 stop=1 rs
+44932369 i2c.rd.resp len=6 data=A2532C6CC69C
+44937171 i2c.req addr=70 data=F7 stop=0
+44937171 i2c.resp status=0
+44937368 i2c.rd.req addr=70 req=6 stop=1 rs
+44937368 i2c.rd.resp len=6 data=A2532C6CC69C
+44942171 i2c.req addr=70 data=F7 stop=0
+44942171 i2c.resp status=0
+44942369 i2c.rd.req addr=70 req=6 stop=1 rs
+44942369 i2c.rd.resp len=6 data=A2532C6CC69C
+44947171 i2c.req addr=70 data=F7 stop=0
+44947171 i2c.resp status=0
+44947369 i2c.rd.req addr=70 req=6 stop=1 rs
+44947369 i2c.rd.resp len=6 data=A2532C6CC69C
+44952171 i2c.req addr=70 data=F7 stop=0
+44952171 i2c.resp status=0
+44952369 i2c.rd.req addr=70 req=6 stop=1 rs
+44952369 i2c.rd.resp len=6 data=A2532C6CC69C
+44957171 i2c.req addr=70 data=F7 stop=0
+44957171 i2c.resp status=0
+44957369 i2c.rd.req addr=70 req=6 stop=1 rs
+44957369 i2c.rd.resp len=6 data=A2532C6CC69C
+44962172 i2c.req addr=70 data=F7 stop=0
+44962172 i2c.resp status=0
+44962369 i2c.rd.req addr=70 req=6 stop=1 rs
+44962369 i2c.rd.resp len=6 data=A2532D6CC5D4
+44963057 mark src=dut text=t_us%3D125001%20data%3Da2532d6cc5d4
+44967172 i2c.req addr=70 data=F7 stop=0
+44967172 i2c.resp status=0
+44967370 i2c.rd.req addr=70 req=6 stop=1 rs
+44967370 i2c.rd.resp len=6 data=A2532D6CC5D4
+44972171 i2c.req addr=70 data=F7 stop=0
+44972171 i2c.resp status=0
+44972369 i2c.rd.req addr=70 req=6 stop=1 rs
+44972369 i2c.rd.resp len=6 data=A2532D6CC5D4
+44977172 i2c.req addr=70 data=F7 stop=0
+44977172 i2c.resp status=0
+44977369 i2c.rd.req addr=70 req=6 stop=1 rs
+44977369 i2c.rd.resp len=6 data=A2532D6CC5D4
+44982172 i2c.req addr=70 data=F7 stop=0
+44982172 i2c.resp status=0
+44982369 i2c.rd.req addr=70 req=6 stop=1 rs
+44982369 i2c.rd.resp len=6 data=A2532D6CC5D4
+44987171 i2c.req addr=70 data=F7 stop=0
+44987171 i2c.resp status=0
+44987368 i2c.rd.req addr=70 req=6 stop=1 rs
+44987368 i2c.rd.resp len=6 data=A2532D6CC5D4
+44992174 i2c.req addr=70 data=F7 stop=0
+44992174 i2c.resp status=0
+44992371 i2c.rd.req addr=70 req=6 stop=1 rs
+44992371 i2c.rd.resp len=6 data=A2532D6CC5D4
+44997172 i2c.req addr=70 data=F7 stop=0
+44997172 i2c.resp status=0
+44997369 i2c.rd.req addr=70 req=6 stop=1 rs
+44997369 i2c.rd.resp len=6 data=A2532D6CC5D4
+45002172 i2c.req addr=70 data=F7 stop=0
+45002172 i2c.resp status=0
+45002369 i2c.rd.req addr=70 req=6 stop=1 rs
+45002369 i2c.rd.resp len=6 data=A2532D6CC5D4
+45007171 i2c.req addr=70 data=F7 stop=0
+45007171 i2c.resp status=0
+45007368 i2c.rd.req addr=70 req=6 stop=1 rs
+45007368 i2c.rd.resp len=6 data=A2532D6CC5D4
+45012172 i2c.req addr=70 data=F7 stop=0
+45012172 i2c.resp status=0
+45012369 i2c.rd.req addr=70 req=6 stop=1 rs
+45012369 i2c.rd.resp len=6 data=A2532D6CC5D4
+45017171 i2c.req addr=70 data=F7 stop=0
+45017171 i2c.resp status=0
+45017369 i2c.rd.req addr=70 req=6 stop=1 rs
+45017369 i2c.rd.resp len=6 data=A253346CC569
+45018041 mark src=dut text=t_us%3D180001%20data%3Da253346cc569
+45022172 i2c.req addr=70 data=F7 stop=0
+45022172 i2c.resp status=0
+45022370 i2c.rd.req addr=70 req=6 stop=1 rs
+45022370 i2c.rd.resp len=6 data=A253346CC569
+45027172 i2c.req addr=70 data=F7 stop=0
+45027172 i2c.resp status=0
+45027369 i2c.rd.req addr=70 req=6 stop=1 rs
+45027369 i2c.rd.resp len=6 data=A253346CC569
+45032172 i2c.req addr=70 data=F7 stop=0
+45032172 i2c.resp status=0
+45032369 i2c.rd.req addr=70 req=6 stop=1 rs
+45032369 i2c.rd.resp len=6 data=A253346CC569
+45037172 i2c.req addr=70 data=F7 stop=0
+45037172 i2c.resp status=0
+45037369 i2c.rd.req addr=70 req=6 stop=1 rs
+45037369 i2c.rd.resp len=6 data=A253346CC569
+45042172 i2c.req addr=70 data=F7 stop=0
+45042172 i2c.resp status=0
+45042369 i2c.rd.req addr=70 req=6 stop=1 rs
+45042369 i2c.rd.resp len=6 data=A253346CC569
+45047172 i2c.req addr=70 data=F7 stop=0
+45047172 i2c.resp status=0
+45047369 i2c.rd.req addr=70 req=6 stop=1 rs
+45047369 i2c.rd.resp len=6 data=A253346CC569
+45052171 i2c.req addr=70 data=F7 stop=0
+45052171 i2c.resp status=0
+45052368 i2c.rd.req addr=70 req=6 stop=1 rs
+45052368 i2c.rd.resp len=6 data=A253346CC569
+45057174 i2c.req addr=70 data=F7 stop=0
+45057174 i2c.resp status=0
+45057371 i2c.rd.req addr=70 req=6 stop=1 rs
+45057371 i2c.rd.resp len=6 data=A253346CC569
+45062171 i2c.req addr=70 data=F7 stop=0
+45062171 i2c.resp status=0
+45062369 i2c.rd.req addr=70 req=6 stop=1 rs
+45062369 i2c.rd.resp len=6 data=A253346CC569
+45067171 i2c.req addr=70 data=F7 stop=0
+45067171 i2c.resp status=0
+45067369 i2c.rd.req addr=70 req=6 stop=1 rs
+45067369 i2c.rd.resp len=6 data=A253346CC569
+45072171 i2c.req addr=70 data=F7 stop=0
+45072171 i2c.resp status=0
+45072369 i2c.rd.req addr=70 req=6 stop=1 rs
+45072369 i2c.rd.resp len=6 data=A253346CC569
+45077174 i2c.req addr=70 data=F7 stop=0
+45077174 i2c.resp status=0
+45077371 i2c.rd.req addr=70 req=6 stop=1 rs
+45077371 i2c.rd.resp len=6 data=A2531C6CC4B0
+45078050 mark src=dut text=t_us%3D240001%20data%3Da2531c6cc4b0
+45082172 i2c.req addr=70 data=F7 stop=0
+45082172 i2c.resp status=0
+45082369 i2c.rd.req addr=70 req=6 stop=1 rs
+45082369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45087172 i2c.req addr=70 data=F7 stop=0
+45087172 i2c.resp status=0
+45087369 i2c.rd.req addr=70 req=6 stop=1 rs
+45087369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45092172 i2c.req addr=70 data=F7 stop=0
+45092172 i2c.resp status=0
+45092369 i2c.rd.req addr=70 req=6 stop=1 rs
+45092369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45097171 i2c.req addr=70 data=F7 stop=0
+45097171 i2c.resp status=0
+45097369 i2c.rd.req addr=70 req=6 stop=1 rs
+45097369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45102171 i2c.req addr=70 data=F7 stop=0
+45102171 i2c.resp status=0
+45102369 i2c.rd.req addr=70 req=6 stop=1 rs
+45102369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45107172 i2c.req addr=70 data=F7 stop=0
+45107172 i2c.resp status=0
+45107369 i2c.rd.req addr=70 req=6 stop=1 rs
+45107369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45112172 i2c.req addr=70 data=F7 stop=0
+45112172 i2c.resp status=0
+45112369 i2c.rd.req addr=70 req=6 stop=1 rs
+45112369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45117171 i2c.req addr=70 data=F7 stop=0
+45117171 i2c.resp status=0
+45117369 i2c.rd.req addr=70 req=6 stop=1 rs
+45117369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45122171 i2c.req addr=70 data=F7 stop=0
+45122171 i2c.resp status=0
+45122369 i2c.rd.req addr=70 req=6 stop=1 rs
+45122369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45127172 i2c.req addr=70 data=F7 stop=0
+45127172 i2c.resp status=0
+45127369 i2c.rd.req addr=70 req=6 stop=1 rs
+45127369 i2c.rd.resp len=6 data=A2531C6CC4B0
+45132171 i2c.req addr=70 data=F7 stop=0
+45132171 i2c.resp status=0
+45132369 i2c.rd.req addr=70 req=6 stop=1 rs
+45132369 i2c.rd.resp len=6 data=A253106CC41D
+45133043 mark src=dut text=t_us%3D295000%20data%3Da253106cc41d
+45137172 i2c.req addr=70 data=F7 stop=0
+45137172 i2c.resp status=0
+45137370 i2c.rd.req addr=70 req=6 stop=1 rs
+45137370 i2c.rd.resp len=6 data=A253106CC41D
+45142172 i2c.req addr=70 data=F7 stop=0
+45142172 i2c.resp status=0
+45142369 i2c.rd.req addr=70 req=6 stop=1 rs
+45142369 i2c.rd.resp len=6 data=A253106CC41D
+45147171 i2c.req addr=70 data=F7 stop=0
+45147171 i2c.resp status=0
+45147369 i2c.rd.req addr=70 req=6 stop=1 rs
+45147369 i2c.rd.resp len=6 data=A253106CC41D
+45152171 i2c.req addr=70 data=F7 stop=0
+45152171 i2c.resp status=0
+45152368 i2c.rd.req addr=70 req=6 stop=1 rs
+45152368 i2c.rd.resp len=6 data=A253106CC41D
+45157172 i2c.req addr=70 data=F7 stop=0
+45157172 i2c.resp status=0
+45157369 i2c.rd.req addr=70 req=6 stop=1 rs
+45157369 i2c.rd.resp len=6 data=A253106CC41D
+45162171 i2c.req addr=70 data=F7 stop=0
+45162171 i2c.resp status=0
+45162368 i2c.rd.req addr=70 req=6 stop=1 rs
+45162368 i2c.rd.resp len=6 data=A253106CC41D
+45167171 i2c.req addr=70 data=F7 stop=0
+45167171 i2c.resp status=0
+45167369 i2c.rd.req addr=70 req=6 stop=1 rs
+45167369 i2c.rd.resp len=6 data=A253106CC41D
+45172171 i2c.req addr=70 data=F7 stop=0
+45172171 i2c.resp status=0
+45172369 i2c.rd.req addr=70 req=6 stop=1 rs
+45172369 i2c.rd.resp len=6 data=A253106CC41D
+45177172 i2c.req addr=70 data=F7 stop=0
+45177172 i2c.resp status=0
+45177369 i2c.rd.req addr=70 req=6 stop=1 rs
+45177369 i2c.rd.resp len=6 data=A253106CC41D
+45182171 i2c.req addr=70 data=F7 stop=0
+45182171 i2c.resp status=0
+45182369 i2c.rd.req addr=70 req=6 stop=1 rs
+45182369 i2c.rd.resp len=6 data=A253106CC41D
+45187171 i2c.req addr=70 data=F7 stop=0
+45187171 i2c.resp status=0
+45187368 i2c.rd.req addr=70 req=6 stop=1 rs
+45187368 i2c.rd.resp len=6 data=A253016CC3AC
+45188045 mark src=dut text=t_us%3D350000%20data%3Da253016cc3ac
+45192179 i2c.req addr=70 data=F7 stop=0
+45192179 i2c.resp status=0
+45192376 i2c.rd.req addr=70 req=6 stop=1 rs
+45192376 i2c.rd.resp len=6 data=A253016CC3AC
+45197172 i2c.req addr=70 data=F7 stop=0
+45197172 i2c.resp status=0
+45197369 i2c.rd.req addr=70 req=6 stop=1 rs
+45197369 i2c.rd.resp len=6 data=A253016CC3AC
+45202171 i2c.req addr=70 data=F7 stop=0
+45202171 i2c.resp status=0
+45202368 i2c.rd.req addr=70 req=6 stop=1 rs
+45202368 i2c.rd.resp len=6 data=A253016CC3AC
+45207172 i2c.req addr=70 data=F7 stop=0
+45207172 i2c.resp status=0
+45207369 i2c.rd.req addr=70 req=6 stop=1 rs
+45207369 i2c.rd.resp len=6 data=A253016CC3AC
+45212172 i2c.req addr=70 data=F7 stop=0
+45212172 i2c.resp status=0
+45212369 i2c.rd.req addr=70 req=6 stop=1 rs
+45212369 i2c.rd.resp len=6 data=A253016CC3AC
+45217172 i2c.req addr=70 data=F7 stop=0
+45217172 i2c.resp status=0
+45217369 i2c.rd.req addr=70 req=6 stop=1 rs
+45217369 i2c.rd.resp len=6 data=A253016CC3AC
+45222172 i2c.req addr=70 data=F7 stop=0
+45222172 i2c.resp status=0
+45222369 i2c.rd.req addr=70 req=6 stop=1 rs
+45222369 i2c.rd.resp len=6 data=A253016CC3AC
+45227171 i2c.req addr=70 data=F7 stop=0
+45227171 i2c.resp status=0
+45227368 i2c.rd.req addr=70 req=6 stop=1 rs
+45227368 i2c.rd.resp len=6 data=A253016CC3AC
+45232172 i2c.req addr=70 data=F7 stop=0
+45232172 i2c.resp status=0
+45232369 i2c.rd.req addr=70 req=6 stop=1 rs
+45232369 i2c.rd.resp len=6 data=A253016CC3AC
+45237172 i2c.req addr=70 data=F7 stop=0
+45237172 i2c.resp status=0
+45237369 i2c.rd.req addr=70 req=6 stop=1 rs
+45237369 i2c.rd.resp len=6 data=A253016CC3AC
+45242171 i2c.req addr=70 data=F7 stop=0
+45242171 i2c.resp status=0
+45242368 i2c.rd.req addr=70 req=6 stop=1 rs
+45242368 i2c.rd.resp len=6 data=A252F36CC2DB
+45243047 mark src=dut text=t_us%3D405000%20data%3Da252f36cc2db
+45247172 i2c.req addr=70 data=F7 stop=0
+45247172 i2c.resp status=0
+45247370 i2c.rd.req addr=70 req=6 stop=1 rs
+45247370 i2c.rd.resp len=6 data=A252F36CC2DB
+45252171 i2c.req addr=70 data=F7 stop=0
+45252171 i2c.resp status=0
+45252369 i2c.rd.req addr=70 req=6 stop=1 rs
+45252369 i2c.rd.resp len=6 data=A252F36CC2DB
+45257172 i2c.req addr=70 data=F7 stop=0
+45257172 i2c.resp status=0
+45257370 i2c.rd.req addr=70 req=6 stop=1 rs
+45257370 i2c.rd.resp len=6 data=A252F36CC2DB
+45262172 i2c.req addr=70 data=F7 stop=0
+45262172 i2c.resp status=0
+45262369 i2c.rd.req addr=70 req=6 stop=1 rs
+45262369 i2c.rd.resp len=6 data=A252F36CC2DB
+45267172 i2c.req addr=70 data=F7 stop=0
+45267172 i2c.resp status=0
+45267369 i2c.rd.req addr=70 req=6 stop=1 rs
+45267369 i2c.rd.resp len=6 data=A252F36CC2DB
+45272172 i2c.req addr=70 data=F7 stop=0
+45272172 i2c.resp status=0
+45272369 i2c.rd.req addr=70 req=6 stop=1 rs
+45272369 i2c.rd.resp len=6 data=A252F36CC2DB
+45277171 i2c.req addr=70 data=F7 stop=0
+45277171 i2c.resp status=0
+45277369 i2c.rd.req addr=70 req=6 stop=1 rs
+45277369 i2c.rd.resp len=6 data=A252F36CC2DB
+45282172 i2c.req addr=70 data=F7 stop=0
+45282172 i2c.resp status=0
+45282369 i2c.rd.req addr=70 req=6 stop=1 rs
+45282369 i2c.rd.resp len=6 data=A252F36CC2DB
+45287172 i2c.req addr=70 data=F7 stop=0
+45287172 i2c.resp status=0
+45287369 i2c.rd.req addr=70 req=6 stop=1 rs
+45287369 i2c.rd.resp len=6 data=A252F36CC2DB
+45292171 i2c.req addr=70 data=F7 stop=0
+45292171 i2c.resp status=0
+45292369 i2c.rd.req addr=70 req=6 stop=1 rs
+45292369 i2c.rd.resp len=6 data=A252F36CC2DB
+45297171 i2c.req addr=70 data=F7 stop=0
+45297171 i2c.resp status=0
+45297369 i2c.rd.req addr=70 req=6 stop=1 rs
+45297369 i2c.rd.resp len=6 data=A252F36CC2DB
+45302172 i2c.req addr=70 data=F7 stop=0
+45302172 i2c.resp status=0
+45302370 i2c.rd.req addr=70 req=6 stop=1 rs
+45302370 i2c.rd.resp len=6 data=A253076CC26D
+45303056 mark src=dut text=t_us%3D465001%20data%3Da253076cc26d
+45307174 i2c.req addr=70 data=F7 stop=0
+45307174 i2c.resp status=0
+45307371 i2c.rd.req addr=70 req=6 stop=1 rs
+45307371 i2c.rd.resp len=6 data=A253076CC26D
+45312172 i2c.req addr=70 data=F7 stop=0
+45312172 i2c.resp status=0
+45312369 i2c.rd.req addr=70 req=6 stop=1 rs
+45312369 i2c.rd.resp len=6 data=A253076CC26D
+45317171 i2c.req addr=70 data=F7 stop=0
+45317171 i2c.resp status=0
+45317369 i2c.rd.req addr=70 req=6 stop=1 rs
+45317369 i2c.rd.resp len=6 data=A253076CC26D
+45322174 i2c.req addr=70 data=F7 stop=0
+45322174 i2c.resp status=0
+45322371 i2c.rd.req addr=70 req=6 stop=1 rs
+45322371 i2c.rd.resp len=6 data=A253076CC26D
+45327171 i2c.req addr=70 data=F7 stop=0
+45327171 i2c.resp status=0
+45327368 i2c.rd.req addr=70 req=6 stop=1 rs
+45327368 i2c.rd.resp len=6 data=A253076CC26D
+45332171 i2c.req addr=70 data=F7 stop=0
+45332171 i2c.resp status=0
+45332369 i2c.rd.req addr=70 req=6 stop=1 rs
+45332369 i2c.rd.resp len=6 data=A253076CC26D
+45337172 i2c.req addr=70 data=F7 stop=0
+45337172 i2c.resp status=0
+45337369 i2c.rd.req addr=70 req=6 stop=1 rs
+45337369 i2c.rd.resp len=6 data=A253076CC26D
+45342171 i2c.req addr=70 data=F7 stop=0
+45342171 i2c.resp status=0
+45342369 i2c.rd.req addr=70 req=6 stop=1 rs
+45342369 i2c.rd.resp len=6 data=A253076CC26D
+45347171 i2c.req addr=70 data=F7 stop=0
+45347171 i2c.resp status=0
+45347368 i2c.rd.req addr=70 req=6 stop=1 rs
+45347368 i2c.rd.resp len=6 data=A253076CC26D
+45352172 i2c.req addr=70 data=F7 stop=0
+45352172 i2c.resp status=0
+45352369 i2c.rd.req addr=70 req=6 stop=1 rs
+45352369 i2c.rd.resp len=6 data=A253076CC26D
+45357172 i2c.req addr=70 data=F7 stop=0
+45357172 i2c.resp status=0
+45357369 i2c.rd.req addr=70 req=6 stop=1 rs
+45357369 i2c.rd.resp len=6 data=A252FA6CC20E
+45358042 mark src=dut text=t_us%3D520001%20data%3Da252fa6cc20e
+45362174 i2c.req addr=70 data=F7 stop=0
+45362174 i2c.resp status=0
+45362372 i2c.rd.req addr=70 req=6 stop=1 rs
+45362372 i2c.rd.resp len=6 data=A252FA6CC20E
+45367172 i2c.req addr=70 data=F7 stop=0
+45367172 i2c.resp status=0
+45367369 i2c.rd.req addr=70 req=6 stop=1 rs
+45367369 i2c.rd.resp len=6 data=A252FA6CC20E
+45372172 i2c.req addr=70 data=F7 stop=0
+45372172 i2c.resp status=0
+45372369 i2c.rd.req addr=70 req=6 stop=1 rs
+45372369 i2c.rd.resp len=6 data=A252FA6CC20E
+45377172 i2c.req addr=70 data=F7 stop=0
+45377172 i2c.resp status=0
+45377369 i2c.rd.req addr=70 req=6 stop=1 rs
+45377369 i2c.rd.resp len=6 data=A252FA6CC20E
+45382172 i2c.req addr=70 data=F7 stop=0
+45382172 i2c.resp status=0
+45382369 i2c.rd.req addr=70 req=6 stop=1 rs
+45382369 i2c.rd.resp len=6 data=A252FA6CC20E
+45387175 i2c.req addr=70 data=F7 stop=0
+45387175 i2c.resp status=0
+45387372 i2c.rd.req addr=70 req=6 stop=1 rs
+45387372 i2c.rd.resp len=6 data=A252FA6CC20E
+45392171 i2c.req addr=70 data=F7 stop=0
+45392171 i2c.resp status=0
+45392369 i2c.rd.req addr=70 req=6 stop=1 rs
+45392369 i2c.rd.resp len=6 data=A252FA6CC20E
+45397172 i2c.req addr=70 data=F7 stop=0
+45397172 i2c.resp status=0
+45397369 i2c.rd.req addr=70 req=6 stop=1 rs
+45397369 i2c.rd.resp len=6 data=A252FA6CC20E
+45402172 i2c.req addr=70 data=F7 stop=0
+45402172 i2c.resp status=0
+45402369 i2c.rd.req addr=70 req=6 stop=1 rs
+45402369 i2c.rd.resp len=6 data=A252FA6CC20E
+45407171 i2c.req addr=70 data=F7 stop=0
+45407171 i2c.resp status=0
+45407369 i2c.rd.req addr=70 req=6 stop=1 rs
+45407369 i2c.rd.resp len=6 data=A252FA6CC20E
+45412172 i2c.req addr=70 data=F7 stop=0
+45412172 i2c.resp status=0
+45412369 i2c.rd.req addr=70 req=6 stop=1 rs
+45412369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45413039 mark src=dut text=t_us%3D575000%20data%3Da252fd6cc1e3
+45417174 i2c.req addr=70 data=F7 stop=0
+45417174 i2c.resp status=0
+45417372 i2c.rd.req addr=70 req=6 stop=1 rs
+45417372 i2c.rd.resp len=6 data=A252FD6CC1E3
+45422172 i2c.req addr=70 data=F7 stop=0
+45422172 i2c.resp status=0
+45422369 i2c.rd.req addr=70 req=6 stop=1 rs
+45422369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45427171 i2c.req addr=70 data=F7 stop=0
+45427171 i2c.resp status=0
+45427369 i2c.rd.req addr=70 req=6 stop=1 rs
+45427369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45432171 i2c.req addr=70 data=F7 stop=0
+45432171 i2c.resp status=0
+45432369 i2c.rd.req addr=70 req=6 stop=1 rs
+45432369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45437172 i2c.req addr=70 data=F7 stop=0
+45437172 i2c.resp status=0
+45437369 i2c.rd.req addr=70 req=6 stop=1 rs
+45437369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45442172 i2c.req addr=70 data=F7 stop=0
+45442172 i2c.resp status=0
+45442369 i2c.rd.req addr=70 req=6 stop=1 rs
+45442369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45447172 i2c.req addr=70 data=F7 stop=0
+45447172 i2c.resp status=0
+45447369 i2c.rd.req addr=70 req=6 stop=1 rs
+45447369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45452174 i2c.req addr=70 data=F7 stop=0
+45452174 i2c.resp status=0
+45452371 i2c.rd.req addr=70 req=6 stop=1 rs
+45452371 i2c.rd.resp len=6 data=A252FD6CC1E3
+45457172 i2c.req addr=70 data=F7 stop=0
+45457172 i2c.resp status=0
+45457369 i2c.rd.req addr=70 req=6 stop=1 rs
+45457369 i2c.rd.resp len=6 data=A252FD6CC1E3
+45462171 i2c.req addr=70 data=F7 stop=0
+45462171 i2c.resp status=0
+45462368 i2c.rd.req addr=70 req=6 stop=1 rs
+45462368 i2c.rd.resp len=6 data=A252FD6CC1E3
+45467172 i2c.req addr=70 data=F7 stop=0
+45467172 i2c.resp status=0
+45467369 i2c.rd.req addr=70 req=6 stop=1 rs
+45467369 i2c.rd.resp len=6 data=A252EE6CC18F
+45468048 mark src=dut text=t_us%3D630001%20data%3Da252ee6cc18f
+45472174 i2c.req addr=70 data=F7 stop=0
+45472174 i2c.resp status=0
+45472372 i2c.rd.req addr=70 req=6 stop=1 rs
+45472372 i2c.rd.resp len=6 data=A252EE6CC18F
+45477171 i2c.req addr=70 data=F7 stop=0
+45477171 i2c.resp status=0
+45477369 i2c.rd.req addr=70 req=6 stop=1 rs
+45477369 i2c.rd.resp len=6 data=A252EE6CC18F
+45482171 i2c.req addr=70 data=F7 stop=0
+45482171 i2c.resp status=0
+45482369 i2c.rd.req addr=70 req=6 stop=1 rs
+45482369 i2c.rd.resp len=6 data=A252EE6CC18F
+45487172 i2c.req addr=70 data=F7 stop=0
+45487172 i2c.resp status=0
+45487369 i2c.rd.req addr=70 req=6 stop=1 rs
+45487369 i2c.rd.resp len=6 data=A252EE6CC18F
+45492172 i2c.req addr=70 data=F7 stop=0
+45492172 i2c.resp status=0
+45492369 i2c.rd.req addr=70 req=6 stop=1 rs
+45492369 i2c.rd.resp len=6 data=A252EE6CC18F
+45497171 i2c.req addr=70 data=F7 stop=0
+45497171 i2c.resp status=0
+45497369 i2c.rd.req addr=70 req=6 stop=1 rs
+45497369 i2c.rd.resp len=6 data=A252EE6CC18F
+45502172 i2c.req addr=70 data=F7 stop=0
+45502172 i2c.resp status=0
+45502369 i2c.rd.req addr=70 req=6 stop=1 rs
+45502369 i2c.rd.resp len=6 data=A252EE6CC18F
+45507171 i2c.req addr=70 data=F7 stop=0
+45507171 i2c.resp status=0
+45507368 i2c.rd.req addr=70 req=6 stop=1 rs
+45507368 i2c.rd.resp len=6 data=A252EE6CC18F
+45512171 i2c.req addr=70 data=F7 stop=0
+45512171 i2c.resp status=0
+45512369 i2c.rd.req addr=70 req=6 stop=1 rs
+45512369 i2c.rd.resp len=6 data=A252EE6CC18F
+45517172 i2c.req addr=70 data=F7 stop=0
+45517172 i2c.resp status=0
+45517369 i2c.rd.req addr=70 req=6 stop=1 rs
+45517369 i2c.rd.resp len=6 data=A252EE6CC18F
+45522172 i2c.req addr=70 data=F7 stop=0
+45522172 i2c.resp status=0
+45522369 i2c.rd.req addr=70 req=6 stop=1 rs
+45522369 i2c.rd.resp len=6 data=A252EE6CC18F
+45527171 i2c.req addr=70 data=F7 stop=0
+45527171 i2c.resp status=0
+45527369 i2c.rd.req addr=70 req=6 stop=1 rs
+45527369 i2c.rd.resp len=6 data=A252E86CC21E
+45528048 mark src=dut text=t_us%3D690001%20data%3Da252e86cc21e
+45532172 i2c.req addr=70 data=F7 stop=0
+45532172 i2c.resp status=0
+45532369 i2c.rd.req addr=70 req=6 stop=1 rs
+45532369 i2c.rd.resp len=6 data=A252E86CC21E
+45537172 i2c.req addr=70 data=F7 stop=0
+45537172 i2c.resp status=0
+45537369 i2c.rd.req addr=70 req=6 stop=1 rs
+45537369 i2c.rd.resp len=6 data=A252E86CC21E
+45542171 i2c.req addr=70 data=F7 stop=0
+45542171 i2c.resp status=0
+45542368 i2c.rd.req addr=70 req=6 stop=1 rs
+45542368 i2c.rd.resp len=6 data=A252E86CC21E
+45547172 i2c.req addr=70 data=F7 stop=0
+45547172 i2c.resp status=0
+45547370 i2c.rd.req addr=70 req=6 stop=1 rs
+45547370 i2c.rd.resp len=6 data=A252E86CC21E
+45552171 i2c.req addr=70 data=F7 stop=0
+45552171 i2c.resp status=0
+45552369 i2c.rd.req addr=70 req=6 stop=1 rs
+45552369 i2c.rd.resp len=6 data=A252E86CC21E
+45557171 i2c.req addr=70 data=F7 stop=0
+45557171 i2c.resp status=0
+45557369 i2c.rd.req addr=70 req=6 stop=1 rs
+45557369 i2c.rd.resp len=6 data=A252E86CC21E
+45562171 i2c.req addr=70 data=F7 stop=0
+45562171 i2c.resp status=0
+45562369 i2c.rd.req addr=70 req=6 stop=1 rs
+45562369 i2c.rd.resp len=6 data=A252E86CC21E
+45567172 i2c.req addr=70 data=F7 stop=0
+45567172 i2c.resp status=0
+45567370 i2c.rd.req addr=70 req=6 stop=1 rs
+45567370 i2c.rd.resp len=6 data=A252E86CC21E
+45572172 i2c.req addr=70 data=F7 stop=0
+45572172 i2c.resp status=0
+45572369 i2c.rd.req addr=70 req=6 stop=1 rs
+45572369 i2c.rd.resp len=6 data=A252E86CC21E
+45577172 i2c.req addr=70 data=F7 stop=0
+45577172 i2c.resp status=0
+45577369 i2c.rd.req addr=70 req=6 stop=1 rs
+45577369 i2c.rd.resp len=6 data=A252E86CC21E
+45582174 i2c.req addr=70 data=F7 stop=0
+45582174 i2c.resp status=0
+45582372 i2c.rd.req addr=70 req=6 stop=1 rs
+45582372 i2c.rd.resp len=6 data=A252F46CC1AD
+45583042 mark src=dut text=t_us%3D745001%20data%3Da252f46cc1ad
+45587174 i2c.req addr=70 data=F7 stop=0
+45587174 i2c.resp status=0
+45587372 i2c.rd.req addr=70 req=6 stop=1 rs
+45587372 i2c.rd.resp len=6 data=A252F46CC1AD
+45592171 i2c.req addr=70 data=F7 stop=0
+45592171 i2c.resp status=0
+45592369 i2c.rd.req addr=70 req=6 stop=1 rs
+45592369 i2c.rd.resp len=6 data=A252F46CC1AD
+45597172 i2c.req addr=70 data=F7 stop=0
+45597172 i2c.resp status=0
+45597369 i2c.rd.req addr=70 req=6 stop=1 rs
+45597369 i2c.rd.resp len=6 data=A252F46CC1AD
+45602172 i2c.req addr=70 data=F7 stop=0
+45602172 i2c.resp status=0
+45602369 i2c.rd.req addr=70 req=6 stop=1 rs
+45602369 i2c.rd.resp len=6 data=A252F46CC1AD
+45607171 i2c.req addr=70 data=F7 stop=0
+45607171 i2c.resp status=0
+45607369 i2c.rd.req addr=70 req=6 stop=1 rs
+45607369 i2c.rd.resp len=6 data=A252F46CC1AD
+45612172 i2c.req addr=70 data=F7 stop=0
+45612172 i2c.resp status=0
+45612370 i2c.rd.req addr=70 req=6 stop=1 rs
+45612370 i2c.rd.resp len=6 data=A252F46CC1AD
+45617171 i2c.req addr=70 data=F7 stop=0
+45617171 i2c.resp status=0
+45617368 i2c.rd.req addr=70 req=6 stop=1 rs
+45617368 i2c.rd.resp len=6 data=A252F46CC1AD
+45622172 i2c.req addr=70 data=F7 stop=0
+45622172 i2c.resp status=0
+45622370 i2c.rd.req addr=70 req=6 stop=1 rs
+45622370 i2c.rd.resp len=6 data=A252F46CC1AD
+45627171 i2c.req addr=70 data=F7 stop=0
+45627171 i2c.resp status=0
+45627369 i2c.rd.req addr=70 req=6 stop=1 rs
+45627369 i2c.rd.resp len=6 data=A252F46CC1AD
+45632172 i2c.req addr=70 data=F7 stop=0
+45632172 i2c.resp status=0
+45632369 i2c.rd.req addr=70 req=6 stop=1 rs
+45632369 i2c.rd.resp len=6 data=A252F46CC1AD
+45637171 i2c.req addr=70 data=F7 stop=0
+45637171 i2c.resp status=0
+45637369 i2c.rd.req addr=70 req=6 stop=1 rs
+45637369 i2c.rd.resp len=6 data=A252EB6CC12D
+45638044 mark src=dut text=t_us%3D800001%20data%3Da252eb6cc12d
+45642172 i2c.req addr=70 data=F7 stop=0
+45642172 i2c.resp status=0
+45642370 i2c.rd.req addr=70 req=6 stop=1 rs
+45642370 i2c.rd.resp len=6 data=A252EB6CC12D
+45647237 i2c.req addr=70 data=F7 stop=0
+45647237 i2c.resp status=0
+45647435 i2c.rd.req addr=70 req=6 stop=1 rs
+45647435 i2c.rd.resp len=6 data=A252EB6CC12D
+45652172 i2c.req addr=70 data=F7 stop=0
+45652172 i2c.resp status=0
+45652369 i2c.rd.req addr=70 req=6 stop=1 rs
+45652369 i2c.rd.resp len=6 data=A252EB6CC12D
+45657171 i2c.req addr=70 data=F7 stop=0
+45657171 i2c.resp status=0
+45657369 i2c.rd.req addr=70 req=6 stop=1 rs
+45657369 i2c.rd.resp len=6 data=A252EB6CC12D
+45662171 i2c.req addr=70 data=F7 stop=0
+45662171 i2c.resp status=0
+45662368 i2c.rd.req addr=70 req=6 stop=1 rs
+45662368 i2c.rd.resp len=6 data=A252EB6CC12D
+45667172 i2c.req addr=70 data=F7 stop=0
+45667172 i2c.resp status=0
+45667369 i2c.rd.req addr=70 req=6 stop=1 rs
+45667369 i2c.rd.resp len=6 data=A252EB6CC12D
+45672171 i2c.req addr=70 data=F7 stop=0
+45672171 i2c.resp status=0
+45672369 i2c.rd.req addr=70 req=6 stop=1 rs
+45672369 i2c.rd.resp len=6 data=A252EB6CC12D
+45677172 i2c.req addr=70 data=F7 stop=0
+45677172 i2c.resp status=0
+45677369 i2c.rd.req addr=70 req=6 stop=1 rs
+45677369 i2c.rd.resp len=6 data=A252EB6CC12D
+45682172 i2c.req addr=70 data=F7 stop=0
+45682172 i2c.resp status=0
+45682369 i2c.rd.req addr=70 req=6 stop=1 rs
+45682369 i2c.rd.resp len=6 data=A252EB6CC12D
+45687171 i2c.req addr=70 data=F7 stop=0
+45687171 i2c.resp status=0
+45687369 i2c.rd.req addr=70 req=6 stop=1 rs
+45687369 i2c.rd.resp len=6 data=A252EB6CC12D
+45692171 i2c.req addr=70 data=F7 stop=0
+45692171 i2c.resp status=0
+45692368 i2c.rd.req addr=70 req=6 stop=1 rs
+45692368 i2c.rd.resp len=6 data=A252EC6CC069
+45693043 mark src=dut text=t_us%3D855000%20data%3Da252ec6cc069
+45697174 i2c.req addr=70 data=F7 stop=0
+45697174 i2c.resp status=0
+45697371 i2c.rd.req addr=70 req=6 stop=1 rs
+45697371 i2c.rd.resp len=6 data=A252EC6CC069
+45702172 i2c.req addr=70 data=F7 stop=0
+45702172 i2c.resp status=0
+45702369 i2c.rd.req addr=70 req=6 stop=1 rs
+45702369 i2c.rd.resp len=6 data=A252EC6CC069
+45707171 i2c.req addr=70 data=F7 stop=0
+45707171 i2c.resp status=0
+45707369 i2c.rd.req addr=70 req=6 stop=1 rs
+45707369 i2c.rd.resp len=6 data=A252EC6CC069
+45712172 i2c.req addr=70 data=F7 stop=0
+45712172 i2c.resp status=0
+45712369 i2c.rd.req addr=70 req=6 stop=1 rs
+45712369 i2c.rd.resp len=6 data=A252EC6CC069
+45717171 i2c.req addr=70 data=F7 stop=0
+45717171 i2c.resp status=0
+45717369 i2c.rd.req addr=70 req=6 stop=1 rs
+45717369 i2c.rd.resp len=6 data=A252EC6CC069
+45722171 i2c.req addr=70 data=F7 stop=0
+45722171 i2c.resp status=0
+45722369 i2c.rd.req addr=70 req=6 stop=1 rs
+45722369 i2c.rd.resp len=6 data=A252EC6CC069
+45727171 i2c.req addr=70 data=F7 stop=0
+45727171 i2c.resp status=0
+45727369 i2c.rd.req addr=70 req=6 stop=1 rs
+45727369 i2c.rd.resp len=6 data=A252EC6CC069
+45732172 i2c.req addr=70 data=F7 stop=0
+45732172 i2c.resp status=0
+45732369 i2c.rd.req addr=70 req=6 stop=1 rs
+45732369 i2c.rd.resp len=6 data=A252EC6CC069
+45737171 i2c.req addr=70 data=F7 stop=0
+45737171 i2c.resp status=0
+45737369 i2c.rd.req addr=70 req=6 stop=1 rs
+45737369 i2c.rd.resp len=6 data=A252EC6CC069
+45742171 i2c.req addr=70 data=F7 stop=0
+45742171 i2c.resp status=0
+45742369 i2c.rd.req addr=70 req=6 stop=1 rs
+45742369 i2c.rd.resp len=6 data=A252EC6CC069
+45747172 i2c.req addr=70 data=F7 stop=0
+45747172 i2c.resp status=0
+45747369 i2c.rd.req addr=70 req=6 stop=1 rs
+45747369 i2c.rd.resp len=6 data=A252EC6CC069
+45752171 i2c.req addr=70 data=F7 stop=0
+45752171 i2c.resp status=0
+45752369 i2c.rd.req addr=70 req=6 stop=1 rs
+45752369 i2c.rd.resp len=6 data=A252E06CC086
+45753041 mark src=dut text=t_us%3D915000%20data%3Da252e06cc086
+45757172 i2c.req addr=70 data=F7 stop=0
+45757172 i2c.resp status=0
+45757370 i2c.rd.req addr=70 req=6 stop=1 rs
+45757370 i2c.rd.resp len=6 data=A252E06CC086
+45762172 i2c.req addr=70 data=F7 stop=0
+45762172 i2c.resp status=0
+45762369 i2c.rd.req addr=70 req=6 stop=1 rs
+45762369 i2c.rd.resp len=6 data=A252E06CC086
+45767174 i2c.req addr=70 data=F7 stop=0
+45767174 i2c.resp status=0
+45767371 i2c.rd.req addr=70 req=6 stop=1 rs
+45767371 i2c.rd.resp len=6 data=A252E06CC086
+45772171 i2c.req addr=70 data=F7 stop=0
+45772171 i2c.resp status=0
+45772369 i2c.rd.req addr=70 req=6 stop=1 rs
+45772369 i2c.rd.resp len=6 data=A252E06CC086
+45777172 i2c.req addr=70 data=F7 stop=0
+45777172 i2c.resp status=0
+45777369 i2c.rd.req addr=70 req=6 stop=1 rs
+45777369 i2c.rd.resp len=6 data=A252E06CC086
+45782172 i2c.req addr=70 data=F7 stop=0
+45782172 i2c.resp status=0
+45782369 i2c.rd.req addr=70 req=6 stop=1 rs
+45782369 i2c.rd.resp len=6 data=A252E06CC086
+45787171 i2c.req addr=70 data=F7 stop=0
+45787171 i2c.resp status=0
+45787369 i2c.rd.req addr=70 req=6 stop=1 rs
+45787369 i2c.rd.resp len=6 data=A252E06CC086
+45792171 i2c.req addr=70 data=F7 stop=0
+45792171 i2c.resp status=0
+45792369 i2c.rd.req addr=70 req=6 stop=1 rs
+45792369 i2c.rd.resp len=6 data=A252E06CC086
+45797172 i2c.req addr=70 data=F7 stop=0
+45797172 i2c.resp status=0
+45797369 i2c.rd.req addr=70 req=6 stop=1 rs
+45797369 i2c.rd.resp len=6 data=A252E06CC086
+45802172 i2c.req addr=70 data=F7 stop=0
+45802172 i2c.resp status=0
+45802369 i2c.rd.req addr=70 req=6 stop=1 rs
+45802369 i2c.rd.resp len=6 data=A252E06CC086
+45807171 i2c.req addr=70 data=F7 stop=0
+45807171 i2c.resp status=0
+45807368 i2c.rd.req addr=70 req=6 stop=1 rs
+45807368 i2c.rd.resp len=6 data=A252E76CC09D
+45808041 mark src=dut text=t_us%3D970000%20data%3Da252e76cc09d
+45812172 i2c.req addr=70 data=F7 stop=0
+45812172 i2c.resp status=0
+45812370 i2c.rd.req addr=70 req=6 stop=1 rs
+45812370 i2c.rd.resp len=6 data=A252E76CC09D
+45817172 i2c.req addr=70 data=F7 stop=0
+45817172 i2c.resp status=0
+45817369 i2c.rd.req addr=70 req=6 stop=1 rs
+45817369 i2c.rd.resp len=6 data=A252E76CC09D
+45822171 i2c.req addr=70 data=F7 stop=0
+45822171 i2c.resp status=0
+45822369 i2c.rd.req addr=70 req=6 stop=1 rs
+45822369 i2c.rd.resp len=6 data=A252E76CC09D
+45827172 i2c.req addr=70 data=F7 stop=0
+45827172 i2c.resp status=0
+45827369 i2c.rd.req addr=70 req=6 stop=1 rs
+45827369 i2c.rd.resp len=6 data=A252E76CC09D
+45832172 i2c.req addr=70 data=F7 stop=0
+45832172 i2c.resp status=0
+45832369 i2c.rd.req addr=70 req=6 stop=1 rs
+45832369 i2c.rd.resp len=6 data=A252E76CC09D
+45837171 i2c.req addr=70 data=F7 stop=0
+45837171 i2c.resp status=0
+45837369 i2c.rd.req addr=70 req=6 stop=1 rs
+45837369 i2c.rd.resp len=6 data=A252E76CC09D
+45842172 i2c.req addr=70 data=F7 stop=0
+45842172 i2c.resp status=0
+45842369 i2c.rd.req addr=70 req=6 stop=1 rs
+45842369 i2c.rd.resp len=6 data=A252E76CC09D
+45847171 i2c.req addr=70 data=F7 stop=0
+45847171 i2c.resp status=0
+45847368 i2c.rd.req addr=70 req=6 stop=1 rs
+45847368 i2c.rd.resp len=6 data=A252E76CC09D
+45852171 i2c.req addr=70 data=F7 stop=0
+45852171 i2c.resp status=0
+45852369 i2c.rd.req addr=70 req=6 stop=1 rs
+45852369 i2c.rd.resp len=6 data=A252E76CC09D
+45857171 i2c.req addr=70 data=F7 stop=0
+45857171 i2c.resp status=0
+45857369 i2c.rd.req addr=70 req=6 stop=1 rs
+45857369 i2c.rd.resp len=6 data=A252E76CC09D
+45862171 i2c.req addr=70 data=F7 stop=0
+45862171 i2c.resp status=0
+45862369 i2c.rd.req addr=70 req=6 stop=1 rs
+45862369 i2c.rd.resp len=6 data=A252D86CC08A
+45863048 mark src=dut text=t_us%3D1025001%20data%3Da252d86cc08a
+45867172 i2c.req addr=70 data=F7 stop=0
+45867172 i2c.resp status=0
+45867369 i2c.rd.req addr=70 req=6 stop=1 rs
+45867369 i2c.rd.resp len=6 data=A252D86CC08A
+45872172 i2c.req addr=70 data=F7 stop=0
+45872172 i2c.resp status=0
+45872369 i2c.rd.req addr=70 req=6 stop=1 rs
+45872369 i2c.rd.resp len=6 data=A252D86CC08A
+45877172 i2c.req addr=70 data=F7 stop=0
+45877172 i2c.resp status=0
+45877369 i2c.rd.req addr=70 req=6 stop=1 rs
+45877369 i2c.rd.resp len=6 data=A252D86CC08A
+45882171 i2c.req addr=70 data=F7 stop=0
+45882171 i2c.resp status=0
+45882369 i2c.rd.req addr=70 req=6 stop=1 rs
+45882369 i2c.rd.resp len=6 data=A252D86CC08A
+45887172 i2c.req addr=70 data=F7 stop=0
+45887172 i2c.resp status=0
+45887369 i2c.rd.req addr=70 req=6 stop=1 rs
+45887369 i2c.rd.resp len=6 data=A252D86CC08A
+45892171 i2c.req addr=70 data=F7 stop=0
+45892171 i2c.resp status=0
+45892369 i2c.rd.req addr=70 req=6 stop=1 rs
+45892369 i2c.rd.resp len=6 data=A252D86CC08A
+45897174 i2c.req addr=70 data=F7 stop=0
+45897174 i2c.resp status=0
+45897371 i2c.rd.req addr=70 req=6 stop=1 rs
+45897371 i2c.rd.resp len=6 data=A252D86CC08A
+45902171 i2c.req addr=70 data=F7 stop=0
+45902171 i2c.resp status=0
+45902369 i2c.rd.req addr=70 req=6 stop=1 rs
+45902369 i2c.rd.resp len=6 data=A252D86CC08A
+45907171 i2c.req addr=70 data=F7 stop=0
+45907171 i2c.resp status=0
+45907369 i2c.rd.req addr=70 req=6 stop=1 rs
+45907369 i2c.rd.resp len=6 data=A252D86CC08A
+45912172 i2c.req addr=70 data=F7 stop=0
+45912172 i2c.resp status=0
+45912369 i2c.rd.req addr=70 req=6 stop=1 rs
+45912369 i2c.rd.resp len=6 data=A252D86CC08A
+45917172 i2c.req addr=70 data=F7 stop=0
+45917172 i2c.resp status=0
+45917369 i2c.rd.req addr=70 req=6 stop=1 rs
+45917369 i2c.rd.resp len=6 data=A252C36CC03D
+45918048 mark src=dut text=t_us%3D1080001%20data%3Da252c36cc03d
+45922174 i2c.req addr=70 data=F7 stop=0
+45922174 i2c.resp status=0
+45922372 i2c.rd.req addr=70 req=6 stop=1 rs
+45922372 i2c.rd.resp len=6 data=A252C36CC03D
+45927172 i2c.req addr=70 data=F7 stop=0
+45927172 i2c.resp status=0
+45927369 i2c.rd.req addr=70 req=6 stop=1 rs
+45927369 i2c.rd.resp len=6 data=A252C36CC03D
+45932171 i2c.req addr=70 data=F7 stop=0
+45932171 i2c.resp status=0
+45932368 i2c.rd.req addr=70 req=6 stop=1 rs
+45932368 i2c.rd.resp len=6 data=A252C36CC03D
+45937171 i2c.req addr=70 data=F7 stop=0
+45937171 i2c.resp status=0
+45937369 i2c.rd.req addr=70 req=6 stop=1 rs
+45937369 i2c.rd.resp len=6 data=A252C36CC03D
+45942171 i2c.req addr=70 data=F7 stop=0
+45942171 i2c.resp status=0
+45942369 i2c.rd.req addr=70 req=6 stop=1 rs
+45942369 i2c.rd.resp len=6 data=A252C36CC03D
+45947171 i2c.req addr=70 data=F7 stop=0
+45947171 i2c.resp status=0
+45947369 i2c.rd.req addr=70 req=6 stop=1 rs
+45947369 i2c.rd.resp len=6 data=A252C36CC03D
+45952171 i2c.req addr=70 data=F7 stop=0
+45952171 i2c.resp status=0
+45952368 i2c.rd.req addr=70 req=6 stop=1 rs
+45952368 i2c.rd.resp len=6 data=A252C36CC03D
+45957236 i2c.req addr=70 data=F7 stop=0
+45957236 i2c.resp status=0
+45957433 i2c.rd.req addr=70 req=6 stop=1 rs
+45957433 i2c.rd.resp len=6 data=A252C36CC03D
+45962172 i2c.req addr=70 data=F7 stop=0
+45962172 i2c.resp status=0
+45962369 i2c.rd.req addr=70 req=6 stop=1 rs
+45962369 i2c.rd.resp len=6 data=A252C36CC03D
+45967171 i2c.req addr=70 data=F7 stop=0
+45967171 i2c.resp status=0
+45967369 i2c.rd.req addr=70 req=6 stop=1 rs
+45967369 i2c.rd.resp len=6 data=A252C36CC03D
+45972171 i2c.req addr=70 data=F7 stop=0
+45972171 i2c.resp status=0
+45972369 i2c.rd.req addr=70 req=6 stop=1 rs
+45972369 i2c.rd.resp len=6 data=A252C36CC03D
+45977171 i2c.req addr=70 data=F7 stop=0
+45977171 i2c.resp status=0
+45977369 i2c.rd.req addr=70 req=6 stop=1 rs
+45977369 i2c.rd.resp len=6 data=A252CC6CC02E
+45978044 mark src=dut text=t_us%3D1140000%20data%3Da252cc6cc02e
+45982174 i2c.req addr=70 data=F7 stop=0
+45982174 i2c.resp status=0
+45982371 i2c.rd.req addr=70 req=6 stop=1 rs
+45982371 i2c.rd.resp len=6 data=A252CC6CC02E
+45987171 i2c.req addr=70 data=F7 stop=0
+45987171 i2c.resp status=0
+45987369 i2c.rd.req addr=70 req=6 stop=1 rs
+45987369 i2c.rd.resp len=6 data=A252CC6CC02E
+45992172 i2c.req addr=70 data=F7 stop=0
+45992172 i2c.resp status=0
+45992369 i2c.rd.req addr=70 req=6 stop=1 rs
+45992369 i2c.rd.resp len=6 data=A252CC6CC02E
+45997171 i2c.req addr=70 data=F7 stop=0
+45997171 i2c.resp status=0
+45997368 i2c.rd.req addr=70 req=6 stop=1 rs
+45997368 i2c.rd.resp len=6 data=A252CC6CC02E
+46002171 i2c.req addr=70 data=F7 stop=0
+46002171 i2c.resp status=0
+46002369 i2c.rd.req addr=70 req=6 stop=1 rs
+46002369 i2c.rd.resp len=6 data=A252CC6CC02E
+46007172 i2c.req addr=70 data=F7 stop=0
+46007172 i2c.resp status=0
+46007370 i2c.rd.req addr=70 req=6 stop=1 rs
+46007370 i2c.rd.resp len=6 data=A252CC6CC02E
+46012172 i2c.req addr=70 data=F7 stop=0
+46012172 i2c.resp status=0
+46012370 i2c.rd.req addr=70 req=6 stop=1 rs
+46012370 i2c.rd.resp len=6 data=A252CC6CC02E
+46017171 i2c.req addr=70 data=F7 stop=0
+46017171 i2c.resp status=0
+46017369 i2c.rd.req addr=70 req=6 stop=1 rs
+46017369 i2c.rd.resp len=6 data=A252CC6CC02E
+46022172 i2c.req addr=70 data=F7 stop=0
+46022172 i2c.resp status=0
+46022370 i2c.rd.req addr=70 req=6 stop=1 rs
+46022370 i2c.rd.resp len=6 data=A252CC6CC02E
+46027171 i2c.req addr=70 data=F7 stop=0
+46027171 i2c.resp status=0
+46027368 i2c.rd.req addr=70 req=6 stop=1 rs
+46027368 i2c.rd.resp len=6 data=A252CC6CC02E
+46032171 i2c.req addr=70 data=F7 stop=0
+46032171 i2c.resp status=0
+46032369 i2c.rd.req addr=70 req=6 stop=1 rs
+46032369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46033046 mark src=dut text=t_us%3D1195001%20data%3Da252cd6cbff7
+46037172 i2c.req addr=70 data=F7 stop=0
+46037172 i2c.resp status=0
+46037370 i2c.rd.req addr=70 req=6 stop=1 rs
+46037370 i2c.rd.resp len=6 data=A252CD6CBFF7
+46042172 i2c.req addr=70 data=F7 stop=0
+46042172 i2c.resp status=0
+46042369 i2c.rd.req addr=70 req=6 stop=1 rs
+46042369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46047171 i2c.req addr=70 data=F7 stop=0
+46047171 i2c.resp status=0
+46047369 i2c.rd.req addr=70 req=6 stop=1 rs
+46047369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46052171 i2c.req addr=70 data=F7 stop=0
+46052171 i2c.resp status=0
+46052369 i2c.rd.req addr=70 req=6 stop=1 rs
+46052369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46057172 i2c.req addr=70 data=F7 stop=0
+46057172 i2c.resp status=0
+46057369 i2c.rd.req addr=70 req=6 stop=1 rs
+46057369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46062172 i2c.req addr=70 data=F7 stop=0
+46062172 i2c.resp status=0
+46062369 i2c.rd.req addr=70 req=6 stop=1 rs
+46062369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46067171 i2c.req addr=70 data=F7 stop=0
+46067171 i2c.resp status=0
+46067369 i2c.rd.req addr=70 req=6 stop=1 rs
+46067369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46072172 i2c.req addr=70 data=F7 stop=0
+46072172 i2c.resp status=0
+46072369 i2c.rd.req addr=70 req=6 stop=1 rs
+46072369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46077171 i2c.req addr=70 data=F7 stop=0
+46077171 i2c.resp status=0
+46077368 i2c.rd.req addr=70 req=6 stop=1 rs
+46077368 i2c.rd.resp len=6 data=A252CD6CBFF7
+46082171 i2c.req addr=70 data=F7 stop=0
+46082171 i2c.resp status=0
+46082369 i2c.rd.req addr=70 req=6 stop=1 rs
+46082369 i2c.rd.resp len=6 data=A252CD6CBFF7
+46087172 i2c.req addr=70 data=F7 stop=0
+46087172 i2c.resp status=0
+46087369 i2c.rd.req addr=70 req=6 stop=1 rs
+46087369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46088051 mark src=dut text=t_us%3D1250001%20data%3Da252da6cbfa5
+46092172 i2c.req addr=70 data=F7 stop=0
+46092172 i2c.resp status=0
+46092370 i2c.rd.req addr=70 req=6 stop=1 rs
+46092370 i2c.rd.resp len=6 data=A252DA6CBFA5
+46097172 i2c.req addr=70 data=F7 stop=0
+46097172 i2c.resp status=0
+46097369 i2c.rd.req addr=70 req=6 stop=1 rs
+46097369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46102171 i2c.req addr=70 data=F7 stop=0
+46102171 i2c.resp status=0
+46102368 i2c.rd.req addr=70 req=6 stop=1 rs
+46102368 i2c.rd.resp len=6 data=A252DA6CBFA5
+46107172 i2c.req addr=70 data=F7 stop=0
+46107172 i2c.resp status=0
+46107369 i2c.rd.req addr=70 req=6 stop=1 rs
+46107369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46112171 i2c.req addr=70 data=F7 stop=0
+46112171 i2c.resp status=0
+46112369 i2c.rd.req addr=70 req=6 stop=1 rs
+46112369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46117172 i2c.req addr=70 data=F7 stop=0
+46117172 i2c.resp status=0
+46117369 i2c.rd.req addr=70 req=6 stop=1 rs
+46117369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46122172 i2c.req addr=70 data=F7 stop=0
+46122172 i2c.resp status=0
+46122369 i2c.rd.req addr=70 req=6 stop=1 rs
+46122369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46127171 i2c.req addr=70 data=F7 stop=0
+46127171 i2c.resp status=0
+46127368 i2c.rd.req addr=70 req=6 stop=1 rs
+46127368 i2c.rd.resp len=6 data=A252DA6CBFA5
+46132172 i2c.req addr=70 data=F7 stop=0
+46132172 i2c.resp status=0
+46132369 i2c.rd.req addr=70 req=6 stop=1 rs
+46132369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46137172 i2c.req addr=70 data=F7 stop=0
+46137172 i2c.resp status=0
+46137369 i2c.rd.req addr=70 req=6 stop=1 rs
+46137369 i2c.rd.resp len=6 data=A252DA6CBFA5
+46142172 i2c.req addr=70 data=F7 stop=0
+46142172 i2c.resp status=0
+46142369 i2c.rd.req addr=70 req=6 stop=1 rs
+46142369 i2c.rd.resp len=6 data=A252CE6CBF77
+46143040 mark src=dut text=t_us%3D1305001%20data%3Da252ce6cbf77
+46147172 i2c.req addr=70 data=F7 stop=0
+46147172 i2c.resp status=0
+46147370 i2c.rd.req addr=70 req=6 stop=1 rs
+46147370 i2c.rd.resp len=6 data=A252CE6CBF77
+46152171 i2c.req addr=70 data=F7 stop=0
+46152171 i2c.resp status=0
+46152369 i2c.rd.req addr=70 req=6 stop=1 rs
+46152369 i2c.rd.resp len=6 data=A252CE6CBF77
+46157172 i2c.req addr=70 data=F7 stop=0
+46157172 i2c.resp status=0
+46157369 i2c.rd.req addr=70 req=6 stop=1 rs
+46157369 i2c.rd.resp len=6 data=A252CE6CBF77
+46162171 i2c.req addr=70 data=F7 stop=0
+46162171 i2c.resp status=0
+46162368 i2c.rd.req addr=70 req=6 stop=1 rs
+46162368 i2c.rd.resp len=6 data=A252CE6CBF77
+46167171 i2c.req addr=70 data=F7 stop=0
+46167171 i2c.resp status=0
+46167368 i2c.rd.req addr=70 req=6 stop=1 rs
+46167368 i2c.rd.resp len=6 data=A252CE6CBF77
+46172171 i2c.req addr=70 data=F7 stop=0
+46172171 i2c.resp status=0
+46172369 i2c.rd.req addr=70 req=6 stop=1 rs
+46172369 i2c.rd.resp len=6 data=A252CE6CBF77
+46177172 i2c.req addr=70 data=F7 stop=0
+46177172 i2c.resp status=0
+46177369 i2c.rd.req addr=70 req=6 stop=1 rs
+46177369 i2c.rd.resp len=6 data=A252CE6CBF77
+46182171 i2c.req addr=70 data=F7 stop=0
+46182171 i2c.resp status=0
+46182369 i2c.rd.req addr=70 req=6 stop=1 rs
+46182369 i2c.rd.resp len=6 data=A252CE6CBF77
+46187172 i2c.req addr=70 data=F7 stop=0
+46187172 i2c.resp status=0
+46187369 i2c.rd.req addr=70 req=6 stop=1 rs
+46187369 i2c.rd.resp len=6 data=A252CE6CBF77
+46192172 i2c.req addr=70 data=F7 stop=0
+46192172 i2c.resp status=0
+46192369 i2c.rd.req addr=70 req=6 stop=1 rs
+46192369 i2c.rd.resp len=6 data=A252CE6CBF77
+46197171 i2c.req addr=70 data=F7 stop=0
+46197171 i2c.resp status=0
+46197369 i2c.rd.req addr=70 req=6 stop=1 rs
+46197369 i2c.rd.resp len=6 data=A252CE6CBF77
+46202171 i2c.req addr=70 data=F7 stop=0
+46202171 i2c.resp status=0
+46202369 i2c.rd.req addr=70 req=6 stop=1 rs
+46202369 i2c.rd.resp len=6 data=A252C96CBF44
+46203046 mark src=dut text=t_us%3D1365001%20data%3Da252c96cbf44
+46207172 i2c.req addr=70 data=F7 stop=0
+46207172 i2c.resp status=0
+46207369 i2c.rd.req addr=70 req=6 stop=1 rs
+46207369 i2c.rd.resp len=6 data=A252C96CBF44
+46212172 i2c.req addr=70 data=F7 stop=0
+46212172 i2c.resp status=0
+46212369 i2c.rd.req addr=70 req=6 stop=1 rs
+46212369 i2c.rd.resp len=6 data=A252C96CBF44
+46217172 i2c.req addr=70 data=F7 stop=0
+46217172 i2c.resp status=0
+46217369 i2c.rd.req addr=70 req=6 stop=1 rs
+46217369 i2c.rd.resp len=6 data=A252C96CBF44
+46222172 i2c.req addr=70 data=F7 stop=0
+46222172 i2c.resp status=0
+46222369 i2c.rd.req addr=70 req=6 stop=1 rs
+46222369 i2c.rd.resp len=6 data=A252C96CBF44
+46227171 i2c.req addr=70 data=F7 stop=0
+46227171 i2c.resp status=0
+46227369 i2c.rd.req addr=70 req=6 stop=1 rs
+46227369 i2c.rd.resp len=6 data=A252C96CBF44
+46232172 i2c.req addr=70 data=F7 stop=0
+46232172 i2c.resp status=0
+46232369 i2c.rd.req addr=70 req=6 stop=1 rs
+46232369 i2c.rd.resp len=6 data=A252C96CBF44
+46237172 i2c.req addr=70 data=F7 stop=0
+46237172 i2c.resp status=0
+46237369 i2c.rd.req addr=70 req=6 stop=1 rs
+46237369 i2c.rd.resp len=6 data=A252C96CBF44
+46242172 i2c.req addr=70 data=F7 stop=0
+46242172 i2c.resp status=0
+46242369 i2c.rd.req addr=70 req=6 stop=1 rs
+46242369 i2c.rd.resp len=6 data=A252C96CBF44
+46247171 i2c.req addr=70 data=F7 stop=0
+46247171 i2c.resp status=0
+46247369 i2c.rd.req addr=70 req=6 stop=1 rs
+46247369 i2c.rd.resp len=6 data=A252C96CBF44
+46252172 i2c.req addr=70 data=F7 stop=0
+46252172 i2c.resp status=0
+46252369 i2c.rd.req addr=70 req=6 stop=1 rs
+46252369 i2c.rd.resp len=6 data=A252C96CBF44
+46257172 i2c.req addr=70 data=F7 stop=0
+46257172 i2c.resp status=0
+46257369 i2c.rd.req addr=70 req=6 stop=1 rs
+46257369 i2c.rd.resp len=6 data=A252B66CBF3A
+46258044 mark src=dut text=t_us%3D1420001%20data%3Da252b66cbf3a
+46262172 i2c.req addr=70 data=F7 stop=0
+46262172 i2c.resp status=0
+46262369 i2c.rd.req addr=70 req=6 stop=1 rs
+46262369 i2c.rd.resp len=6 data=A252B66CBF3A
+46267172 i2c.req addr=70 data=F7 stop=0
+46267172 i2c.resp status=0
+46267369 i2c.rd.req addr=70 req=6 stop=1 rs
+46267369 i2c.rd.resp len=6 data=A252B66CBF3A
+46272171 i2c.req addr=70 data=F7 stop=0
+46272171 i2c.resp status=0
+46272369 i2c.rd.req addr=70 req=6 stop=1 rs
+46272369 i2c.rd.resp len=6 data=A252B66CBF3A
+46277171 i2c.req addr=70 data=F7 stop=0
+46277171 i2c.resp status=0
+46277369 i2c.rd.req addr=70 req=6 stop=1 rs
+46277369 i2c.rd.resp len=6 data=A252B66CBF3A
+46282171 i2c.req addr=70 data=F7 stop=0
+46282171 i2c.resp status=0
+46282369 i2c.rd.req addr=70 req=6 stop=1 rs
+46282369 i2c.rd.resp len=6 data=A252B66CBF3A
+46287172 i2c.req addr=70 data=F7 stop=0
+46287172 i2c.resp status=0
+46287369 i2c.rd.req addr=70 req=6 stop=1 rs
+46287369 i2c.rd.resp len=6 data=A252B66CBF3A
+46292172 i2c.req addr=70 data=F7 stop=0
+46292172 i2c.resp status=0
+46292369 i2c.rd.req addr=70 req=6 stop=1 rs
+46292369 i2c.rd.resp len=6 data=A252B66CBF3A
+46297172 i2c.req addr=70 data=F7 stop=0
+46297172 i2c.resp status=0
+46297369 i2c.rd.req addr=70 req=6 stop=1 rs
+46297369 i2c.rd.resp len=6 data=A252B66CBF3A
+46302172 i2c.req addr=70 data=F7 stop=0
+46302172 i2c.resp status=0
+46302370 i2c.rd.req addr=70 req=6 stop=1 rs
+46302370 i2c.rd.resp len=6 data=A252B66CBF3A
+46307172 i2c.req addr=70 data=F7 stop=0
+46307172 i2c.resp status=0
+46307369 i2c.rd.req addr=70 req=6 stop=1 rs
+46307369 i2c.rd.resp len=6 data=A252B66CBF3A
+46312171 i2c.req addr=70 data=F7 stop=0
+46312171 i2c.resp status=0
+46312369 i2c.rd.req addr=70 req=6 stop=1 rs
+46312369 i2c.rd.resp len=6 data=A2529E6CBF86
+46313048 mark src=dut text=t_us%3D1475000%20data%3Da2529e6cbf86
+46317172 i2c.req addr=70 data=F7 stop=0
+46317172 i2c.resp status=0
+46317370 i2c.rd.req addr=70 req=6 stop=1 rs
+46317370 i2c.rd.resp len=6 data=A2529E6CBF86
+46322172 i2c.req addr=70 data=F7 stop=0
+46322172 i2c.resp status=0
+46322369 i2c.rd.req addr=70 req=6 stop=1 rs
+46322369 i2c.rd.resp len=6 data=A2529E6CBF86
+46327172 i2c.req addr=70 data=F7 stop=0
+46327172 i2c.resp status=0
+46327369 i2c.rd.req addr=70 req=6 stop=1 rs
+46327369 i2c.rd.resp len=6 data=A2529E6CBF86
+46332172 i2c.req addr=70 data=F7 stop=0
+46332172 i2c.resp status=0
+46332370 i2c.rd.req addr=70 req=6 stop=1 rs
+46332370 i2c.rd.resp len=6 data=A2529E6CBF86
+46337172 i2c.req addr=70 data=F7 stop=0
+46337172 i2c.resp status=0
+46337369 i2c.rd.req addr=70 req=6 stop=1 rs
+46337369 i2c.rd.resp len=6 data=A2529E6CBF86
+46342171 i2c.req addr=70 data=F7 stop=0
+46342171 i2c.resp status=0
+46342369 i2c.rd.req addr=70 req=6 stop=1 rs
+46342369 i2c.rd.resp len=6 data=A2529E6CBF86
+46347172 i2c.req addr=70 data=F7 stop=0
+46347172 i2c.resp status=0
+46347369 i2c.rd.req addr=70 req=6 stop=1 rs
+46347369 i2c.rd.resp len=6 data=A2529E6CBF86
+46352172 i2c.req addr=70 data=F7 stop=0
+46352172 i2c.resp status=0
+46352369 i2c.rd.req addr=70 req=6 stop=1 rs
+46352369 i2c.rd.resp len=6 data=A2529E6CBF86
+46357172 i2c.req addr=70 data=F7 stop=0
+46357172 i2c.resp status=0
+46357369 i2c.rd.req addr=70 req=6 stop=1 rs
+46357369 i2c.rd.resp len=6 data=A2529E6CBF86
+46362171 i2c.req addr=70 data=F7 stop=0
+46362171 i2c.resp status=0
+46362369 i2c.rd.req addr=70 req=6 stop=1 rs
+46362369 i2c.rd.resp len=6 data=A2529E6CBF86
+46367172 i2c.req addr=70 data=F7 stop=0
+46367172 i2c.resp status=0
+46367369 i2c.rd.req addr=70 req=6 stop=1 rs
+46367369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46368048 mark src=dut text=t_us%3D1530001%20data%3Da2529f6cbfad
+46372174 i2c.req addr=70 data=F7 stop=0
+46372174 i2c.resp status=0
+46372371 i2c.rd.req addr=70 req=6 stop=1 rs
+46372371 i2c.rd.resp len=6 data=A2529F6CBFAD
+46377172 i2c.req addr=70 data=F7 stop=0
+46377172 i2c.resp status=0
+46377369 i2c.rd.req addr=70 req=6 stop=1 rs
+46377369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46382172 i2c.req addr=70 data=F7 stop=0
+46382172 i2c.resp status=0
+46382369 i2c.rd.req addr=70 req=6 stop=1 rs
+46382369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46387172 i2c.req addr=70 data=F7 stop=0
+46387172 i2c.resp status=0
+46387369 i2c.rd.req addr=70 req=6 stop=1 rs
+46387369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46392172 i2c.req addr=70 data=F7 stop=0
+46392172 i2c.resp status=0
+46392369 i2c.rd.req addr=70 req=6 stop=1 rs
+46392369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46397172 i2c.req addr=70 data=F7 stop=0
+46397172 i2c.resp status=0
+46397369 i2c.rd.req addr=70 req=6 stop=1 rs
+46397369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46402171 i2c.req addr=70 data=F7 stop=0
+46402171 i2c.resp status=0
+46402369 i2c.rd.req addr=70 req=6 stop=1 rs
+46402369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46407172 i2c.req addr=70 data=F7 stop=0
+46407172 i2c.resp status=0
+46407370 i2c.rd.req addr=70 req=6 stop=1 rs
+46407370 i2c.rd.resp len=6 data=A2529F6CBFAD
+46412171 i2c.req addr=70 data=F7 stop=0
+46412171 i2c.resp status=0
+46412369 i2c.rd.req addr=70 req=6 stop=1 rs
+46412369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46417172 i2c.req addr=70 data=F7 stop=0
+46417172 i2c.resp status=0
+46417369 i2c.rd.req addr=70 req=6 stop=1 rs
+46417369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46422172 i2c.req addr=70 data=F7 stop=0
+46422172 i2c.resp status=0
+46422369 i2c.rd.req addr=70 req=6 stop=1 rs
+46422369 i2c.rd.resp len=6 data=A2529F6CBFAD
+46427172 i2c.req addr=70 data=F7 stop=0
+46427172 i2c.resp status=0
+46427369 i2c.rd.req addr=70 req=6 stop=1 rs
+46427369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46428046 mark src=dut text=t_us%3D1590001%20data%3Da2529b6cbf4a
+46432172 i2c.req addr=70 data=F7 stop=0
+46432172 i2c.resp status=0
+46432369 i2c.rd.req addr=70 req=6 stop=1 rs
+46432369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46437172 i2c.req addr=70 data=F7 stop=0
+46437172 i2c.resp status=0
+46437369 i2c.rd.req addr=70 req=6 stop=1 rs
+46437369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46442171 i2c.req addr=70 data=F7 stop=0
+46442171 i2c.resp status=0
+46442368 i2c.rd.req addr=70 req=6 stop=1 rs
+46442368 i2c.rd.resp len=6 data=A2529B6CBF4A
+46447185 i2c.req addr=70 data=F7 stop=0
+46447185 i2c.resp status=0
+46447383 i2c.rd.req addr=70 req=6 stop=1 rs
+46447383 i2c.rd.resp len=6 data=A2529B6CBF4A
+46452172 i2c.req addr=70 data=F7 stop=0
+46452172 i2c.resp status=0
+46452369 i2c.rd.req addr=70 req=6 stop=1 rs
+46452369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46457172 i2c.req addr=70 data=F7 stop=0
+46457172 i2c.resp status=0
+46457369 i2c.rd.req addr=70 req=6 stop=1 rs
+46457369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46462172 i2c.req addr=70 data=F7 stop=0
+46462172 i2c.resp status=0
+46462369 i2c.rd.req addr=70 req=6 stop=1 rs
+46462369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46467172 i2c.req addr=70 data=F7 stop=0
+46467172 i2c.resp status=0
+46467369 i2c.rd.req addr=70 req=6 stop=1 rs
+46467369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46472171 i2c.req addr=70 data=F7 stop=0
+46472171 i2c.resp status=0
+46472369 i2c.rd.req addr=70 req=6 stop=1 rs
+46472369 i2c.rd.resp len=6 data=A2529B6CBF4A
+46477171 i2c.req addr=70 data=F7 stop=0
+46477171 i2c.resp status=0
+46477368 i2c.rd.req addr=70 req=6 stop=1 rs
+46477368 i2c.rd.resp len=6 data=A2529B6CBF4A
+46482173 i2c.req addr=70 data=F7 stop=0
+46482173 i2c.resp status=0
+46482370 i2c.rd.req addr=70 req=6 stop=1 rs
+46482370 i2c.rd.resp len=6 data=A2528B6CBF2D
+46483049 mark src=dut text=t_us%3D1645001%20data%3Da2528b6cbf2d
+46487172 i2c.req addr=70 data=F7 stop=0
+46487172 i2c.resp status=0
+46487369 i2c.rd.req addr=70 req=6 stop=1 rs
+46487369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46492172 i2c.req addr=70 data=F7 stop=0
+46492172 i2c.resp status=0
+46492369 i2c.rd.req addr=70 req=6 stop=1 rs
+46492369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46497172 i2c.req addr=70 data=F7 stop=0
+46497172 i2c.resp status=0
+46497370 i2c.rd.req addr=70 req=6 stop=1 rs
+46497370 i2c.rd.resp len=6 data=A2528B6CBF2D
+46502171 i2c.req addr=70 data=F7 stop=0
+46502171 i2c.resp status=0
+46502369 i2c.rd.req addr=70 req=6 stop=1 rs
+46502369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46507171 i2c.req addr=70 data=F7 stop=0
+46507171 i2c.resp status=0
+46507369 i2c.rd.req addr=70 req=6 stop=1 rs
+46507369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46512171 i2c.req addr=70 data=F7 stop=0
+46512171 i2c.resp status=0
+46512369 i2c.rd.req addr=70 req=6 stop=1 rs
+46512369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46517171 i2c.req addr=70 data=F7 stop=0
+46517171 i2c.resp status=0
+46517369 i2c.rd.req addr=70 req=6 stop=1 rs
+46517369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46522171 i2c.req addr=70 data=F7 stop=0
+46522171 i2c.resp status=0
+46522369 i2c.rd.req addr=70 req=6 stop=1 rs
+46522369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46527171 i2c.req addr=70 data=F7 stop=0
+46527171 i2c.resp status=0
+46527369 i2c.rd.req addr=70 req=6 stop=1 rs
+46527369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46532172 i2c.req addr=70 data=F7 stop=0
+46532172 i2c.resp status=0
+46532369 i2c.rd.req addr=70 req=6 stop=1 rs
+46532369 i2c.rd.resp len=6 data=A2528B6CBF2D
+46537171 i2c.req addr=70 data=F7 stop=0
+46537171 i2c.resp status=0
+46537369 i2c.rd.req addr=70 req=6 stop=1 rs
+46537369 i2c.rd.resp len=6 data=A252A86CBF2A
+46538042 mark src=dut text=t_us%3D1700001%20data%3Da252a86cbf2a
+46542172 i2c.req addr=70 data=F7 stop=0
+46542172 i2c.resp status=0
+46542369 i2c.rd.req addr=70 req=6 stop=1 rs
+46542369 i2c.rd.resp len=6 data=A252A86CBF2A
+46547172 i2c.req addr=70 data=F7 stop=0
+46547172 i2c.resp status=0
+46547369 i2c.rd.req addr=70 req=6 stop=1 rs
+46547369 i2c.rd.resp len=6 data=A252A86CBF2A
+46552172 i2c.req addr=70 data=F7 stop=0
+46552172 i2c.resp status=0
+46552369 i2c.rd.req addr=70 req=6 stop=1 rs
+46552369 i2c.rd.resp len=6 data=A252A86CBF2A
+46557171 i2c.req addr=70 data=F7 stop=0
+46557171 i2c.resp status=0
+46557369 i2c.rd.req addr=70 req=6 stop=1 rs
+46557369 i2c.rd.resp len=6 data=A252A86CBF2A
+46562172 i2c.req addr=70 data=F7 stop=0
+46562172 i2c.resp status=0
+46562370 i2c.rd.req addr=70 req=6 stop=1 rs
+46562370 i2c.rd.resp len=6 data=A252A86CBF2A
+46567171 i2c.req addr=70 data=F7 stop=0
+46567171 i2c.resp status=0
+46567369 i2c.rd.req addr=70 req=6 stop=1 rs
+46567369 i2c.rd.resp len=6 data=A252A86CBF2A
+46572172 i2c.req addr=70 data=F7 stop=0
+46572172 i2c.resp status=0
+46572369 i2c.rd.req addr=70 req=6 stop=1 rs
+46572369 i2c.rd.resp len=6 data=A252A86CBF2A
+46577171 i2c.req addr=70 data=F7 stop=0
+46577171 i2c.resp status=0
+46577368 i2c.rd.req addr=70 req=6 stop=1 rs
+46577368 i2c.rd.resp len=6 data=A252A86CBF2A
+46582172 i2c.req addr=70 data=F7 stop=0
+46582172 i2c.resp status=0
+46582369 i2c.rd.req addr=70 req=6 stop=1 rs
+46582369 i2c.rd.resp len=6 data=A252A86CBF2A
+46587171 i2c.req addr=70 data=F7 stop=0
+46587171 i2c.resp status=0
+46587369 i2c.rd.req addr=70 req=6 stop=1 rs
+46587369 i2c.rd.resp len=6 data=A252A86CBF2A
+46592172 i2c.req addr=70 data=F7 stop=0
+46592172 i2c.resp status=0
+46592369 i2c.rd.req addr=70 req=6 stop=1 rs
+46592369 i2c.rd.resp len=6 data=A252A26CBE1A
+46593042 mark src=dut text=t_us%3D1755001%20data%3Da252a26cbe1a
+46597173 i2c.req addr=70 data=F7 stop=0
+46597173 i2c.resp status=0
+46597370 i2c.rd.req addr=70 req=6 stop=1 rs
+46597370 i2c.rd.resp len=6 data=A252A26CBE1A
+46602171 i2c.req addr=70 data=F7 stop=0
+46602171 i2c.resp status=0
+46602369 i2c.rd.req addr=70 req=6 stop=1 rs
+46602369 i2c.rd.resp len=6 data=A252A26CBE1A
+46607172 i2c.req addr=70 data=F7 stop=0
+46607172 i2c.resp status=0
+46607369 i2c.rd.req addr=70 req=6 stop=1 rs
+46607369 i2c.rd.resp len=6 data=A252A26CBE1A
+46612172 i2c.req addr=70 data=F7 stop=0
+46612172 i2c.resp status=0
+46612370 i2c.rd.req addr=70 req=6 stop=1 rs
+46612370 i2c.rd.resp len=6 data=A252A26CBE1A
+46617171 i2c.req addr=70 data=F7 stop=0
+46617171 i2c.resp status=0
+46617369 i2c.rd.req addr=70 req=6 stop=1 rs
+46617369 i2c.rd.resp len=6 data=A252A26CBE1A
+46622171 i2c.req addr=70 data=F7 stop=0
+46622171 i2c.resp status=0
+46622369 i2c.rd.req addr=70 req=6 stop=1 rs
+46622369 i2c.rd.resp len=6 data=A252A26CBE1A
+46627172 i2c.req addr=70 data=F7 stop=0
+46627172 i2c.resp status=0
+46627369 i2c.rd.req addr=70 req=6 stop=1 rs
+46627369 i2c.rd.resp len=6 data=A252A26CBE1A
+46632171 i2c.req addr=70 data=F7 stop=0
+46632171 i2c.resp status=0
+46632369 i2c.rd.req addr=70 req=6 stop=1 rs
+46632369 i2c.rd.resp len=6 data=A252A26CBE1A
+46637172 i2c.req addr=70 data=F7 stop=0
+46637172 i2c.resp status=0
+46637369 i2c.rd.req addr=70 req=6 stop=1 rs
+46637369 i2c.rd.resp len=6 data=A252A26CBE1A
+46642172 i2c.req addr=70 data=F7 stop=0
+46642172 i2c.resp status=0
+46642369 i2c.rd.req addr=70 req=6 stop=1 rs
+46642369 i2c.rd.resp len=6 data=A252A26CBE1A
+46647171 i2c.req addr=70 data=F7 stop=0
+46647171 i2c.resp status=0
+46647369 i2c.rd.req addr=70 req=6 stop=1 rs
+46647369 i2c.rd.resp len=6 data=A252A26CBE1A
+46652171 i2c.req addr=70 data=F7 stop=0
+46652171 i2c.resp status=0
+46652369 i2c.rd.req addr=70 req=6 stop=1 rs
+46652369 i2c.rd.resp len=6 data=A252916CBE4F
+46653044 mark src=dut text=t_us%3D1815001%20data%3Da252916cbe4f
+46657172 i2c.req addr=70 data=F7 stop=0
+46657172 i2c.resp status=0
+46657369 i2c.rd.req addr=70 req=6 stop=1 rs
+46657369 i2c.rd.resp len=6 data=A252916CBE4F
+46662172 i2c.req addr=70 data=F7 stop=0
+46662172 i2c.resp status=0
+46662369 i2c.rd.req addr=70 req=6 stop=1 rs
+46662369 i2c.rd.resp len=6 data=A252916CBE4F
+46667172 i2c.req addr=70 data=F7 stop=0
+46667172 i2c.resp status=0
+46667369 i2c.rd.req addr=70 req=6 stop=1 rs
+46667369 i2c.rd.resp len=6 data=A252916CBE4F
+46672172 i2c.req addr=70 data=F7 stop=0
+46672172 i2c.resp status=0
+46672369 i2c.rd.req addr=70 req=6 stop=1 rs
+46672369 i2c.rd.resp len=6 data=A252916CBE4F
+46677171 i2c.req addr=70 data=F7 stop=0
+46677171 i2c.resp status=0
+46677369 i2c.rd.req addr=70 req=6 stop=1 rs
+46677369 i2c.rd.resp len=6 data=A252916CBE4F
+46682171 i2c.req addr=70 data=F7 stop=0
+46682171 i2c.resp status=0
+46682369 i2c.rd.req addr=70 req=6 stop=1 rs
+46682369 i2c.rd.resp len=6 data=A252916CBE4F
+46687172 i2c.req addr=70 data=F7 stop=0
+46687172 i2c.resp status=0
+46687369 i2c.rd.req addr=70 req=6 stop=1 rs
+46687369 i2c.rd.resp len=6 data=A252916CBE4F
+46692171 i2c.req addr=70 data=F7 stop=0
+46692171 i2c.resp status=0
+46692369 i2c.rd.req addr=70 req=6 stop=1 rs
+46692369 i2c.rd.resp len=6 data=A252916CBE4F
+46697172 i2c.req addr=70 data=F7 stop=0
+46697172 i2c.resp status=0
+46697369 i2c.rd.req addr=70 req=6 stop=1 rs
+46697369 i2c.rd.resp len=6 data=A252916CBE4F
+46702171 i2c.req addr=70 data=F7 stop=0
+46702171 i2c.resp status=0
+46702369 i2c.rd.req addr=70 req=6 stop=1 rs
+46702369 i2c.rd.resp len=6 data=A252916CBE4F
+46707171 i2c.req addr=70 data=F7 stop=0
+46707171 i2c.resp status=0
+46707368 i2c.rd.req addr=70 req=6 stop=1 rs
+46707368 i2c.rd.resp len=6 data=A2528B6CBE86
+46708041 mark src=dut text=t_us%3D1870000%20data%3Da2528b6cbe86
+46712172 i2c.req addr=70 data=F7 stop=0
+46712172 i2c.resp status=0
+46712369 i2c.rd.req addr=70 req=6 stop=1 rs
+46712369 i2c.rd.resp len=6 data=A2528B6CBE86
+46717172 i2c.req addr=70 data=F7 stop=0
+46717172 i2c.resp status=0
+46717369 i2c.rd.req addr=70 req=6 stop=1 rs
+46717369 i2c.rd.resp len=6 data=A2528B6CBE86
+46722171 i2c.req addr=70 data=F7 stop=0
+46722171 i2c.resp status=0
+46722369 i2c.rd.req addr=70 req=6 stop=1 rs
+46722369 i2c.rd.resp len=6 data=A2528B6CBE86
+46727172 i2c.req addr=70 data=F7 stop=0
+46727172 i2c.resp status=0
+46727369 i2c.rd.req addr=70 req=6 stop=1 rs
+46727369 i2c.rd.resp len=6 data=A2528B6CBE86
+46732171 i2c.req addr=70 data=F7 stop=0
+46732171 i2c.resp status=0
+46732369 i2c.rd.req addr=70 req=6 stop=1 rs
+46732369 i2c.rd.resp len=6 data=A2528B6CBE86
+46737171 i2c.req addr=70 data=F7 stop=0
+46737171 i2c.resp status=0
+46737369 i2c.rd.req addr=70 req=6 stop=1 rs
+46737369 i2c.rd.resp len=6 data=A2528B6CBE86
+46742172 i2c.req addr=70 data=F7 stop=0
+46742172 i2c.resp status=0
+46742369 i2c.rd.req addr=70 req=6 stop=1 rs
+46742369 i2c.rd.resp len=6 data=A2528B6CBE86
+46747172 i2c.req addr=70 data=F7 stop=0
+46747172 i2c.resp status=0
+46747369 i2c.rd.req addr=70 req=6 stop=1 rs
+46747369 i2c.rd.resp len=6 data=A2528B6CBE86
+46752171 i2c.req addr=70 data=F7 stop=0
+46752171 i2c.resp status=0
+46752369 i2c.rd.req addr=70 req=6 stop=1 rs
+46752369 i2c.rd.resp len=6 data=A2528B6CBE86
+46757172 i2c.req addr=70 data=F7 stop=0
+46757172 i2c.resp status=0
+46757369 i2c.rd.req addr=70 req=6 stop=1 rs
+46757369 i2c.rd.resp len=6 data=A2528B6CBE86
+46762171 i2c.req addr=70 data=F7 stop=0
+46762171 i2c.resp status=0
+46762369 i2c.rd.req addr=70 req=6 stop=1 rs
+46762369 i2c.rd.resp len=6 data=A252936CBECC
+46763044 mark src=dut text=t_us%3D1925000%20data%3Da252936cbecc
+46767172 i2c.req addr=70 data=F7 stop=0
+46767172 i2c.resp status=0
+46767369 i2c.rd.req addr=70 req=6 stop=1 rs
+46767369 i2c.rd.resp len=6 data=A252936CBECC
+46772171 i2c.req addr=70 data=F7 stop=0
+46772171 i2c.resp status=0
+46772369 i2c.rd.req addr=70 req=6 stop=1 rs
+46772369 i2c.rd.resp len=6 data=A252936CBECC
+46777174 i2c.req addr=70 data=F7 stop=0
+46777174 i2c.resp status=0
+46777371 i2c.rd.req addr=70 req=6 stop=1 rs
+46777371 i2c.rd.resp len=6 data=A252936CBECC
+46782171 i2c.req addr=70 data=F7 stop=0
+46782171 i2c.resp status=0
+46782369 i2c.rd.req addr=70 req=6 stop=1 rs
+46782369 i2c.rd.resp len=6 data=A252936CBECC
+46787171 i2c.req addr=70 data=F7 stop=0
+46787171 i2c.resp status=0
+46787369 i2c.rd.req addr=70 req=6 stop=1 rs
+46787369 i2c.rd.resp len=6 data=A252936CBECC
+46792171 i2c.req addr=70 data=F7 stop=0
+46792171 i2c.resp status=0
+46792369 i2c.rd.req addr=70 req=6 stop=1 rs
+46792369 i2c.rd.resp len=6 data=A252936CBECC
+46797171 i2c.req addr=70 data=F7 stop=0
+46797171 i2c.resp status=0
+46797369 i2c.rd.req addr=70 req=6 stop=1 rs
+46797369 i2c.rd.resp len=6 data=A252936CBECC
+46802172 i2c.req addr=70 data=F7 stop=0
+46802172 i2c.resp status=0
+46802369 i2c.rd.req addr=70 req=6 stop=1 rs
+46802369 i2c.rd.resp len=6 data=A252936CBECC
+46807172 i2c.req addr=70 data=F7 stop=0
+46807172 i2c.resp status=0
+46807369 i2c.rd.req addr=70 req=6 stop=1 rs
+46807369 i2c.rd.resp len=6 data=A252936CBECC
+46812171 i2c.req addr=70 data=F7 stop=0
+46812171 i2c.resp status=0
+46812369 i2c.rd.req addr=70 req=6 stop=1 rs
+46812369 i2c.rd.resp len=6 data=A252936CBECC
+46817174 i2c.req addr=70 data=F7 stop=0
+46817174 i2c.resp status=0
+46817371 i2c.rd.req addr=70 req=6 stop=1 rs
+46817371 i2c.rd.resp len=6 data=A2529E6CBE30
+46818044 mark src=dut text=t_us%3D1980001%20data%3Da2529e6cbe30
+46822173 i2c.req addr=70 data=F7 stop=0
+46822173 i2c.resp status=0
+46822370 i2c.rd.req addr=70 req=6 stop=1 rs
+46822370 i2c.rd.resp len=6 data=A2529E6CBE30
+46827172 i2c.req addr=70 data=F7 stop=0
+46827172 i2c.resp status=0
+46827369 i2c.rd.req addr=70 req=6 stop=1 rs
+46827369 i2c.rd.resp len=6 data=A2529E6CBE30
+46832171 i2c.req addr=70 data=F7 stop=0
+46832171 i2c.resp status=0
+46832369 i2c.rd.req addr=70 req=6 stop=1 rs
+46832369 i2c.rd.resp len=6 data=A2529E6CBE30
+46837171 i2c.req addr=70 data=F7 stop=0
+46837171 i2c.resp status=0
+46837368 i2c.rd.req addr=70 req=6 stop=1 rs
+46837368 i2c.rd.resp len=6 data=A2529E6CBE30
+46838048 mark src=dut text=reads%3D401%20changes%3D37
+46838111 i2c.req addr=70 data=F400 stop=1
+46838111 i2c.resp status=0
+46838403 mark case=qmp6988-standby-long-50ms phase=normal end=1
+46838407 mark case=qmp6988-standby-long-50ms end=1
