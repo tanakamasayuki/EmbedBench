@@ -236,6 +236,7 @@ M5UnitUnified 0.6.4 が `#if defined(ARDUINO)` で `esp32-hal-i2c.h`（`i2cIsIni
 
 直すのは host の core（lang-ship）の側。EmbedBench は直さない。ArduinoCore-API の決まりと違う不具合（`requestFrom` の
 曖昧さ、`begin(uint8_t)` がマスタになる）と、足りないものの追加は分けて扱う。
+依頼の中身は `HOST_EXTENSION_AUDIT.ja.md` §9（H5）。依頼するかは保留（利用者、2026-11-03）。
 
 L9・L10 の言葉（パラメータの名前と意味）は OEP の `oep-spec` の `docs/peripheral-testing.ja.md` §3.2 にそろえる。
 L7・L8 は host の core の持ち主と、どの API が要るかを決めてから。
