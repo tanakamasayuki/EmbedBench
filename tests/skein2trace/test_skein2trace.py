@@ -6,6 +6,9 @@ bytes to an absent 0x50 with no pull-ups, captured SDA/SCL itself at
 capture, and wireskein's transactions (with start_cond / end_cond /
 scl_waits, wireskein e2ced47) are kept here so the format is pinned by
 real output, not by a guess at it (the lesson of X65's sigrok shift).
+The run.json was later moved to wireskein-run/1 (host times as integer
+monotonic ns, wireskein 4c96212): the host times are the original ones on
+an arbitrary base, so the differences, and the markers, are as recorded.
 """
 
 import importlib.util
@@ -37,13 +40,13 @@ def sample_lines():
 def test_real_sample():
     lines = sample_lines()
     assert lines == [
-        "6055947 mark case=test_wire clock=host",
+        "6055946 mark case=test_wire clock=host",
         "6061895 mark case=test_wire phase=write_2_bytes_to_0x50",
         "6062119 i2c.req addr=50 data= stop=1",
         "6062119 i2c.resp status=2",
         "6062291 mark src=dut text=endTransmission%3D4",
         "6062294 mark case=test_wire phase=write_2_bytes_to_0x50 end=1",
-        "6132080 mark case=test_wire end=1 clock=host",
+        "6132079 mark case=test_wire end=1 clock=host",
     ]
     # One clock: the transfer (tick 211 of a capture starting at probe
     # time 6061908 us) sits between the phase's markers, and the
@@ -97,10 +100,11 @@ def test_read_rs_waits_and_nack():
 
 def test_marker_values_never_read_as_events():
     tool = load("skein2trace")
-    run = {"captures": [{"file": "c0001.wireskein", "t0": 0.0}],
-           "log": [{"t": 0.0, "src": "marker", "text": "# i2c.req",
+    run = {"format": "wireskein-run/1",
+           "captures": [{"file": "c0001.wireskein", "host_ns": 0}],
+           "log": [{"host_ns": 0, "src": "marker", "text": "# i2c.req",
                     "probe_ns": 6061908000},
-                   {"t": 0.0, "src": "dut", "text": "x i2c.rd.resp y",
+                   {"host_ns": 0, "src": "dut", "text": "x i2c.rd.resp y",
                     "probe_ns": 6061909000}]}
     lines = tool.convert({"transactions": []}, SAMPLE / "c0001.wireskein",
                          run)

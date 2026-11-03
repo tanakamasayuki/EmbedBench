@@ -29,7 +29,9 @@ I2C_JSON   wireskein's transactions, as its analysis export writes them:
            same for a phase. A line with src=dut is the application's own
            output. A line that carries probe_ns is placed by it; one that
            does not (the host's own markers) is placed through the
-           capture's host time t0, and says so with clock=host.
+           capture's host time (captures[].host_ns, the host's monotonic
+           clock in ns, as log[].host_ns), and says so with clock=host.
+           Only wireskein-run/1 is read.
 
 Lines follow la2trace.py: both lines of a transfer carry its START time;
 status is 0 / 2 address NACK / 3 data NACK, read off the bus; a read
@@ -126,19 +128,25 @@ def transfer_lines(transactions, hz, start_ns, tick0):
     return out
 
 
+RUN_FORMAT = "wireskein-run/1"
+
+
 def mark_lines(run, capture_file, start_ns):
+    if run.get("format") != RUN_FORMAT:
+        raise SystemExit("run.json: format %r, this reads %s only" % (
+            run.get("format"), RUN_FORMAT))
     entry = next((c for c in run.get("captures", [])
                   if c.get("file") == capture_file), None)
-    t0 = entry.get("t0") if entry else None
+    armed_ns = entry.get("host_ns") if entry else None
     out = []
     case = phase = None
     for line in run.get("log", []):
         if "probe_ns" in line:
             time, clock = int(line["probe_ns"]) // 1000, ""
-        elif t0 is not None:
-            # The host's markers have only host time; the capture's t0 is
-            # the one point both clocks share.
-            time = int(round(start_ns / 1000 + (line["t"] - t0) * 1e6))
+        elif armed_ns is not None:
+            # The host's markers have only host time; the capture's arming
+            # is the one point both clocks share.
+            time = (start_ns + line["host_ns"] - armed_ns) // 1000
             clock = " clock=host"
         else:
             continue

@@ -1,16 +1,16 @@
 {
- "format": "wireskein-run/3",
+ "format": "wireskein-run/1",
  "meta": {
   "probe": "usb:e8f60ae84e28"
  },
  "log": [
   {
-   "t": 0.011321855010464787,
+   "host_ns": 1639757011321855,
    "src": "marker",
    "text": "# test_wire"
   },
   {
-   "t": 0.01902855304069817,
+   "host_ns": 1639757019028553,
    "src": "marker",
    "text": "## write 2 bytes to 0x50",
    "probe_ns": 6061895000,
@@ -18,7 +18,7 @@
    "probe": "usb:e8f60ae84e28"
   },
   {
-   "t": 0.019424904137849808,
+   "host_ns": 1639757019424904,
    "src": "dut",
    "text": "endTransmission=4",
    "probe_ns": 6062291000,
@@ -26,7 +26,7 @@
    "probe": "usb:e8f60ae84e28"
   },
   {
-   "t": 0.01942790695466101,
+   "host_ns": 1639757019427907,
    "src": "marker",
    "text": "##",
    "probe_ns": 6062294000,
@@ -34,7 +34,7 @@
    "probe": "usb:e8f60ae84e28"
   },
   {
-   "t": 0.08745495416224003,
+   "host_ns": 1639757087454954,
    "src": "marker",
    "text": "#"
   }
@@ -42,7 +42,7 @@
  "captures": [
   {
    "file": "c0001.wireskein",
-   "t0": 0.017283132998272777,
+   "host_ns": 1639757017283133,
    "channels": [
     "SDA",
     "SCL"

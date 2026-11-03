@@ -308,7 +308,7 @@ wireskein の analyze の JSON（[oep] 調べ）:
 `start_ns` / `tick_hz` ＋ run.json → §6.1 の行）。wireskein は EmbedBench を知らないままでよい。
 
 - 時刻はすべて probe の時計の µs。転送は `start_ns + tick / tick_hz`、目印は run.json の `probe_ns`。
-  `probe_ns` を持たない host 側の目印は、キャプチャの host 時刻 `t0` を介して置き、`clock=host` と書く。
+  `probe_ns` を持たない host 側の目印は、キャプチャを arm した host 時刻（`captures[].host_ns`、`log[].host_ns` と同じ単調時計の ns）との差で置き、`clock=host` と書く。
 - `status` は線から読んだ値（0 / 2 / 3）。**ライブラリの戻り値ではない**: 最初の試料は、線ではアドレス NACK（2）、
   Wire の `endTransmission` は 4（プルアップ無し）だった。
 - 入力は今は「役割を決めた復号」の転送（wireskein の verify と同じ経路）。短い試料では `wireskein analyze`
