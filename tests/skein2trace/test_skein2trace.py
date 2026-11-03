@@ -133,7 +133,7 @@ def test_knowledge_folds_a_decode_artefact(tmp_path):
                             write(200, 0x73, "", False), write(300, 0x70, "e0e5"),
                             write(400, 0x73, "", False)]}
     lines = tool.convert(i2c, SAMPLE / "c0001.wireskein", None,
-                         tool.load_folds(["%s:70" % knowledge]))
+                         tool.load_folds(["%s@0x70" % knowledge]))
     folds = [l for l in lines if "folded" in l]
     assert len(folds) == 1 and folds[0].endswith(
         "mark folded=reset-byte-as-address addr=73")

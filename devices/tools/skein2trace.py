@@ -45,8 +45,8 @@ closed (end_cond null) is written with stop=1 and reported on stderr.
 (wireskein's scl_waits); the line level cannot tell who held SCL low, so
 it is a wait, not a stretch.
 
---knowledge FILE:ADDR (EmbedBenchDeviceData knowledge/<chip>.yaml and the
-part's address) folds what the file's decode_artefacts name: a transfer
+--knowledge FILE@ADDR (EmbedBenchDeviceData knowledge/<chip>.yaml and the
+part's I2C address, 0x70) folds what the file's decode_artefacts name: a transfer
 that the decode shows right after a given write to the part, and that is
 that write's own doing rather than a transfer of its own (QMP6988's reset
 byte E6, read by the decoder as an address: 0x73 written). It becomes
@@ -59,7 +59,7 @@ an event. Checked against a P4X capture of a real bus (X66).
 
 Usage:
     skein2trace.py i2c.json --capture c0001.wireskein [--run run.json]
-        [--knowledge knowledge/qmp6988.yaml:70]
+        [--knowledge knowledge/qmp6988.yaml@0x70]
 """
 
 from __future__ import annotations
@@ -101,12 +101,15 @@ def tick_us(tick, hz, start_ns, tick0):
 
 
 def load_folds(specs):
-    """--knowledge FILE:ADDR: the decode artefacts a part's knowledge file
-    names, for the part at ADDR (hex)."""
+    """--knowledge FILE@ADDR: every decode artefact a part's knowledge file
+    names (its decode_artefacts, by key), for the part at I2C address ADDR
+    (0x70)."""
     import yaml
     rules = []
     for spec in specs:
-        path, _, addr = spec.rpartition(":")
+        path, _, addr = spec.rpartition("@")
+        if not path or not addr.lower().startswith("0x"):
+            raise SystemExit("--knowledge %s: expected FILE@0x<i2c address>" % spec)
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         for item in data.get("decode_artefacts") or []:
             then = item["then"]
@@ -240,8 +243,8 @@ def main():
                     help="the .wireskein capture the transactions came from")
     ap.add_argument("--run", type=Path, help="run.json, for the markers")
     ap.add_argument("--knowledge", action="append", default=[],
-                    metavar="FILE:ADDR",
-                    help="a part's knowledge file and its address (hex): "
+                    metavar="FILE@ADDR",
+                    help="a part's knowledge file and the part's I2C address (0x70): "
                     "fold the decode artefacts it names")
     args = ap.parse_args()
     run = json.loads(args.run.read_text()) if args.run else None

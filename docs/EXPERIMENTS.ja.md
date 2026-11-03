@@ -2675,7 +2675,7 @@ P×8・T×1 は OEP の run で 10.646〜10.728 ms に絞れ（下端は 400 kHz
 出て、復号器はそれを 0x73 への書込みと読む。pilot（sigrok）は ACK の 0x73、OEP（wireskein）は NACK の 0x73 を出した。
 0x73 の部品はいない。部品（E6 を受けている最中のリセット）と controller のどちらが出すかは、まだ分けていない。
 復号器は線のとおりに出すのが正しいので、畳むのは読む側にした（OEP・wireskein と相談）: knowledge/qmp6988.yaml の
-`decode_artefacts` に書き、`skein2trace.py --knowledge knowledge/qmp6988.yaml:70` が `mark folded=...` に替える。
+`decode_artefacts` に書き、`skein2trace.py --knowledge knowledge/qmp6988.yaml@0x70` が `mark folded=...` に替える。
 OEP の 2 本はこれを通し、`--only-addr` 無しでも差 0。
 
 **SHT30: 記録 4 本で、差は説明の付くものだけ。**
