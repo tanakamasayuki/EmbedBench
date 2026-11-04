@@ -24,9 +24,10 @@ tests/<実験名>/
   test_<実験名>.py
 ```
 
-ネイティブ専用の実験（`native_env/`、`contracts/`、`capacity_policy/`、`capture_scaffold/`、`tape_replay/`、`tape_multi/`）は `.ino` と `sketch.yaml` を持たず、
-pytestがg++で直接ビルドする。複数の実験と複数の環境で共有する参照模型は
-`common_models/`（Arduinoライブラリ形式、`src/` に純粋C++の模型）に置き、
+ネイティブ専用の実験（`native_env/`、`contracts/`、`capacity_policy/`、`capture_scaffold/`、`tape_replay/`、`tape_multi/`、`model_replay/`）は `.ino` と `sketch.yaml` を持たず、
+pytestがg++で直接ビルドする。複数の実験と複数の環境で共有するデバイス模型は、
+第2のArduinoライブラリとしてリポジトリ直下の [`devices/`](../devices/) に置き
+（`src/` に置かないのは、使わない人のビルド時間に乗せないため）、
 sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-I` で参照する。
 環境実装例#2（純粋C++）は `common_env/` に置き、ネイティブ実験が共有する。
 
@@ -63,7 +64,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `format_registry/`: format識別の4方式比較（固定番号の衝突・名前intern・文字列のみ・registry無し縮退）とframeのbus id
 - `capacity/`: 最大データ量の環境ネゴ（`maxFrameBits`）。同一模型の自動分割と上限超過の可視な拒否
 - `bulk_spi/`: 大量転送の記録粒度。transaction内の件数+checksum集約と、per-byte方式のバッファ爆発の実証
-- `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`common_models/` の同一模型でX23のシナリオを再現し、デバイス側イベント列の一致を確認
+- `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`devices/` の同一模型でX23のシナリオを再現し、デバイス側イベント列の一致を確認
 - `i2c_transaction/`: I2Cのtransaction文脈（STOP有無・repeated start）。repeated startを要求するregister-map模型
 - `frame_bits/`: frameのbit packing（MSB-first・padding検査・空frame）と原子性（128bit frameは分割せず拒否）
 - `reentry/`: 再入規則。応答中にIRQを上げる模型で、即時配送（depth 2）と延期配送（depth 1）を比較
@@ -104,4 +105,6 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `tape_multi/`: 1セッションに複数デバイス（I2C 2台、SPI flash、I2C＋シリアル）の録画を、`trace2tape.py` の `--addr` / `--spi` / `--serial` でデバイスごとのtapeに分けて同時再生（native）
 - `common_scenarios/`: capture系実験が共有するアプリの操作列（`Session`）。`capture_scaffold/`・`tape_replay/`・`tape_multi/` が使用
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
-- 実験が共有するデバイス模型は、第2のArduinoライブラリとしてリポジトリ直下の [`devices/`](../devices/) へ移した。`src/` に置かないのは、使わない人のビルド時間に乗せないため
+- `model_replay/`: 実機の記録から作った模型（QMP6988・SHT30）を、`tracecmp.py` で記録そのものと突き合わせる（native）
+- `skein2trace/`: wireskein の run とキャプチャを EmbedBench のトレース行へ変換する `skein2trace.py` の検査（Python のみ）
+- `facts/`: [docs/FACTS.ja.md](../docs/FACTS.ja.md) の数値をリポジトリから数え直して突き合わせる（Python のみ）

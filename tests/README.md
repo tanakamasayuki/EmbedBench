@@ -24,11 +24,12 @@ tests/<experiment>/
   test_<experiment>.py
 ```
 
-Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`, `capture_scaffold/`, `tape_replay/`, `tape_multi/`) have no `.ino` or
-`sketch.yaml`; pytest builds them directly with g++. Reference models shared
-across experiments and environments live in `common_models/` (Arduino library
-layout, pure C++ models under `src/`), referenced by `libraries: dir` from
-sketches and by `-I` natively. Environment example #2 (pure C++) lives in
+Native-only experiments (`native_env/`, `contracts/`, `capacity_policy/`, `capture_scaffold/`, `tape_replay/`, `tape_multi/`, `model_replay/`) have no `.ino` or
+`sketch.yaml`; pytest builds them directly with g++. Device models shared
+across experiments and environments live in [`devices/`](../devices/) at the
+repository root, as a second Arduino library (kept out of `src/` so their
+build cost falls only on sketches that use them), referenced by
+`libraries: dir` from sketches and by `-I` natively. Environment example #2 (pure C++) lives in
 `common_env/` for native experiments to share.
 
 The current `smoke/` test is the minimal end-to-end check for Arduino library
@@ -65,7 +66,7 @@ Additional experiments:
 - `format_registry/`: four format-identity schemes compared (fixed-number collision, environment-interned names, strings only, no-registry degradation) plus frame bus ids.
 - `capacity/`: negotiated size limits (`maxFrameBits`): one model auto-splitting per environment, oversize rejected visibly.
 - `bulk_spi/`: bulk-transfer recording granularity: in-transaction count+checksum summaries vs the per-byte buffer explosion.
-- `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the X23 scenario with the same `common_models/` sources and matching device-side event lines.
+- `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the X23 scenario with the same `devices/` sources and matching device-side event lines.
 - `i2c_transaction/`: I2C transaction context (STOP, repeated start) with a register-map model that requires repeated start.
 - `frame_bits/`: frame bit packing (MSB-first, padding check, empty frames) and atomicity (a 128-bit frame is refused, never split).
 - `reentry/`: the re-entrancy rule: a model raising IRQ mid-response, immediate delivery (depth 2) vs deferred delivery (depth 1).
@@ -106,4 +107,6 @@ Additional experiments:
 - `tape_multi/`: several devices per session (two I2C parts, a SPI flash, a bus plus a serial port), split by `trace2tape.py`'s `--addr` / `--spi` / `--serial` into one tape per device and replayed together (native).
 - `common_scenarios/`: the application sequences (`Session`) the capture experiments share; used by `capture_scaffold/`, `tape_replay/` and `tape_multi/`.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
-- The device models the experiments share now live in [`devices/`](../devices/) at the repository root, as a second Arduino library. They are kept out of `src/` so their build cost falls only on sketches that use them.
+- `model_replay/`: models built from real-device recordings (QMP6988, SHT30) checked against those recordings with `tracecmp.py` (native).
+- `skein2trace/`: `skein2trace.py`, which turns a wireskein run and its capture into EmbedBench trace lines (Python only).
+- `facts/`: recounts the figures in [docs/FACTS.md](../docs/FACTS.md) from the repository and compares them (Python only).
