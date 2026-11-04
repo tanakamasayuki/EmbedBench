@@ -1,4 +1,4 @@
-// X65, step 3: one tape per device, several tapes per session.
+// Step 3: one tape per device, several tapes per session.
 #include <stdio.h>
 
 #include <scenarios.h>

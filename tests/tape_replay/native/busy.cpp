@@ -1,4 +1,4 @@
-// X67: a busy step holds the time a part was busy, not a poll count.
+// a busy step holds the time a part was busy, not a poll count.
 // The SHT30's high-repeatability measurement from a real capture, played
 // back with polls at several periods. Built with the tape from
 // trace2tape.py --busy (sht30_tape.h) or without it (SHT30_STEPWISE).

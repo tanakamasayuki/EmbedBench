@@ -32,7 +32,7 @@ namespace ebhost {
 enum class Origin : uint8_t { kApp, kDir, kDev, kCore, kDiag };
 
 // One recorded event. Text payload keeps the draft simple; the binary
-// record shape was measured separately in X10.
+// record shape is measured separately.
 struct Event {
   uint32_t seq = 0;
   uint64_t timeUs = 0;
@@ -41,7 +41,7 @@ struct Event {
   uint32_t link = 0;  // request seq for response events, 0 otherwise
   // A repeating cycle is folded into its first copy when the buffer would
   // otherwise overflow, so `repeats` is 1 for an ordinary event and
-  // lastTimeUs is when the last copy happened (X53).
+  // lastTimeUs is when the last copy happened.
   uint32_t repeats = 1;
   uint64_t lastTimeUs = 0;
   char text[56] = {0};
@@ -68,7 +68,7 @@ struct Stats {
   // installed by runBegin, so before it the environment is not connected
   // to anything. `windows == 0` is therefore the only evidence that a
   // runBegin was forgotten, and an empty trace with it means "never
-  // started", not "nothing happened" (X60).
+  // started", not "nothing happened".
   uint32_t windows = 0;
 };
 
@@ -98,7 +98,7 @@ using FrameHandler = void (*)(uint8_t bus, uint16_t format,
                               const uint8_t* data, size_t bits, void* user);
 // Every recorded event is also offered to listeners, in slot order, with
 // no return value: an observer can watch the stream but never change it
-// (X9's observer/responder split).
+// (the observer/responder split).
 using EventListener = void (*)(const Event& event, void* user);
 
 // Which instance of a bus a binding refers to. The host core exposes two

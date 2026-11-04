@@ -1,7 +1,7 @@
 // Measures what the current host hooks show for operations the host
 // rejects or drops: a Wire endTransmission without beginTransmission, a
 // Wire transmit-buffer overflow, a UART tx-queue overflow, and refused
-// analog calls. Grounds the Gate A choice on log-completeness scope.
+// analog calls: the log is complete for what the host accepts.
 #include <Arduino.h>
 #include <EmbedBench.h>
 #include <HostBus.h>

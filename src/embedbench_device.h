@@ -56,9 +56,8 @@
 //   composed by the environment's adapter from child Devices. Lines,
 //   channels, and frame buses are numbered per device.
 //
-// FROZEN — interface version 1 (2026-09-04). The experiment phase that
-// hardened this surface is recorded in docs/EXPERIMENTS.ja.md (X23-X41)
-// and the freeze itself in docs/DEVICE_IF_FROZEN.ja.md.
+// FROZEN — interface version 1. What is frozen and how it may change:
+// docs/DEVICE_IF_FROZEN.ja.md.
 //
 // Change rules from here on:
 //   - version 1 stays source- and behavior-compatible: a device written

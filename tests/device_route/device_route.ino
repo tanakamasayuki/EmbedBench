@@ -1,4 +1,4 @@
-// WP-A2: compares three routing policies for driving the same register-map
+// Compares three routing policies for driving the same register-map
 // sensor model — everything direct, everything through a common channel
 // interface, and setup/inspection direct with runtime mutations through the
 // channel. All structures are experiment-local candidates.

@@ -12,8 +12,7 @@ IFの外側の**運用**であり、IFの変更を伴わない。
 | `tests/<実験名>/` | その実験でしか意味を持たない模型 | 契約違反を仕込んだ `badlen_model`、容量試験の `flood_model` |
 
 判断基準は「2つ目の利用者が現れたか」。現れた時点で `devices/` へ移す
-（X29で参照模型を移した時と同じ手順: `sketch.yaml` の `libraries: dir` と
-ネイティブ側の `-I` を共有先へ向ける）。
+（`sketch.yaml` の `libraries: dir` と、ネイティブ側の `-I` を共有先へ向ける）。
 
 模型が満たすこと:
 
@@ -25,7 +24,7 @@ IFの外側の**運用**であり、IFの変更を伴わない。
 ## 2. format 名の登録運用
 
 frame経路の format 名は**ライブラリ間で衝突しない識別子**であり、番号は環境
-ローカル（X26/X34）。運用規則:
+ローカル。運用規則:
 
 1. 形式は `<vendor>.<protocol>.<version>`、**最大19文字**（`kFormatNameMaxLength`）。
    超過は登録が拒否される（切り詰められない）
@@ -78,10 +77,10 @@ frame経路の format 名は**ライブラリ間で衝突しない識別子**で
 | `unit_codec_model` | （BASE周辺） | **I2C + SPI**、`lineIn`、`diagnose` | **1つの模型が2本のバスに載る**。制御バスの設定がデータバスの応答を変える |
 | `unit_faulty_model` | （故障注入） | I2C、channel | **わざと壊れる**唯一の模型。無応答・拒否・途中で切れる読み出し・間欠故障 |
 | `unit_sdcard_model` | SD/TFカード | SPI、`lineIn`、`requestWake`、`diagnose`、channel | **ブロックデバイス**（512バイト×8）。FATは載せない——それはアプリの仕事 |
-| `qmp6988_model` | ENV III（U001-C）の気圧 | I2C（`regtable_model` の派生）、`requestWake`、channel | **実物の記録から作った最初の模型**（X68）。表は pilot の記録、フックは forced / normal の変換時間、読出しはバイト単位でアドレスが進む。実データ 3 本と一致 |
-| `sht30_model` | ENV III（U001-C）の温湿度 | I2C、`diagnose`、channel | **コマンド型、実物の記録で確かめた**（X68）。測定中はアドレスを断る、clock stretch、CRC-8。stretch を待つ長さは controller の性質として channel で与える |
+| `qmp6988_model` | ENV III（U001-C）の気圧 | I2C（`regtable_model` の派生）、`requestWake`、channel | **実物の記録から作った最初の模型**。表は pilot の記録、フックは forced / normal の変換時間、読出しはバイト単位でアドレスが進む。実データ 3 本と一致 |
+| `sht30_model` | ENV III（U001-C）の温湿度 | I2C、`diagnose`、channel | **コマンド型、実物の記録で確かめた**。測定中はアドレスを断る、clock stretch、CRC-8。stretch を待つ長さは controller の性質として channel で与える |
 | `regtable_model` | （汎用・表駆動） | I2C、`diagnose`、channel | **表とフックの分離**。register-mapを`RegTableSpec`の表で持ち、表で言えない振る舞いは派生クラスの`onRead`/`afterWrite`へ。キャプチャから表を生成する入口（下記） |
-| `tape_model` | （汎用・録画再生） | I2C、serial、SPI、`requestWake`、`diagnose` | **録画を1ステップずつ再生**。外れた要求を診断で名指しし、その後も応答を返し続ける。分岐は持たない（X64・X65） |
+| `tape_model` | （汎用・録画再生） | I2C、serial、SPI、`requestWake`、`diagnose` | **録画を1ステップずつ再生**。外れた要求を診断で名指しし、その後も応答を返し続ける。分岐は持たない |
 
 ### ファイルシステムはデバイス側に無い
 
@@ -105,9 +104,9 @@ SDカードが提供するのは番号のついたブロックだけで、FATを
 時間で変わったレジスタ、動いた線、要求より短い読み出し、ログが切り詰めた
 payload、素通しでないchannelはTODOとして残り、生成クラスを継承した
 別ファイルのフックに人が書く（`tests/capture_scaffold/native/hooks.h` が実例）。
-**JSONで振る舞いまで書こうとしない**——表はデータのまま、規則言語にはしない（X63）。
+**JSONで振る舞いまで書こうとしない**——表はデータのまま、規則言語にはしない。
 
-キャプチャの入口は3つ（X64・X65）。実機側のシム `capture/`（`CaptureWire` は `TwoWire` 派生、
+キャプチャの入口は3つ。実機側のシム `capture/`（`CaptureWire` は `TwoWire` 派生、
 `CaptureSerial` は `Stream` 派生、`CaptureSPI` はラッパー。実体へ転送しつつ同じイベント行を
 `micros()` 付きで出す。全payloadを運ぶ。バスだけでは**線が見えない**ので、部品が駆動する線は
 `CaptureLines` でポーリングして足す）、ロジックアナライザのバスレベル出力を同じ行へ畳む
@@ -120,7 +119,7 @@ EmbedBench自身のトレース（payloadは5バイトまでなので雛形に�
 
 凍結IFの `reset()` は「電源投入状態へ戻し、保留中の時刻を全て捨てる」。
 揮発性の模型では「まっさらな新品」と同じになるので差が出ないが、
-**不揮発な部品では書いた内容は残る**（X58）。`unit_flash_model` が実例で、
+**不揮発な部品では書いた内容は残る**。`unit_flash_model` が実例で、
 `reset()` は配列に触れず、新品状態（全て0xFF）は構築時に作り、
 消去はchip eraseコマンドでのみ起きる。不揮発の状態を持つ模型を書くときは
 この区別を守ること。進行中の書き込みは `reset()` で落とす（契約どおり）。
@@ -131,7 +130,7 @@ EmbedBench自身のトレース（payloadは5バイトまでなので雛形に�
 2. ネイティブ単体で検証する（FakePortか `common_env/` の環境実装例）
 3. host環境でも同じ模型を無改変で動かす（adapterは実験側に置く）
 4. 2つ目の利用者が現れたら `devices/` へ移す
-5. frame経路を使うなら、2節の名前を台帳の表へ追加する
+5. frame経路を使うなら、2節の表へ format 名を追加する
 
 ## 4. 準拠キットとの関係
 

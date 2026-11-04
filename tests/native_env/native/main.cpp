@@ -1,4 +1,4 @@
-// The device_if scenario (X23) replayed on environment example #2: the
+// The device_if scenario replayed on environment example #2: the
 // same unmodified temp_model / modem_model sources, driven by a native
 // application through nenv::Env instead of Arduino APIs on the host core.
 #include <stdio.h>

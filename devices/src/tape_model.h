@@ -8,7 +8,7 @@
 // This is the first thing to run after taking a capture: does the
 // application on the host walk the same path it walked on the board? It
 // cannot branch (a tape has no state beyond its position), which is why
-// it is the complement of regtable_model rather than a replacement (X64).
+// it is the complement of regtable_model rather than a replacement.
 //
 // Steps the application initiates (kWrite, kRead, kSerialIn) wait for it;
 // steps the device initiates (kSerialOut) are performed on their own once
@@ -21,7 +21,7 @@
 // step completed, every request is refused at the address and the step
 // stays; the first request after that passes it and is answered from the
 // next step. The tape then holds the time the part was busy, not how many
-// times this application happened to ask (X67). Pure C++11.
+// times this application happened to ask. Pure C++11.
 #pragma once
 
 #include <embedbench_device.h>

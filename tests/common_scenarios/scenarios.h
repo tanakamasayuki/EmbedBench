@@ -1,4 +1,4 @@
-// Application sequences shared by the capture experiments (X63, X64):
+// Application sequences shared by the capture experiments:
 // written once so the same sequence can be driven against a hand-written
 // catalog model (to capture) and against what the capture produced (to
 // replay). A Session is one run on environment example #2 with every

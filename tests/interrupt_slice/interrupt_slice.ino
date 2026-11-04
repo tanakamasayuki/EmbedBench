@@ -26,7 +26,7 @@ static void record(const char* origin, const char* detail) {
 
 // Candidate injection path: record first, then apply, then decide the
 // edge against the normalized trigger and invoke the registered ISR.
-// Matching on InterruptTrigger, never the raw mode (X13).
+// Matching on InterruptTrigger, never the raw mode.
 static void injectLevel(uint8_t pin, uint8_t level) {
   const uint8_t previous = pinValue(pin);
   const InterruptTrigger trigger = interruptTrigger(pin);

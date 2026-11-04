@@ -1,4 +1,4 @@
-// X65, step 1: sessions with more than one device on them, captured — two
+// Step 1: sessions with more than one device on them, captured — two
 // I2C parts on one bus, a SPI flash, and a bus plus a serial port at once.
 #include <stdio.h>
 

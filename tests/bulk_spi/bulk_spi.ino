@@ -1,4 +1,4 @@
-// Bulk-transfer recording granularity (the X10 / Gate F homework): SPI
+// Bulk-transfer recording granularity: SPI
 // bytes inside a transaction coalesce into one summary event with count
 // and checksums, while transfers outside a transaction keep the per-byte
 // request/response pair — whose cost is demonstrated by overflowing the
@@ -22,7 +22,7 @@ static void runOnce(char* out, size_t cap) {
   }
   SPI.endTransaction();
 
-  // Outside a transaction the per-byte pair remains (X24 behavior).
+  // Outside a transaction the per-byte pair remains.
   for (uint32_t i = 0; i < 4; ++i) {
     SPI.transfer(static_cast<uint8_t>(0xA0 + i));
   }

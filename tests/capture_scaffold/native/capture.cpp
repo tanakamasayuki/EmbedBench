@@ -1,4 +1,4 @@
-// Step 1 of X63: run the hand-written catalog models through the shared
+// Step 1: run the hand-written catalog models through the shared
 // sequences and print their traces — the stand-in for a capture taken on
 // a real board. Each run gets a fresh Session: environment bindings and
 // ticking registrations persist across env.reset(), as they do on a

@@ -7,8 +7,7 @@ Figures other documents can cite. Every number here is checked by
 into someone else's document.
 
 Cite this page rather than counting for yourself: this project's state
-moves, and the last three external quotations of it were each wrong in at
-least one number.
+moves.
 
 <!-- FACTS BEGIN -->
 | What | Value |
@@ -22,12 +21,11 @@ least one number.
 | SD card preset volumes | 7 |
 <!-- FACTS END -->
 
-Effective LOC excludes blank lines and comment-only lines, the same
-measure the ledger uses.
+Effective LOC excludes blank lines and comment-only lines.
 
 **Sizes are not listed here.** A raw line count moves whenever anyone
 edits a comment, so pinning one turns every ordinary edit into a failing
-build — which is what happened, once. The questions a line count was
+build. The questions a line count was
 being used to answer have better answers:
 
 | Question | Where to get it |
@@ -104,8 +102,7 @@ real hardware:
   cannot be compared line for line.
 - Contract violations on the model side (`reset`, `channelRead` or `dump`
   calling HostPort). The kit checks environments, not models; the model
-  side is checked by `tests/device_if/`, which found three real
-  violations when it was added.
+  side is checked by `tests/device_if/`.
 
 ## Notes for anyone quoting this
 

@@ -1,4 +1,4 @@
-// WP-C1: the I2C vertical slice. An unmodified Arduino app drives a
+// The I2C vertical slice. An unmodified Arduino app drives a
 // register-map sensor over Wire; a candidate bench core owns the Wire and
 // clock hooks, records every external interaction as one ordered event
 // list with virtual timestamps, lets the director inject a temperature

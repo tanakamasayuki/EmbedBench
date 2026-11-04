@@ -1,4 +1,4 @@
-"""X12's last question: which route should an inspection take to become
+"""Which route should an inspection take to become
 evidence — a text dump, a channel read, or the model's own API?"""
 
 import subprocess

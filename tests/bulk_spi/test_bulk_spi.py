@@ -7,7 +7,7 @@ def test_bulk_spi(dut):
     dut.expect("TEST start bulk_spi", timeout=10)
     # 210 record attempts total (2 transaction + 8 per-byte + 200 burst).
     # Every byte of the burst differs, so there is no exact cycle to fold
-    # (X53); the shape summary (X54) recognises the repeating request /
+    #; the shape summary recognises the repeating request /
     # response pair anyway and nothing is lost. The transaction summary
     # is still the better answer: it costs one line at the moment of the
     # call, while the per-byte path only collapses once the buffer fills.

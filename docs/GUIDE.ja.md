@@ -30,6 +30,10 @@ EmbedBenchは、この4つを引き受けます。時間は仮想なので `dela
 「0x76番地へ0xF4を書いて、7.5 ms待って、3バイト読んだ」までが対象で、
 その信号が何ボルトで何ナノ秒だったかは対象外です。
 
+GUIやバスの波形ビューアは作りません。実機テスト用の設定も持ちません。
+EmbedBench自身をESP32などへ移植することはしませんが、凍結したデバイスIFに対して
+別の環境を書くことは歓迎します。
+
 ## 2. 3つの登場人物
 
 ```text
@@ -92,6 +96,20 @@ uv run pytest units_gpio -q -s
 この5行は「テストがボタンを押した→デバイスが線を下げた→割り込みが走った→
 アプリがLEDを点けた→割り込みが終わった」と読めます。
 **因果が時刻と順序で残る**のがEmbedBenchの中心的な価値です。
+
+### 行の細部
+
+- 応答の行の `re=N` は、対応する要求の行の通し番号です。
+- I2Cの行の `data=` は先頭5バイトまでで、印を付けずに切れます（実際の長さは `len=`）。
+  全バイトを確かめたいときは、スケッチで値を出力してassertします。
+- frameとbinaryのserialは、4バイトを超えると `len= crc=`（CRC-8/ATM）にまとまります。
+  serialは、印字できる文字と `\r` `\n` `\t` だけなら文字列で出ます。
+- SPIはtransactionの内側を `spi.bulk n= mosi_crc= miso_crc=` の1行にまとめます（模型は1バイトずつ呼ばれます）。
+  transactionの外は要求と応答の2行です。
+- 記録が満杯になると、同じ周期は `x8..007000`（8回、最後は7000 µs）のように畳まれます。値まで一致しないときは
+  `mosi=* crc=XX xN..T` のように形だけで畳み、CRCは残します。それでも足りなければ `trace.truncated lost=N` で知らせます。
+- 記録と応答の対象は `Wire` / `Wire1` / `SPI` / `Serial1` / `Serial2` です（`Serial` はコンソール）。
+  `Wire1` と `Serial2` の行には `bus=1` / `port=2` が付きます。
 
 ## 4. 自分のテストを書く
 
@@ -208,6 +226,11 @@ def test_myexperiment(dut):
 「間違った質問をした」ことは、どんなstatus codeでも報告できません。
 値そのものをassertしていれば捕まりますが、
 「エラーが起きていないこと」だけを見ていると通り抜けます。
+I2Cの読み出しにはstatusが無いので、途中で切れてもstatusは0で、証拠はバイト数だけです。
+
+**世界を変えるのはsink、検分は直接でよい。** `runBegin` の前の仕込みでは模型自身のAPIを直接呼んでかまいません（記録されません）。
+走行中に世界を変えるときは、必ず `chanWrite` などのsinkを通します。直接変えると記録が欠け、欠けたことも分かりません。
+検分は直接でかまいませんが、値をassertするなら `channelRead` のフィールドを使います。`dump()` の文は人が読む要約です。
 
 ### 毎回見るべき3つの数字
 
@@ -232,6 +255,17 @@ stats events=15 dropped=0 diag=6 outside=2 windows=1
 なお `delay()` はミリ秒、`delayMicroseconds()` はマイクロ秒です。
 イベントの時刻が想定の1000倍なら、単位を間違えています。
 
+**`micros()` を見張るループが終わらない。**
+`micros()` や `millis()` を読むだけでは仮想時刻は進みません。`yield()` と `delayMicroseconds(0)` は0 µsの待ちで、
+テストが0 µs待ちのハンドラ（`setZeroWaitHandler`）で何か注入しない限り抜けません。`delay(0)` は待ちの口に届きません。
+待つなら0より長い `delay` / `delayMicroseconds` を使います。
+
+**tickハンドラやISRの中で待つ。**
+時間は進みますが、tickの発火は後回しになります。遅れた分は `stats().lateTicks` に数えられます。
+
+**`delayMicroseconds(1000)` が少し早く戻る。**
+途中でwakeをまたぐと、最大でwake 1回分早く戻ることがあります。
+
 **`diag.unbound addr=XX` が出る。**
 そのアドレスに模型を割り当てていません。`ebhost::bindWireDevice()` を確認してください。
 
@@ -245,6 +279,6 @@ stats events=15 dropped=0 diag=6 outside=2 windows=1
 ## 7. 次に読むもの
 
 - [上級ガイド](ADVANCED.ja.md): 自分でデバイス模型を書く
-- [デバイスカタログ](DEVICE_CATALOG.ja.md): 24種の模型の一覧と選び方
+- [デバイスカタログ](DEVICE_CATALOG.ja.md): 模型の一覧と選び方
 - [tests/README.ja.md](../tests/README.ja.md): 実験の索引
-- [実験台帳](EXPERIMENTS.ja.md): なぜこの設計なのかの根拠（実測つき）
+- [デバイスIFの範囲と線引き](DEVICE_IF_SCOPE.ja.md): 何を扱い、何を扱わないか

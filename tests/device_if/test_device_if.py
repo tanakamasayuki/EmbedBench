@@ -92,15 +92,15 @@ def test_native_portability():
         "adapter": region_loc(HERE / "device_if.ino", "adapter"),
     }
     # Growth log (effective LOC, blank and comment lines excluded): 58 at
-    # X23, +4 lineIn (X24), +10 frameOut/frameIn (X25), +8 bus ids and
-    # formatId interning (X26), +4 negotiated maxFrameBits (X27), +22 for
+    # first, +4 lineIn, +10 frameOut/frameIn, +8 bus ids and
+    # formatId interning, +4 negotiated maxFrameBits, +22 for
     # the first contract review (I2cStatus/I2cTransfer, frame helpers, bool
-    # frameOut/channelWrite, schema; X30-X34), +14 for the second review
+    # frameOut/channelWrite, schema), +14 for the second review
     # (name length limit, kChannelUnsupported, safe frame helpers,
-    # schemaFingerprint; X35-X37). The third review (X38-X40) changed
+    # schemaFingerprint). The third review changed
     # contract text only, so the header held at 120 while the modem grew a
     # binary reply branch and the adapter shrank to a binary-safe
-    # serialOut. +1 for kDeviceInterfaceVersion at the freeze (X42) and +1
+    # serialOut. +1 for kDeviceInterfaceVersion at the freeze and +1
     # for kDeviceInterfaceRevision, the three-digit counter of approved
     # additions; the exact surface is pinned in tests/if_frozen/, this is
     # only the size signal.

@@ -49,16 +49,16 @@ Additional experiments:
 - `listener_fanout/`: fanning one host hook out to fixed listener slots, the cap, and removal during callbacks.
 - `event_buffer/`: event record size, fixed-buffer overflow policies, and the byte cost of three line formats.
 - `wire_split/`: splitting Wire into observers plus a single responder per address for unique return values.
-- `device_route/`: comparing all-direct, all-common-interface, and setup/run/inspect-split routing with one device model (WP-A2).
+- `device_route/`: comparing all-direct, all-common-interface, and setup/run/inspect-split routing with one device model.
 - `interrupt_port/`: host core 1.7.1 interrupt port (registration observation, synchronous invocation, enter/exit, mode normalization).
 - `uart_activity/`: host core 1.7.1 UART activity hook (synchronous TX, in-hook immediate replies, discard reporting).
 - `analog_mv/`: host core 1.7.1 millivolt read hook and read-width configuration observation.
 - `interrupt_slice/`: vertical slice from line injection through edge decision, ISR invocation, and ctx=isr tagging.
 - `uart_golden/`: AT conversation golden with immediate and tick-delayed replies on the virtual clock.
-- `i2c_slice/`: the WP-C1 I2C vertical slice (unmodified app, zero event loss, 3x reproducible).
+- `i2c_slice/`: the I2C vertical slice (unmodified app, zero event loss, 3x reproducible).
 - `reject_paths/`: how host-rejected or dropped operations appear to the current hooks (for the completeness-scope decision).
 - `event_timing/`: ordering comparison of four event-completion policies under a re-entrant sink call from a response callback.
-- `uart_sink/`: X17 redone with device replies recorded through the core RX sink so device send times enter the log.
+- `uart_sink/`: device replies recorded through the core RX sink so device send times enter the log.
 - `core_draft/`: the integrated draft core (`src/embedbench_host.*`) putting GPIO, an interrupt, I2C, UART, and time on one event list.
 - `device_if/`: the device interface being fixed (`src/embedbench_device.h`): a pure-C++ g++-only build and the same unmodified sources running on the host core.
 - `spi_device/`: a composite device (SPI plus a DC input line, a busy output line, and time) on the same interface; lineIn was the only addition.
@@ -66,7 +66,7 @@ Additional experiments:
 - `format_registry/`: four format-identity schemes compared (fixed-number collision, environment-interned names, strings only, no-registry degradation) plus frame bus ids.
 - `capacity/`: negotiated size limits (`maxFrameBits`): one model auto-splitting per environment, oversize rejected visibly.
 - `bulk_spi/`: bulk-transfer recording granularity: in-transaction count+checksum summaries vs the per-byte buffer explosion.
-- `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the X23 scenario with the same `devices/` sources and matching device-side event lines.
+- `native_env/`: environment example #2, a pure-C++ minimal recorder replaying the `device_if/` scenario with the same `devices/` sources and matching device-side event lines.
 - `i2c_transaction/`: I2C transaction context (STOP, repeated start) with a register-map model that requires repeated start.
 - `frame_bits/`: frame bit packing (MSB-first, padding check, empty frames) and atomicity (a 128-bit frame is refused, never split).
 - `reentry/`: the re-entrancy rule: a model raising IRQ mid-response, immediate delivery (depth 2) vs deferred delivery (depth 1).
@@ -81,7 +81,7 @@ Additional experiments:
 - `if_frozen/`: guards the frozen device interface (version 1): pinned surface, standalone build, documented defaults.
 - `conformance/`: the environment conformance kit: one probe and one scenario, both environments reaching the same verdict.
 - `core_draft2/`: draft core v2 (analog, the lifecycle-driven run window, event listeners).
-- `log_formats/`: parse time, file size, and diff readability of the three line formats (WP-B2 remainder).
+- `log_formats/`: parse time, file size, and diff readability of the three line formats.
 - `bulk_checksum/`: what a bulk summary must carry: byte sum versus CRC-8 detection rates.
 - `if_gaps/`: the three missing paths measured against the workarounds they replace (the evidence for revisions 002-004).
 - `if_rev1/`: the revision 002-004 additions (analogOut, requestWake, diagnose) end to end on the host environment.

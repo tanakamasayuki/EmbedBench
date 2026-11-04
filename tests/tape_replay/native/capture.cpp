@@ -1,4 +1,4 @@
-// X64, step 1: the hand-written models through the shared sequences — the
+// Step 1: the hand-written models through the shared sequences — the
 // stand-in for a capture — for the environmental sensor (I2C) and the AT
 // modem (serial). A fresh Session per run, as in capture_scaffold.
 #include <stdio.h>

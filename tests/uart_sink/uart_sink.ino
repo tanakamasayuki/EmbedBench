@@ -1,4 +1,4 @@
-// X17 redone per review: the device's UART replies go through the core's
+// The device's UART replies go through the core's
 // RX sink, which records a dev.tx event before pushRx, so the moment the
 // device transmitted is part of the event list. Covers both the immediate
 // reply (from the kUartTx notification) and the tick-delayed reply

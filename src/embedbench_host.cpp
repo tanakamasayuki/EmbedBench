@@ -1,6 +1,6 @@
 // EmbedBench draft core implementation. See embedbench_host.h: this is
-// an experimental candidate whose behavior comes from measured winners in
-// the experiment ledger; rework is expected and nothing here is final.
+// an environment implementation whose behavior is pinned by the
+// experiments under tests/; it is not frozen.
 #include "embedbench_host.h"
 #include "embedbench_device.h"
 
@@ -65,7 +65,7 @@ struct State {
   uint32_t dropped = 0;
   uint32_t folded = 0;
   // Deliberately not cleared by runBegin: the point is to survive the
-  // window that was missing when the effect happened (X60).
+  // window that was missing when the effect happened.
   uint32_t outsideWindow = 0;
   uint32_t windows = 0;
   bool foldExhausted = false;  // a full buffer with no cycle left to fold
@@ -73,7 +73,7 @@ struct State {
   uint32_t diagCount = 0;
   bool running = false;
 
-  // Clock (X4 split, X8 defer, X7 zero-wait guard).
+  // Clock: split long waits, defer nested ones, guard zero waits.
   uint32_t tickUs = 1000;
   uint64_t vnow = 0;
   uint64_t nextTick = 1000;
@@ -143,7 +143,7 @@ struct State {
   // several devices share one environment and each may be waiting for a
   // different moment, so keeping only the earliest serves the others late
   // — which the interface forbids ("may advance more often than asked,
-  // never less"). Found by the three-anchor UWB model (X52).
+  // never less"). Found by the three-anchor UWB model.
   uint64_t wakeAtUs[kWakeSlots] = {0};
   uint32_t droppedWakes = 0;
 
@@ -204,7 +204,7 @@ const char* originName(Origin origin) {
 // only matches when those lines really do repeat, so there is nothing to
 // mistake. Returns whether any room was made. A run that never fills the
 // buffer never reaches this, so traces that already fit are untouched
-// (X53).
+//.
 bool foldCycle() {
   const size_t kMaxWidth = 8;
   for (size_t width = 1; width <= kMaxWidth; ++width) {
@@ -284,7 +284,7 @@ void shapeOf(const char* text, char* out, size_t cap) {
 // folds. The count and a checksum over the values still answer what a
 // test asks — that it happened, how many times, and that the data was
 // right; the individual values are what is given up, which is why this
-// runs only after the lossless tier has failed (X54).
+// runs only after the lossless tier has failed.
 //
 // It takes the candidate that frees the most slots rather than the first
 // found: a short numbered setup is technically a cycle too, and folding
@@ -428,7 +428,7 @@ uint32_t vrecord(Origin origin, uint32_t link, const char* fmt, va_list ap) {
   vsnprintf(e.text, sizeof(e.text), fmt, ap);
 
   // Fan out to observers. Index iteration over stable slots keeps this
-  // safe when a listener removes itself or another one mid-event (X9);
+  // safe when a listener removes itself or another one mid-event;
   // the guard stops a listener that records from recursing.
   if (!st().dispatching) {
     st().dispatching = true;
@@ -649,7 +649,7 @@ static void retireWakesUpTo(uint64_t when) {
 void onWait(uint32_t us, void*) {
   if (us == 0) {
     // The only external-processing opportunity of a busy-waiting sketch
-    // (X7); never re-entered from director or ISR context.
+    //; never re-entered from director or ISR context.
     if (st().dirDepth > 0 || st().isrDepth > 0) {
       ++st().zeroInDirector;
       return;
@@ -664,7 +664,7 @@ void onWait(uint32_t us, void*) {
   }
   if (st().dirDepth > 0 || st().isrDepth > 0) {
     // Nested wait inside a director or ISR: advance time, defer the tick
-    // firing to the outer splitter (X8's only clean policy).
+    // firing to the outer splitter (the only clean policy).
     const uint64_t target = st().vnow + us;
     while (st().nextTick <= target) {
       ++st().pendingTicks;
@@ -678,7 +678,7 @@ void onWait(uint32_t us, void*) {
   // slices of exactly this length and re-enter until their own deadline,
   // so returning early from one of those costs nothing. Every other
   // length is a one-shot delayMicroseconds, which is called once and
-  // never again — cutting that short would simply lose time (X59).
+  // never again — cutting that short would simply lose time.
   //
   // The residual hole is delayMicroseconds(1000), which is
   // indistinguishable from a loop slice and can still come back up to one
@@ -757,7 +757,7 @@ void onPinWrite(uint8_t pin, uint8_t value, void*) {
 
 int onPinRead(uint8_t pin, uint8_t held, void*) {
   // Held reads have no responder callback, so the event is atomic and a
-  // single line suffices (X20 applies only when a callback can re-enter).
+  // single line suffices (two lines matter only when a callback can re-enter).
   recordf(Origin::kApp, 0, "gpio.read pin=%u val=%u", pin, held);
   return held;
 }
@@ -787,7 +787,7 @@ void onInterruptEvent(HostArduino::InterruptEvent event,
   }
 }
 
-// --- Wire hooks: request/response two-line events (X20 winner) ----------
+// --- Wire hooks: request/response two-line events ------------------------
 
 uint8_t onWireWriteOn(uint8_t bus, uint8_t address, const uint8_t* data,
                       size_t len, bool stop) {
@@ -801,7 +801,7 @@ uint8_t onWireWriteOn(uint8_t bus, uint8_t address, const uint8_t* data,
                                "i2c.req addr=%02X%s data=%s stop=%u%s", address,
                                busTag, hex, stop ? 1 : 0,
                                continued ? " rs" : "");
-  uint8_t status = 2;  // address NACK when no responder is bound (X11)
+  uint8_t status = 2;  // address NACK when no responder is bound
   if (dev != nullptr) {
     enterDevice();
     status = dev->ops.onWrite(data, len, stop, continued, dev->ops.user);
@@ -1005,7 +1005,7 @@ void onAnalogWrite(HostArduino::AnalogWriteEvent event,
           static_cast<unsigned>(out.frequency));
 }
 
-// --- UART hook: device replies go through the RX sink (X21) --------------
+// --- UART hook: device replies go through the RX sink --------------
 
 void onUartActivity(HostUart::ActivityEvent event, HostUart& uart,
                     const uint8_t* data, size_t len, void*) {

@@ -1,4 +1,4 @@
-// X28's open question: when a bulk transfer is recorded as a summary, what
+// When a bulk transfer is recorded as a summary, what
 // must the summary contain for the record to still catch a difference?
 // Compares a byte sum against CRC-8 on the corruptions a device model
 // actually produces — a changed byte, two bytes swapped, a lost byte, a

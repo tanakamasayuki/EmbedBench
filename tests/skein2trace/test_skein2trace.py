@@ -1,11 +1,11 @@
-"""X66: wireskein's decode of an OEP probe's capture, as event lines.
+"""wireskein's decode of an OEP probe's capture, as event lines.
 
 The sample is a real one: a P4X probe ran a library case writing two
 bytes to an absent 0x50 with no pull-ups, captured SDA/SCL itself at
 1 MHz, and logged the case markers on the capture's clock. Its run.json,
 capture, and wireskein's transactions (with start_cond / end_cond /
 scl_waits, wireskein e2ced47) are kept here so the format is pinned by
-real output, not by a guess at it (the lesson of X65's sigrok shift).
+real output, not by a guess at it (a synthetic sigrok sample once hid a doubled address shift).
 The run.json was later moved to wireskein-run/1 (host times as integer
 monotonic ns, wireskein 4c96212): the host times are the original ones on
 an arbitrary base, so the differences, and the markers, are as recorded.

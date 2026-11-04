@@ -12,7 +12,7 @@
 #include <Wire.h>
 #include <string.h>
 
-// --- Register-map temperature sensor model (as X18) -----------------------
+// --- Register-map temperature sensor model --------------------------------
 struct TempSensor {
   uint8_t config = 0;
   uint16_t tempRaw = 0;

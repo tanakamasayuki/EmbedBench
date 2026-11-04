@@ -105,7 +105,7 @@ uint32_t UnitRtcModel::nowSeconds() const {
 ### 3.2 `reset()` is a power cycle, not a new part
 
 For volatile models the two are the same, which is why it never came up.
-**For a non-volatile part, what was written survives** (X58).
+**For a non-volatile part, what was written survives.**
 
 ```cpp
 UnitFlashModel::UnitFlashModel() {          // a fresh part is erased
@@ -121,6 +121,11 @@ Blanking it should take an erase command, the same as on the bench. A
 program **in flight is dropped** by `reset()` — that is the contract's
 "drop every pending due time", and it matches an interrupted write.
 
+**A line's resting level belongs to the wiring.** `reset()` cannot call
+`lineOut`, so a model cannot set a resting level such as a pull-up; until
+its first `lineOut`, the line's value is the environment's and the
+sketch's.
+
 ### 3.3 Re-entrancy does not happen
 
 **The environment never re-enters a device that is running.** Effects
@@ -131,8 +136,8 @@ So calling `frameOut()` will not call this model's `frameIn()` from
 inside it. You can raise effects with your state consistent.
 
 **But deferral has a capacity too** (four in the example implementation).
-Raising many effects in one call overruns it. X56 hit this: ten chunks
-sent at once, six lost.
+Raising many effects in one call overruns it: ten chunks sent at once
+lose six.
 
 **The model was wrong, not the environment.** A link with a limit on what
 fits in a frame has a cost per frame too. Ten frames in no time at all
@@ -171,6 +176,9 @@ for a while. Written with `while`, the FIFO overflows — which is the
 **Re-arm `requestWake` every time.** The environment holds a finite
 number of them (eight in the example), and a slot is spent **per distinct
 moment, not per device** — devices waiting for the same instant share one.
+When they are all taken, `requestWake` returns `false` and
+`diag.wake_full` is recorded; check the result and fall back to running
+at tick granularity.
 
 ### 3.5 Buffers are borrowed
 
@@ -223,6 +231,14 @@ Numbering the pieces, marking the last one, and handling a link too small
 to carry the header are the format's decisions (`unit_chunk_model` is the
 worked example).
 
+**`true` from `frameOut` means "carried".** It does not mean the other
+device accepted the frame; a refusal on that side shows on another path —
+a line, a channel, or `diagnose`.
+
+**What an I2C read cannot say.** `i2cRead` returns only a length, so
+"refused at the address" and "zero bytes" look the same, and neither
+clock stretching nor a read answered part-way can be expressed.
+
 ## 5. If you are writing an environment
 
 There are two example implementations. If you write a third, run it
@@ -234,12 +250,12 @@ scenario, checking that both implementations reach the same verdict.
 **Hold wakes in a table, not a single slot.** The first version kept only
 the earliest and discarded the rest after returning `true` for them. The
 contract is "may advance more often than asked, **never less**", so that
-was a plain violation. It never showed up with only one device (X52).
+was a plain violation. It never showed up with only one device.
 
 **Combining lines is the adapter's job.** The interface tells each device
 only about its own line. When several parts share one line, a
 pass-through adapter lets **whichever part releases first pull the line
-out from under the one still asserting** (X59).
+out from under the one still asserting**.
 
 ```cpp
 static void setLine(size_t which, uint8_t level) {
@@ -266,8 +282,8 @@ environment at all (installing the hooks is what `runBegin` does).
 
 **Answers are rounded to tick boundaries.** Your `HostPort` did not
 override `requestWake` — the base implementation does nothing and returns
-`false`. This has happened here; the symptom was 1,000 us spacing where
-500 us was intended.
+`false`. The symptom is spacing such as 1,000 us where 500 us was
+intended.
 
 **`diag.deferred_full` appears.** Too many effects in one call. Reshape
 the model along the time axis, as in §3.3.
@@ -275,6 +291,11 @@ the model along the time axis, as in §3.3.
 **`dropped` is not zero.** The record has gaps: the events are too varied
 for any repeating cycle to be folded. Consider whether a path that can
 summarise at the moment of the call (a transaction-level record) applies.
+
+**`diag.reentrant` appears.** Something called `chanWrite` or `frameTx`
+while a device call was in progress (inside a port implementation, a
+channel handler, or a frame-receiving shim). The request is recorded and
+refused.
 
 **What is `x8..007000` in the trace?** A folded repeat: this line
 happened eight times, and the last was at 007000.
@@ -298,5 +319,4 @@ happened eight times, and the last was at 007000.
 | Playing a recording back (the first thing to run after a capture) | `tape_model` |
 
 They are all listed in the [catalog](DEVICE_CATALOG.ja.md) (Japanese),
-and counted in [FACTS.md](FACTS.md). The reasoning and measurements behind every decision are in
-the [experiment ledger](EXPERIMENTS.ja.md) (Japanese), X0 through X60.
+and counted in [FACTS.md](FACTS.md).

@@ -1,4 +1,4 @@
-"""X63: a capture as the scaffold of a device model.
+"""a capture as the scaffold of a device model.
 
 Three catalog models are driven through their known sequences on
 environment example #2 and their traces taken as if captured on a board.
@@ -215,7 +215,7 @@ def test_capture_scaffold():
 
     # The hook is the part a person still writes. Pinned so that a change
     # in what the table can carry shows up here as a deliberate act; the
-    # originals' sizes are printed for the ledger, not pinned (FACTS).
+    # originals' sizes are printed, not pinned (FACTS).
     assert sizes == {"temp": 8, "env": 40, "imu": 78}
 
 

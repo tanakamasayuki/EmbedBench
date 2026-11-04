@@ -1,4 +1,4 @@
-"""X64: a capture played back as a tape.
+"""a capture played back as a tape.
 
 The environmental sensor (I2C) and the AT modem (serial) are captured on
 environment example #2; devices/tools/trace2tape.py turns each trace into
@@ -148,7 +148,7 @@ def test_tape_replay():
 
 
 def test_busy_step_holds_time_not_poll_count(tmp_path):
-    """X67: a real SHT30 capture (high repeatability, polled until the part
+    """A real SHT30 capture (high repeatability, polled until the part
     answers its address). With --busy the tape answers the first poll
     after the time the part was busy, whatever the polling period; without
     it, the tape answers the 28th poll whenever that comes — at 11.2 ms

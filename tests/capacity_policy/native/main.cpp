@@ -1,6 +1,6 @@
 // What a fixed-capacity recorder should do when a polling-heavy scenario
-// fills it (the open item from X50, where a status poll loop overflowed a
-// 64-slot buffer and lost four events).
+// fills it (a status poll loop can overflow a 64-slot buffer and lose
+// events).
 //
 // The question is not "how big" — any fixed size can be filled — but what
 // a test sees when it happens. A verification library must not let an

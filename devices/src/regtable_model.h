@@ -6,7 +6,7 @@
 // when a measurement finishes, a FIFO whose read length is device state,
 // a line that rises — goes into a derived class through the hooks below.
 // The split is deliberate: the table stays data and never grows into a
-// rule language (X63).
+// rule language.
 //
 // A "register" here is what one pointer value selects, with a width: a
 // 2-byte temperature at 0x00 and a 1-byte config at 0x01 are two entries,

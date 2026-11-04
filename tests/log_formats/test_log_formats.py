@@ -1,4 +1,4 @@
-"""WP-B2 remainder: parse time and diff readability of the three formats."""
+"""Parse time and diff readability of the three formats."""
 
 import difflib
 import re

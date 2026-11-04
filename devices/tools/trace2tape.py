@@ -5,7 +5,7 @@ Where trace2regtable.py distils a trace into what a part IS (a register
 table), this keeps what the part DID: every transfer and serial exchange in
 order, as a C++ table `tape_model` plays back step by step. Run the
 application against the tape first — the model says, through the
-diagnostic path, exactly where the application leaves the recording (X64).
+diagnostic path, exactly where the application leaves the recording.
 
 Input: the same event lines trace2regtable.py reads (see there), plus
     uart.tx <text>          bytes the application sent   -> a kSerialIn step
@@ -24,7 +24,7 @@ case; see skein2trace.py), so one case of a long run becomes one tape.
 read's response: a part refusing its address while it measures or
 writes) into one kBusy step: the part is
 busy until just after the last refused poll, whatever the number of polls
-the application makes (X67). Without it every poll is a step, and an
+the application makes. Without it every poll is a step, and an
 application that polls once more or less leaves the tape.
 Text is as the environments print it: printable characters, \\r \\n \\t
 escapes, `data=HEX` for short binary, `empty`. A `len=N crc=XX` label is a

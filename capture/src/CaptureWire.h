@@ -12,7 +12,7 @@
 // Feed the lines to devices/tools/trace2regtable.py (a register-table
 // scaffold) or devices/tools/trace2tape.py (a replayable tape). Unlike the
 // host trace, the whole payload is printed: a capture has to carry every
-// byte (X63), so kPayloadMax is the only cut and it is announced.
+// byte, so kPayloadMax is the only cut and it is announced.
 //
 // It IS a TwoWire, so a library that takes a TwoWire* can be handed the
 // capture. On ESP32 Arduino 3.x the I2C entry points are virtual

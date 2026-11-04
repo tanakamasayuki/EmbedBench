@@ -6,7 +6,7 @@ def test_uart_sink(dut):
     dut.expect("01 000000 uart.begin", timeout=10)
     dut.expect("02 000000 uart.tx AT", timeout=10)
     # The device's transmission is its own event, between the app's TX and
-    # the app's RX consumption — X17 could not show this line.
+    # the app's RX consumption.
     dut.expect("03 000000 dev.tx OK", timeout=10)
     dut.expect("04 000000 uart.rx O", timeout=10)
     dut.expect("05 000000 uart.rx K", timeout=10)

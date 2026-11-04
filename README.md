@@ -21,7 +21,7 @@ hardware.
 - **[Advanced guide](docs/ADVANCED.md)** — writing device models, the
   contracts they must keep, and the traps found while building the examples.
 
-Design records, the experiment ledger and the device catalog are kept in
+Design notes, the device catalog and how real-device data is used are kept in
 Japanese under [docs/README.ja.md](docs/README.ja.md).
 
 The repository currently contains:

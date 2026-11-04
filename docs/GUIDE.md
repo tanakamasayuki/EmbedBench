@@ -34,6 +34,11 @@ What is in scope is **what the application was trying to do**. "Write
 0xF4 to address 0x76, wait 7.5 ms, read three bytes" is the subject; how
 many volts and nanoseconds that took is not.
 
+There is no GUI and no bus waveform viewer, and no configuration for
+real-hardware testing. EmbedBench itself will not be ported to an ESP32
+or the like, but other environments written against the frozen device
+interface are welcome.
+
 ## 2. The three participants
 
 ```text
@@ -99,6 +104,26 @@ Those five lines read as: the test pressed the button, the device pulled
 its line low, the interrupt ran, the application lit an LED, the
 interrupt returned. **Cause and effect survive, with times and order** —
 that is the central thing EmbedBench gives you.
+
+### The finer points of a line
+
+- `re=N` on a response line is the sequence number of its request line.
+- `data=` on an I2C line keeps the first five bytes and is cut without a
+  mark (`len=` has the real length). To check every byte, print the
+  value from the sketch and assert on that.
+- Frames and binary serial data longer than four bytes become
+  `len= crc=` (CRC-8/ATM). Serial data made only of printable characters
+  and `\r` `\n` `\t` is printed as text.
+- SPI inside a transaction becomes one `spi.bulk n= mosi_crc= miso_crc=`
+  line (the model is still called byte by byte); outside a transaction it
+  is a request and a response line.
+- When the record fills, a repeating cycle folds into one line such as
+  `x8..007000` (eight times, the last at 7000 µs). When the values differ
+  it folds by shape alone, `mosi=* crc=XX xN..T`, keeping the CRC; if even
+  that is not enough, `trace.truncated lost=N` says so.
+- What is recorded and answered: `Wire`, `Wire1`, `SPI`, `Serial1` and
+  `Serial2` (`Serial` is the console). `Wire1` and `Serial2` lines carry
+  `bus=1` / `port=2`.
 
 ## 4. Writing your own test
 
@@ -217,6 +242,15 @@ and what comes back is **some other register's value**.
 
 No status code can report that the sketch asked the wrong question. An
 assertion on the value catches it; watching only for errors does not.
+An I2C read has no status, so a read cut short still shows status 0; the
+only evidence is the byte count.
+
+**Change the world through a sink; inspect directly.** Before
+`runBegin`, setting up through a model's own API is fine (it is not
+recorded). While running, change the world only through `chanWrite` and
+the other sinks: a direct change leaves a hole in the record, and nothing
+says so. Inspecting directly is fine, but assert on `channelRead` fields;
+the `dump()` text is a summary for people.
 
 ### Three numbers worth reading every time
 
@@ -243,6 +277,21 @@ that `delay()` is milliseconds and `delayMicroseconds()` is microseconds
 — if your event times are a thousand times larger than expected, that is
 the reason.
 
+**A loop watching `micros()` never ends.**
+Reading `micros()` or `millis()` does not move virtual time. `yield()`
+and `delayMicroseconds(0)` are zero-length waits and return only if the
+test injects something through its zero-wait handler
+(`setZeroWaitHandler`); `delay(0)` never reaches the wait hook at all.
+Wait with a `delay` or `delayMicroseconds` longer than zero.
+
+**Waiting inside a tick handler or an ISR.**
+Time moves, but the tick is held until the handler returns; how late it
+fired is counted in `stats().lateTicks`.
+
+**`delayMicroseconds(1000)` returns a little early.**
+When a wake falls inside the wait, it can return early by up to one
+wake.
+
 **`diag.unbound addr=XX` appears.**
 No model is bound to that address. Check your `ebhost::bindWireDevice()`.
 
@@ -256,8 +305,8 @@ override it. Without it, answers are rounded up to the next tick.
 ## 7. Where to go next
 
 - [Advanced guide](ADVANCED.md): writing your own device models.
-- [Device catalog](DEVICE_CATALOG.ja.md) (Japanese): the twenty-four
-  models and how to pick one.
+- [Device catalog](DEVICE_CATALOG.ja.md) (Japanese): the models and how
+  to pick one.
 - [tests/README.md](../tests/README.md): an index of the experiments.
-- [Experiment ledger](EXPERIMENTS.ja.md) (Japanese): why the design is
-  what it is, with measurements.
+- [Device interface scope](DEVICE_IF_SCOPE.ja.md) (Japanese): what the
+  interface covers and what it leaves to other tools.

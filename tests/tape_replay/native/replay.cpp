@@ -1,4 +1,4 @@
-// X64, step 3: the tapes the capture produced, played back — once under
+// Step 3: the tapes the capture produced, played back — once under
 // the recorded sequence, once under an application that strays from it.
 #include <stdio.h>
 

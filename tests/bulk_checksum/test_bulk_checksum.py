@@ -1,4 +1,4 @@
-"""X28: what a bulk summary must carry to still catch a difference."""
+"""What a bulk summary must carry to still catch a difference."""
 
 import re
 import subprocess

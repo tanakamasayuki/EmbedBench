@@ -1,4 +1,4 @@
-"""X65: one tape per device, several devices per session.
+"""one tape per device, several devices per session.
 
 A capture of a bus with two parts on it, of a SPI flash, and of a bus and
 a serial port used at once. trace2tape.py splits each trace by source

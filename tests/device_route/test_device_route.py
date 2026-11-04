@@ -1,4 +1,4 @@
-"""WP-A2: compare direct, common-interface, and split routing policies."""
+"""Compare direct, common-interface, and split routing policies."""
 
 import re
 from pathlib import Path

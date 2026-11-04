@@ -1,7 +1,7 @@
 // SHT30 humidity and temperature sensor (Sensirion SHT3x-DIS), as on the
 // M5Stack ENV III (U001-C, 0x44). A command part, so hand-written rather
-// than a table (X67): the second model built against a real recording
-// (REAL_DEVICE_ROADMAP L2). What the recording showed decides the
+// than a table, built against a real recording
+// (docs/REAL_DEVICE_DATA.ja.md). What the recording showed decides the
 // behaviour; the datasheet fills in what it did not exercise.
 //
 //   - Single-shot measurement, three repeatabilities, with or without

@@ -1,5 +1,5 @@
 // CaptureLines — records the lines a part drives (IRQ, DRDY, BUSY), the
-// one thing a bus-side capture cannot see (X64).
+// one thing a bus-side capture cannot see.
 //
 // The application registers the pins it wants watched and calls poll()
 // from its loop; every level change is one line:

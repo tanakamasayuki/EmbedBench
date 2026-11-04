@@ -54,7 +54,7 @@ def test_spi_device(dut):
     dut.expect("08 000000 main dev spi.resp miso=30 re=7", timeout=10)
     dut.expect("09 000000 main app gpio.write pin=4 val=0", timeout=10)
     # The busy line rises between the refresh byte's request and response
-    # — the X20 nested case occurring in a real composite device.
+    # — the nested case occurring in a real composite device.
     dut.expect("10 000000 main app spi.req mosi=FF", timeout=10)
     dut.expect("11 000000 main dev gpio.inject pin=26 0->1 match=0",
                timeout=10)

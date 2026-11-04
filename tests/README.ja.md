@@ -47,16 +47,16 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `listener_fanout/`: 単一hookから固定slotの複数listenerへの配送と上限・callback中解除
 - `event_buffer/`: イベント記録のサイズ、固定バッファ満杯方式、1行形式3候補の容量
 - `wire_split/`: Wireの観測者と応答デバイスを分離して戻り値を一意にする構造
-- `device_route/`: 全直接・全共通IF・仕込み/実行/検分分離の3案を同一模型で比較（WP-A2）
+- `device_route/`: 全直接・全共通IF・仕込み/実行/検分分離の3案を同一模型で比較
 - `interrupt_port/`: host core 1.7.1の割り込み口（登録観測・同期呼出し・enter/exit・mode正規化）の検証
 - `uart_activity/`: host core 1.7.1のUART activity hook（TX同期通知・hook内即時応答・破棄報告）の検証
 - `analog_mv/`: host core 1.7.1のmV読取りhookと分解能設定観測の検証
 - `interrupt_slice/`: 線注入→edge判定→ISR起動→`ctx=isr`付与の縦切り
 - `uart_golden/`: AT会話（即時応答とtick遅延応答）の仮想時刻つきgolden
-- `i2c_slice/`: WP-C1のI2C縦切り（アプリ無改造・欠落0・3回再現）の先行実証
+- `i2c_slice/`: I2C縦切り（アプリ無改造・欠落0・3回再現）の先行実証
 - `reject_paths/`: hostが拒否・破棄した操作が現hookでどう見えるか（ログ完全性の範囲判断用）
 - `event_timing/`: 応答callback内の再入sinkに対する、イベント完成4方式の順序比較
-- `uart_sink/`: dev応答をRX sinkで記録してから`pushRx`するX17改（送信時刻の復元）
+- `uart_sink/`: dev応答をRX sinkで記録してから`pushRx`する（送信時刻の復元）
 - `core_draft/`: 統合draft core（`src/embedbench_host.*`）でGPIO・割り込み・I2C・UART・時間を1本のイベント列に載せる計測
 - `device_if/`: 固定対象のデバイスIF（`src/embedbench_device.h`）。純粋C++のg++単体ビルドと、同一ソース無改変のhost実行の両検証
 - `spi_device/`: 複合デバイス（SPI＋DC入力線＋busy出力線＋時間）でのIF検証。追加は`lineIn`1つ
@@ -64,7 +64,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `format_registry/`: format識別の4方式比較（固定番号の衝突・名前intern・文字列のみ・registry無し縮退）とframeのbus id
 - `capacity/`: 最大データ量の環境ネゴ（`maxFrameBits`）。同一模型の自動分割と上限超過の可視な拒否
 - `bulk_spi/`: 大量転送の記録粒度。transaction内の件数+checksum集約と、per-byte方式のバッファ爆発の実証
-- `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`devices/` の同一模型でX23のシナリオを再現し、デバイス側イベント列の一致を確認
+- `native_env/`: 環境実装例#2（純粋C++の最小記録環境）。`devices/` の同一模型で`device_if/` のシナリオを再現し、デバイス側イベント列の一致を確認
 - `i2c_transaction/`: I2Cのtransaction文脈（STOP有無・repeated start）。repeated startを要求するregister-map模型
 - `frame_bits/`: frameのbit packing（MSB-first・padding検査・空frame）と原子性（128bit frameは分割せず拒否）
 - `reentry/`: 再入規則。応答中にIRQを上げる模型で、即時配送（depth 2）と延期配送（depth 1）を比較
@@ -79,7 +79,7 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `if_frozen/`: 凍結したデバイスIFの面の固定・単独ビルド・既定挙動（version 1のガード）
 - `conformance/`: 環境の準拠キット。共通probeで同一シナリオを流し、両環境が同じ判定になることを確認
 - `core_draft2/`: draft core v2（Analog・lifecycle連動のrun window・event listener）
-- `log_formats/`: 1行形式3候補のparse時間・ファイル長・diff変化行の比較（WP-B2の残り）
+- `log_formats/`: 1行形式3候補のparse時間・ファイル長・diff変化行の比較
 - `bulk_checksum/`: 集約サマリのchecksum種別（byte和とCRC-8の検出率比較）
 - `if_gaps/`: 凍結IFに足りない3経路を回避策と比較した測定（revision 002〜004の根拠）
 - `if_rev1/`: revision 002〜004（analogOut・requestWake・diagnose）のhost環境での通し

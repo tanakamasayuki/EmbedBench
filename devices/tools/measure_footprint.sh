@@ -1,9 +1,8 @@
 #!/bin/sh
 # Measure what the device models cost on a small target.
 #
-# Written for the harness discussion (docs/HARNESS_REQUESTS.ja.md, C-8):
-# "can a probe firmware carry the models?" is answerable with numbers
-# rather than opinion. Run from the repository root.
+# Answers "can a firmware carry the models?" with numbers. Run from the
+# repository root.
 #
 # RAM is each model's sizeof; .text is the object compiled on its own, so
 # it is an upper bound — the linker drops unused parts with --gc-sections.

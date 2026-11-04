@@ -5,7 +5,7 @@ The reproduction side of EmbedBench reads a trace to check an application.
 This tool reads the same trace the other way round, to start writing the
 DEVICE: it turns what one part answered into the table `regtable_model`
 runs from, and lists everything the capture could not settle so a person
-knows exactly which hooks to write (X63).
+knows exactly which hooks to write.
 
 Input
 -----
@@ -25,7 +25,7 @@ microsecond timestamp first:
     123456 i2c.req addr=76 data=F425 stop=1
     123500 i2c.resp status=0
 
-A folded repeat (`x8..007000`, see X53) counts as one observation.
+A folded repeat (`x8..007000`) counts as one observation.
 
 What it infers
 --------------

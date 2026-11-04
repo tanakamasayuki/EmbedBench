@@ -1,7 +1,7 @@
 // EmbedBench host environment — introspection for the experiments.
 //
 // These report the environment's own limits and record shape. They exist
-// because the experiment ledger measures them; an application-side test
+// because the experiments measure them; an application-side test
 // asserting on device behaviour does not need any of them, so they are
 // kept out of embedbench_host.h rather than sitting alongside the
 // functions that are actually part of writing a test.
@@ -29,7 +29,7 @@ size_t deferralCapacity();
 // The earliest outstanding wake request, or 0 when there is none.
 uint64_t pendingWakeUs();
 
-// Record shape and volume, as measured in the ledger (X10, X22).
+// Record shape and volume, as the experiments measure them.
 size_t eventCount();
 size_t respLineCount();
 size_t eventBytes();

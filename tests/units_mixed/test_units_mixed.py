@@ -24,8 +24,8 @@ def test_units_mixed(dut):
     dut.expect("05 000000 main dev spi.resp miso=00 re=4", timeout=10)
     dut.expect("06 000000 main app gpio.write pin=5 val=1", timeout=10)
 
-    # Byte-per-transfer SPI fills the buffer, so the repeats fold (X53,
-    # X54) rather than the end of the run being lost. Escaped literally:
+    # Byte-per-transfer SPI fills the buffer, so the repeats fold
+    # rather than the end of the run being lost. Escaped literally:
     # the shape placeholder and the span separator are regex characters.
     dut.expect(re.escape("08 000000 main app spi.req mosi=* crc=96 "
                          "x4..000000"), timeout=10)

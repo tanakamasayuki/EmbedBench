@@ -57,7 +57,7 @@ from the run's targets; --knowledge is for input with no provenance.
 
 Marker values are reduced to [A-Za-z0-9_-] (anything else becomes `_`),
 and the application's text is percent-encoded, so no marker can read as
-an event. Checked against a P4X capture of a real bus (X66).
+an event. Checked against a P4X capture of a real bus.
 
 Usage:
     skein2trace.py i2c.json --capture c0001.wireskein [--run run.json]

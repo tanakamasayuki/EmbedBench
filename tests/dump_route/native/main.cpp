@@ -1,4 +1,4 @@
-// X12's last open question: when an inspection has to become evidence,
+// When an inspection has to become evidence,
 // which route should it take? Three candidates on the same device and the
 // same check, so the comparison is about the route.
 //

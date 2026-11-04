@@ -1,4 +1,4 @@
-// WP-B2's remainder: the three one-line candidates compared on what X10
+// The three one-line candidates compared on what the event record
 // left open — parse time and how a diff reads — at 100,000 events. Native
 // C++ so generation and parsing are measured on the same footing; the diff
 // side is counted by the test from the files written here.
@@ -18,7 +18,7 @@ uint64_t nowUs() {
   return static_cast<uint64_t>(ts.tv_sec) * 1000000ull + ts.tv_nsec / 1000;
 }
 
-// One event's fields, as X10 defined them.
+// One event's fields.
 struct Row {
   uint32_t seq;
   uint64_t timeUs;

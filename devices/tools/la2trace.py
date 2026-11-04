@@ -13,7 +13,7 @@ read, with the master's view of each transfer:
 
 status follows Wire::endTransmission(): 0 acknowledged, 2 address NACK,
 3 data NACK. A read whose address went unanswered says status=2 too, so
-it is not mistaken for one that was answered with nothing (X67). `stop=0` is a transfer followed by a repeated START; `rs`
+it is not mistaken for one that was answered with nothing. `stop=0` is a transfer followed by a repeated START; `rs`
 marks the transfer that continued it to the same address. A read whose
 address was not acknowledged answers len=0.
 
@@ -29,7 +29,7 @@ Input formats, told apart by the CSV header:
             direction. A Saleae Logic 2 I2C export, for instance, already
             has type / start_time / address / data / ack / read columns;
             a mapping for it is not built in because no real export has
-            been checked against (X65) — the sigrok text below is what
+            been checked against — the sigrok text below is what
             such a mapping looks like once it has been.
 
   sigrok    the text sigrok-cli prints for the i2c decoder, one annotation
@@ -50,7 +50,7 @@ Input formats, told apart by the CSV header:
             R/W bit (46 for a write, 47 for a read) — pass
             --address-format unshifted then. Checked against two real
             captures from sigrok-dumps (BH1750 at 500 kHz, SHT31 at 8 MHz)
-            decoded by sigrok-cli 0.7.2 (X65).
+            decoded by sigrok-cli 0.7.2.
 
 Usage:
     la2trace.py capture.csv > capture.trace

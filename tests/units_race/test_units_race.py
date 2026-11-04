@@ -13,7 +13,7 @@ def test_units_race(dut):
     dut.expect("values at2400=1 at2600=1 at3600=0 naive=0", timeout=10)
     # A one-shot wait spanning a wake lasts exactly as long as it asked
     # for: the wake is served at 2500 and the slice carries on to 2600
-    # (X59). Only the core's own looping slices come back early, and they
+    #. Only the core's own looping slices come back early, and they
     # re-enter, so nothing is lost there.
     dut.expect("values asked=200 took=200", timeout=10)
 

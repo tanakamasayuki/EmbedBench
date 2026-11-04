@@ -73,19 +73,18 @@ def test_native_env():
     sizes = {"env": loc(ENV / "nenv.h") + loc(ENV / "nenv.cpp")}
     print(f"LOC {sizes}")
     # Environment example #2 in full: HostPort, app-side bus API, director
-    # path, tick clock, and trace recorder (X29: 290). +38 for the first
+    # path, tick clock, and trace recorder (290). +38 for the first
     # contract revision (I2C transaction context, schema-checked formats,
-    # frame padding/atomicity checks, channel rejection diagnostics;
-    # X30-X34), +11 for the second (bus-level repeated start, name length
-    # limit, unregistered format ids refused, I2C status range; X35-X37),
+    # frame padding/atomicity checks, channel rejection diagnostics), +11 for the second (bus-level repeated start, name length
+    # limit, unregistered format ids refused, I2C status range),
     # +30 for the third (binary-safe serialOut and logging, i2cRead length
-    # guard; X38-X40), +6 for the receive-capacity knob the shortfall test
-    # needs (X41), +10 for CRC-8 bulk summaries (X46), +37 for the
+    # guard), +6 for the receive-capacity knob the shortfall test
+    # needs, +10 for CRC-8 bulk summaries, +37 for the
     # approved interface revisions 002-004: analog output lines, wake
-    # requests (which the clock now stops at), and device notes (X47),
-    # +17 for keeping line-based payloads readable in the log (X50), +25
+    # requests (which the clock now stops at), and device notes,
+    # +17 for keeping line-based payloads readable in the log, +25
     # for holding several outstanding wakes instead of one, which the
-    # three-anchor UWB model showed was a contract violation (X52), +20
+    # three-anchor UWB model showed was a contract violation, +20
     # for SPI (bindSpi, spiTransfer, and the lines an application drives)
-    # so the flash and tape models run natively too (X65).
+    # so the flash and tape models run natively too.
     assert sizes == {"env": 484}

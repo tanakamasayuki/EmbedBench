@@ -1,4 +1,4 @@
-"""X68: models built from recordings, checked against recordings.
+"""models built from recordings, checked against recordings.
 
 QMP6988 and SHT30 (M5Stack U001-C) are modelled from the I2CDeviceDB pilot
 and then checked, with devices/tools/tracecmp.py, against it and against
@@ -182,7 +182,7 @@ def test_sht30_stretch_limit_belongs_to_the_controller():
 def test_qmp6988_reset_byte_decodes_as_an_address():
     # E0 = E6 resets the part, and the wire then shows a START with E6 as
     # the address: 0x73 written. Both decoders show it, rightly; there is
-    # no part at 0x73 (X67's open question). The pilot (sigrok) kept it, an
+    # no part at 0x73. The pilot (sigrok) kept it, an
     # ACKed 0x73; the OEP runs went through skein2trace.py --provenance,
     # which folds what QMP6988's knowledge names as a decode artefact
     # (EmbedBenchDeviceData knowledge/qmp6988.yaml), and the model then

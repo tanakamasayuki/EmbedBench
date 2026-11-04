@@ -1,4 +1,4 @@
-"""X65: the other three shims, and the sigrok text format.
+"""the other three shims, and the sigrok text format.
 
 CaptureSerial on the modem's port, CaptureSPI on the flash, CaptureLines
 on the sensor's DRDY next to CaptureWire — one session, both views (the
@@ -77,7 +77,7 @@ def test_streams_on_host(dut):
     assert [(s.length, bytes(s.data)) for s in steps] == [
         (1, b"\x05\xFF"), (1, b"\x00\x00"), (1, b"\x06\xFF"),
         (1, b"\x05\xFF"), (1, b"\x00\x02")]
-    # The scaffold sees the line this time: what X64 said a bus-side
+    # The scaffold sees the line this time: what a bus-side
     # capture lacks, CaptureLines adds back.
     scaffold = load("trace2regtable")
     a = scaffold.analyze(events, 0x76)
@@ -147,7 +147,7 @@ def test_la2trace_sigrok():
 
 # Real captures of real parts, published in sigrok-dumps (the sigrok
 # project's collection of example captures), decoded here by sigrok-cli.
-# This is the check X64 left open — the format against a live decoder —
+# This is the format checked against a live decoder —
 # done without a board: the analyzer output is the analyzer output.
 DUMPS = "https://raw.githubusercontent.com/sigrokproject/sigrok-dumps/master/i2c/"
 REAL_CAPTURES = {

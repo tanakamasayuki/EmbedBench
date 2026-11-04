@@ -17,7 +17,7 @@
 // limit on what fits in a frame has a cost per frame too, so a burst of
 // ten chunks in no time at all was never a real thing — and modelling it
 // that way overran the environment's deferral capacity, which is how the
-// mistake was found (X56). Pure C++11.
+// mistake was found. Pure C++11.
 #pragma once
 
 #include <embedbench_device.h>

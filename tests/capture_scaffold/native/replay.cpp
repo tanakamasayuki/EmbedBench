@@ -1,4 +1,4 @@
-// Step 3 of X63: the same sequences against what the capture produced —
+// Step 3: the same sequences against what the capture produced —
 // first the generated table alone, then the table with the hooks a person
 // wrote from its TODO list. A fresh Session per run, as in capture.cpp.
 #include <stdio.h>

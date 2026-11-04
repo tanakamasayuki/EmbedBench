@@ -85,7 +85,7 @@ void setup() {
   Serial.printf("config trace=<%s>\n", trace);
 
   // The TX notification fires between the surrounding GPIO events, which
-  // is the ordering that queue polling could not preserve (X3/X6). The
+  // is the ordering that queue polling could not preserve. The
   // bytes also still enter the tx queue: watching and polling coexist.
   resetTrace();
   pinMode(4, OUTPUT);
@@ -96,7 +96,7 @@ void setup() {
                 Serial1.txAvailable());
 
   // The reply pushed from the hook is already queued, so the blocking
-  // read consumes it with zero wait calls (X3 needed one 1,000 us wait).
+  // read consumes it with zero wait calls (polling needs one 1,000 us wait).
   resetTrace();
   setClockHooks(&onNow, &onWait);
   Serial1.setTimeout(10);

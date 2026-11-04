@@ -1,6 +1,6 @@
 // QMP6988 barometric pressure sensor (QST), as on the M5Stack ENV III
-// (U001-C, 0x70). The first model built from a real part's recording
-// (REAL_DEVICE_ROADMAP L1): the register table and its power-on contents
+// (U001-C, 0x70), built from a real part's recording
+// (docs/REAL_DEVICE_DATA.ja.md): the register table and its power-on contents
 // come from trace2regtable.py over the I2CDeviceDB pilot capture, and the
 // hooks are the behaviour that capture showed and the table could not say.
 //

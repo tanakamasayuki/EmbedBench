@@ -1,4 +1,4 @@
-"""X64: the entrances from a real board.
+"""the entrances from a real board.
 
 CaptureWire prints, on the board, the same event lines the host
 environment records — checked here on the host, where both views of one

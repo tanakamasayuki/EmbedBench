@@ -28,7 +28,7 @@ def test_units_sdcard(dut):
     dut.expect("values zerobps=0 ok=0,48 loop=1 range=2 short=3", timeout=10)
 
     # A 512-byte block is 515 SPI transfers, so the per-byte pairs
-    # dominate everything else. Folding by shape (X54) carries them.
+    # dominate everything else. Folding by shape carries them.
     dut.expect("01 000000 main app gpio.write pin=5 val=0", timeout=10)
 
     # Twenty-five block reads and one write across seven volumes, and the

@@ -1,4 +1,4 @@
-"""WP-C1 vertical slice: unmodified app, zero event loss, 3x reproducible."""
+"""I2C vertical slice: unmodified app, zero event loss, 3x reproducible."""
 
 
 def test_i2c_slice(dut):

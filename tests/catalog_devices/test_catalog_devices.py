@@ -56,8 +56,7 @@ def test_host_catalog(dut):
     dut.expect("06 000000 main app i2c.req addr=76 data=F425 stop=1",
                timeout=10)
     # The status poll repeats the same four lines eight times. Rather
-    # than spend 32 slots on them and lose the end of the run (which is
-    # what happened before X53), the round is kept once with a count and
+    # than spend 32 slots on them and lose the end of the run, the round is kept once with a count and
     # the moment the last copy happened.
     dut.expect("08 000000 main app i2c.req addr=76 data=F3 stop=0 x8..007000",
                timeout=10)
@@ -77,8 +76,8 @@ def test_host_catalog(dut):
     dut.expect(re.escape(r"50 010500 tick dev dev.tx $GPGGA,10,1*66\r\n"),
                timeout=10)
     # The conclusion of the run survives, which is the point: the sensor
-    # and GPS dumps are the lines a test asserts on, and before X53 they
-    # were the ones the polling loop pushed out of the buffer.
+    # and GPS dumps are the lines a test asserts on, and they are the
+    # ones a polling loop would push out of the buffer.
     dut.expect("67 010500 main dir dump env raw=7FE000 latched=7FE000 "
                "meas=1 bad_reg=0", timeout=10)
     dut.expect("68 010500 main dir dump gps run=1 fix=1 sent=1 rejected=0",
