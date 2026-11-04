@@ -50,4 +50,11 @@ uv sync
 uv run pytest -v -s
 ```
 
-See [tests/README.md](tests/README.md) for the test layout.
+Each experiment keeps three files in `tests/<experiment>/`; see
+[tests/README.md](tests/README.md) for details.
+
+```text
+<experiment>.ino
+sketch.yaml
+test_<experiment>.py
+```
