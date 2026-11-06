@@ -100,8 +100,8 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `capacity_policy/`: 固定容量が尽きたときの4方式比較（native）。満杯時の周期畳み込みとwakeスロットの消費単位
 - `capture_scaffold/`: キャプチャを雛形にデバイス模型を組む（native）。カタログ3模型のトレースを `trace2regtable.py` で表＋TODO一覧へ変換し、表だけ・表＋フックで同じ列を再生してアプリが見た値を比較
 - `tape_replay/`: 録画の再生（native）。環境センサーとATモデムのトレースを `trace2tape.py` でtapeへ変換し、録画どおりの列では元模型と一致、外れた列では外れた箇所を名指しすることを確認
-- `capture_shim/`: 実機からの入口。`CaptureWire` の出力をhost上でEmbedBenchの記録と突き合わせ、ESP32向けにビルドできることを確認。ロジックアナライザ出力の変換 `la2trace.py` も検査
-- `capture_streams/`: 残り3つのシム。`CaptureSerial`（モデム）・`CaptureSPI`（flash）・`CaptureLines`（DRDY）をhost上でEmbedBenchの記録と突き合わせ、ESP32向けにビルド。`la2trace.py` のsigrok形式も検査
+- `capture_shim/`: 実機からの入口。`CaptureWire` の出力をhost上でEmbedBenchの記録と突き合わせ、ESP32向けにビルドできることを確認
+- `capture_streams/`: 残り3つのシム。`CaptureSerial`（モデム）・`CaptureSPI`（flash）・`CaptureLines`（DRDY）をhost上でEmbedBenchの記録と突き合わせ、ESP32向けにビルド
 - `tape_multi/`: 1セッションに複数デバイス（I2C 2台、SPI flash、I2C＋シリアル）の録画を、`trace2tape.py` の `--addr` / `--spi` / `--serial` でデバイスごとのtapeに分けて同時再生（native）
 - `common_scenarios/`: capture系実験が共有するアプリの操作列（`Session`）。`capture_scaffold/`・`tape_replay/`・`tape_multi/` が使用
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用

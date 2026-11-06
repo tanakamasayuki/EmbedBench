@@ -106,11 +106,11 @@ payload、素通しでないchannelはTODOとして残り、生成クラスを�
 別ファイルのフックに人が書く（`tests/capture_scaffold/native/hooks.h` が実例）。
 **JSONで振る舞いまで書こうとしない**——表はデータのまま、規則言語にはしない。
 
-キャプチャの入口は3つ。実機側のシム `capture/`（`CaptureWire` は `TwoWire` 派生、
+キャプチャの入口は3つ。OEP の probe が録り wireskein が復号した run を
+`devices/tools/skein2trace.py` で行にしたもの（[REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md)）、実機側のシム `capture/`（`CaptureWire` は `TwoWire` 派生、
 `CaptureSerial` は `Stream` 派生、`CaptureSPI` はラッパー。実体へ転送しつつ同じイベント行を
 `micros()` 付きで出す。全payloadを運ぶ。バスだけでは**線が見えない**ので、部品が駆動する線は
-`CaptureLines` でポーリングして足す）、ロジックアナライザのバスレベル出力を同じ行へ畳む
-`devices/tools/la2trace.py`（無改造で線も取れるが変換が1段増える）、そして
+`CaptureLines` でポーリングして足す）、そして
 EmbedBench自身のトレース（payloadは5バイトまでなので雛形には足りるがtapeには足りない）。
 キャプチャ直後の一手目は `devices/tools/trace2tape.py` で作る `tape_model` の録画再生で、
 「アプリが同じ道を通るか」を確かめてから表＋フックへ進む。

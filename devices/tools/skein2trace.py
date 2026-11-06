@@ -33,7 +33,7 @@ I2C_JSON   wireskein's transactions, as its analysis export writes them:
            clock in ns, as log[].host_ns), and says so with clock=host.
            Only wireskein-run/1 is read.
 
-Lines follow la2trace.py: both lines of a transfer carry its START time;
+Lines follow docs/REAL_DEVICE_DATA.ja.md §3: both lines of a transfer carry its START time;
 status is 0 / 2 address NACK / 3 data NACK, read off the bus; a read
 whose address went unanswered carries status=2 as well. That is the
 bus's view, not the library's: the first sample's Wire returned 4 (no

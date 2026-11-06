@@ -49,7 +49,7 @@
 | `src/embedbench_host.*` | host Arduino環境 |
 | `src/embedbench_internals.h` | 実験用の内観 |
 | `devices/` | デバイス模型（第2のArduinoライブラリ） |
-| `devices/tools/` | 生成器: キャプチャ→表（`trace2regtable.py`）、→tape（`trace2tape.py`）、ロジックアナライザ→行（`la2trace.py`）、SDイメージ |
+| `devices/tools/` | 生成器: キャプチャ→表（`trace2regtable.py`）、→tape（`trace2tape.py`）、wireskein の run→行（`skein2trace.py`）、SDイメージ |
 | `capture/` | 実機側のキャプチャシム（第3のArduinoライブラリ）: `CaptureWire`（I2C）、`CaptureSerial`（UART）、`CaptureSPI`（SPI）、`CaptureLines`（部品が駆動する線） |
 | `tests/common_env/` | 純粋C++環境（`nenv`） |
 | `tests/conformance/` | 環境の受け入れ試験 |

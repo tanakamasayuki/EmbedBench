@@ -1,10 +1,9 @@
-"""the entrances from a real board.
+"""the entrance from a real board.
 
 CaptureWire prints, on the board, the same event lines the host
 environment records — checked here on the host, where both views of one
 session exist and can be compared, and compiled for an ESP32 to show it
-builds where it is meant to run. la2trace.py is the other entrance: a
-logic analyzer's bus-level decode, folded into the same lines.
+builds where it is meant to run.
 """
 
 import importlib.util
@@ -95,87 +94,3 @@ def test_shim_compiles_for_esp32():
         capture_output=True, text=True)
     assert result.returncode == 0, result.stderr[-3000:]
     assert "CaptureWire.h" not in result.stderr, result.stderr[-3000:]
-
-
-GENERIC_CSV = """\
-time_us,event,value
-0,start,
-10,address,76W
-20,ack,
-30,data,D0
-40,ack,
-50,start,
-60,address,76R
-70,ack,
-80,data,60
-90,nack,
-100,stop,
-200,start,
-210,address,76W
-220,ack,
-230,data,F4
-240,ack,
-250,data,25
-260,ack,
-270,stop,
-1200,start,
-1210,address,76W
-1220,ack,
-1230,data,F3
-1240,ack,
-1250,start,
-1260,address,76R
-1270,ack,
-1280,data,08
-1290,nack,
-1300,stop,
-8200,start,
-8210,address,76W
-8220,ack,
-8230,data,F3
-8240,ack,
-8250,start,
-8260,address,76R
-8270,ack,
-8280,data,00
-8290,nack,
-8300,stop,
-9000,start,
-9010,address,51W
-9020,nack,
-9030,stop,
-"""
-
-def test_la2trace_generic():
-    la = load("la2trace")
-    lines = la.convert(GENERIC_CSV)
-    assert lines == [
-        "10 i2c.req addr=76 data=D0 stop=0",
-        "10 i2c.resp status=0",
-        "60 i2c.rd.req addr=76 req=1 stop=1 rs",
-        "60 i2c.rd.resp len=1 data=60",
-        "210 i2c.req addr=76 data=F425 stop=1",
-        "210 i2c.resp status=0",
-        "1210 i2c.req addr=76 data=F3 stop=0",
-        "1210 i2c.resp status=0",
-        "1260 i2c.rd.req addr=76 req=1 stop=1 rs",
-        "1260 i2c.rd.resp len=1 data=08",
-        "8210 i2c.req addr=76 data=F3 stop=0",
-        "8210 i2c.resp status=0",
-        "8260 i2c.rd.req addr=76 req=1 stop=1 rs",
-        "8260 i2c.rd.resp len=1 data=00",
-        # Nobody at 0x51: the address NACK the master reports as status 2.
-        "9010 i2c.req addr=51 data= stop=1",
-        "9010 i2c.resp status=2",
-    ]
-    # Folded lines are a capture the scaffold tool reads like any other.
-    tool = load("trace2regtable")
-    a = tool.analyze(tool.parse(lines), 0x76)
-    assert sorted(a.regs) == [0xD0, 0xF3, 0xF4]
-    assert a.regs[0xF3].volatile and a.require_rs
-    assert a.todo == ["register F3 changed 08 -> 00 with only time passing (7000 us)"]
-
-    # An export in some other table layout is refused with directions, not
-    # guessed at: that is what an unverified mapping would have been.
-    with pytest.raises(SystemExit, match="time_us,event,value"):
-        la.convert("name,type,start_time\nI2C,start,0.0\n")

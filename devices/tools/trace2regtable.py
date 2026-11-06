@@ -171,8 +171,8 @@ class Xfer:
         if self.kind == "W":
             self.status = int(resp.fields.get("status", "255") or 255)
         else:
-            # status=2 on a read: the address went unanswered (la2trace,
-            # skein2trace); without it an empty read could be either.
+            # status=2 on a read: the address went unanswered
+            # (skein2trace); without it an empty read could be either.
             if "status" in resp.fields:
                 self.status = int(resp.fields.get("status") or 255)
             self.got_len = int(resp.fields.get("len", "0") or 0)

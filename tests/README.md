@@ -102,8 +102,8 @@ Additional experiments:
 - `capacity_policy/`: four policies for a full fixed-capacity recorder (native), plus what a wake slot is actually spent on.
 - `capture_scaffold/`: a capture as the scaffold of a device model (native). Three catalog models' traces go through `trace2regtable.py` into a table plus a TODO list; the same sequences replay against the table alone and the table with hooks, compared on what the application saw.
 - `tape_replay/`: a capture played back (native). The environmental sensor's and the AT modem's traces become tapes through `trace2tape.py`; under the recorded sequence they match the models, and an application that strays is told where.
-- `capture_shim/`: the entrances from a real board. `CaptureWire`'s output is checked on the host against EmbedBench's own record and compiled for an ESP32; `la2trace.py`, the logic-analyzer conversion, is checked here too.
-- `capture_streams/`: the other three shims. `CaptureSerial` (the modem), `CaptureSPI` (the flash) and `CaptureLines` (DRDY) checked on the host against EmbedBench's own record and compiled for an ESP32; `la2trace.py`'s sigrok format is checked here too.
+- `capture_shim/`: the entrances from a real board. `CaptureWire`'s output is checked on the host against EmbedBench's own record and compiled for an ESP32.
+- `capture_streams/`: the other three shims. `CaptureSerial` (the modem), `CaptureSPI` (the flash) and `CaptureLines` (DRDY) checked on the host against EmbedBench's own record and compiled for an ESP32.
 - `tape_multi/`: several devices per session (two I2C parts, a SPI flash, a bus plus a serial port), split by `trace2tape.py`'s `--addr` / `--spi` / `--serial` into one tape per device and replayed together (native).
 - `common_scenarios/`: the application sequences (`Session`) the capture experiments share; used by `capture_scaffold/`, `tape_replay/` and `tape_multi/`.
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.

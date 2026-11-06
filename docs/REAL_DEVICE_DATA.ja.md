@@ -32,7 +32,7 @@ EmbedBench の行（§3）
 
 ## 3. 行の形
 
-`la2trace.py`・`skein2trace.py` が書き、`trace2regtable.py`・`trace2tape.py`・`tracecmp.py` が読む、転送単位の行。
+`skein2trace.py` が書き、`trace2regtable.py`・`trace2tape.py`・`tracecmp.py` が読む、転送単位の行。
 先頭は µs の整数の時刻（probe の時計）。転送の 2 行はどちらも START の時刻を持つ。
 
 ```text
