@@ -54,7 +54,7 @@ CH32 だけの物（`setRoute`、USB、DMA の ADC、flash、timer の貸し出�
 | # | 現象 | 確認 | 直し方（案） |
 | --- | --- | --- | --- |
 | H-B1 | `Wire.requestFrom(uint8_t addr, size_t len, bool stop)` が曖昧でビルドできない。`(int, size_t, bool)` も同じ。ArduinoCore-API の `HardwareI2C` の形そのもの | ビルド | `(uint16_t, size_t, bool)` と `(uint8_t, uint8_t, bool)` が、別々の引数で 1 回ずつ変換を要して並ぶ（`libraries/Wire/src/Wire.h:112-118`）。`size_t requestFrom(uint8_t, size_t, bool)` と `(int, size_t, bool)` を足す。足した後、2 引数の `(uint8_t, size_t)` が `(uint8_t, uint8_t)` に解決されて 255 を超える長さが切れないことも確かめる |
-| H-B3 | ライブラリのディレクトリ名に空白があると（`Adafruit SHT31 Library`、`Adafruit BusIO` をプロファイルで入れたとき）、`-I` が引用されず `g++: cannot specify '-o' with ... multiple files` でビルドが止まる | ビルド | `platform.txt` の include の並びを引用する（ほかの core と同じ `"-I{...}"` の形） |
+| H-B3 | ライブラリのディレクトリ名に空白があると（`Adafruit SHT31 Library`、`Adafruit BusIO` をプロファイルで入れたとき）、ライブラリの `.cpp` のパスが 2 つの引数に割れ、`g++: cannot specify '-o' with ... multiple files` でビルドが止まる | ビルド | `-I`（arduino-cli が引用する）ではなく、`platform.txt` のレシピが `{source_file}`・`{object_file}`・`{preprocessed_file_path}` と combine・size のパスを引用していない。AVR・ESP32 と同じく、すべてのレシピのパスを引用する |
 | H-B2 | `Wire.begin(uint8_t addr)`（スレーブとして始める）が、`begin(int sda = -1, int scl = -1, uint32_t f = 0)` に解決され、`sda = addr` のマスタとして始まる。エラーにならない | 読み（ビルドは通る） | `begin(uint8_t address)`（と arduino-esp32 と同じ `begin(int address)` の扱い）を足す。スレーブの模型が無いうちは、受け付けたことを診断で知らせるだけでもよい |
 
 ### 3.2 足りないもの（小さい。マクロ・空の関数・別名）
