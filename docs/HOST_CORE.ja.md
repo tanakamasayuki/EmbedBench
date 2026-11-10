@@ -40,7 +40,7 @@ host が受理せず捨てる呼び出しは、hook ではイベントになら�
 ## 3. CH32 の core の API を使うライブラリに足りないもの
 
 ArduinoCore-CH32RV の API を使う部品のドライバを host で動かすときに、host core に足りないもの。
-**host core への依頼は保留**（利用者）。ここは依頼するときにそのまま渡せる中身。
+**この節（3.1〜3.3 と 3.5）は host core に依頼済み**で、host-arduino-core が取り込みを進める。取り込まれたら、ここを取り込んだ版に合わせて書き換え、3.5 の表の結果を更新する。
 
 比べたもの: ArduinoCore-CH32RV（公開 API は同リポジトリの `docs/public-api.ja.md`、土台は ArduinoCore-API 1.5.2）と
 host-arduino-core 1.7.1。部品のドライバが触る面（Wire・SPI・割込みの禁止・時間の換算・ポートのレジスタ・Servo）に絞った。
@@ -112,7 +112,7 @@ arduino-cli compile --profile host --build-property "build.extra_flags=-DPROBE_X
 | `P_PORTREG` | `portOutputRegister(digitalPinToPort(2)); digitalPinToBitMask(2);` | 無い |
 | `P_NOTINT` | `NOT_AN_INTERRUPT` | 無い |
 
-依頼して直ったら、同じ表がすべて「通る」になることと、`PROBE_SLAVE` がスレーブとして始まることを確かめる。
+取り込まれたら、同じ表がすべて「通る」になることと、`PROBE_SLAVE` がスレーブとして始まることを確かめる。
 
 ### 3.6 実際のドライバについて
 
