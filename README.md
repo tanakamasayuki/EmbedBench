@@ -36,7 +36,7 @@ The repository currently contains:
   on real hardware — bus traffic and the lines a part drives — in the
   lines the scaffold generator (`devices/tools/trace2regtable.py`) and
   the tape generator (`trace2tape.py`) read
-- experiments running on `lang-ship:host` 1.7.1 (counts in
+- experiments running on `lang-ship:host` (counts in
   [docs/FACTS.md](docs/FACTS.md)).
 
 ## Tests

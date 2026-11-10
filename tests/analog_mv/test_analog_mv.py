@@ -1,4 +1,4 @@
-"""Verify the 1.7.1 analog mV / read-config hooks requested as H3."""
+"""Verify the host core analog mV / read-config hooks requested as H3."""
 
 
 def test_analog_mv(dut):

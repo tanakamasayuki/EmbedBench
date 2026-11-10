@@ -1,4 +1,4 @@
-// Verifies the host core 1.7.1 analog observation additions against the
+// Verifies the host core analog observation additions against the
 // H3 request: analogReadMilliVolts goes through its own hook with the
 // held value, the raw AnalogReadHook stays independent, read-width
 // configuration is observable, and clearAnalogHooks clears everything.

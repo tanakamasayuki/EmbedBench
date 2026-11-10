@@ -26,4 +26,4 @@
 - [DEVICE_IF_SCOPE.ja.md](DEVICE_IF_SCOPE.ja.md): デバイスIFの範囲と線引き。専用portとframeの分担、カバー範囲、絶対にやらない領域
 - [DEVICE_CATALOG.ja.md](DEVICE_CATALOG.ja.md): 模型の置き場所、format名の登録運用、新しい模型を追加する手順
 - [REAL_DEVICE_DATA.ja.md](REAL_DEVICE_DATA.ja.md): 実デバイスの記録から模型を作り、確かめる流れ。行の形、道具、残っている仕事
-- [HOST_CORE.ja.md](HOST_CORE.ja.md): host core（lang-ship:host）で使うときの決まりと、CH32 の core の API に足りないもの
+- [HOST_CORE.ja.md](HOST_CORE.ja.md): host core（lang-ship:host）で使うときの決まりと、CH32 の core の API への対応

@@ -1,4 +1,4 @@
-"""Verify the 1.7.1 UART activity hook properties requested as H2."""
+"""Verify the host core UART activity hook properties requested as H2."""
 
 
 def test_uart_activity(dut):

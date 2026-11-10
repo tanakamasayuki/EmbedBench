@@ -30,7 +30,7 @@ Arduinoライブラリです。公開APIと最終的な構成はまだ確定し�
 - `capture/` の実機側キャプチャシム（`CaptureWire`・`CaptureSerial`・`CaptureSPI`・
   `CaptureLines`）。実機の通信と線を、雛形生成（`devices/tools/trace2regtable.py`）や
   録画再生（`trace2tape.py`）が読む行で残す
-- `lang-ship:host` 1.7.1 上で動く実験群（数は [docs/FACTS.ja.md](docs/FACTS.ja.md)）
+- `lang-ship:host` 上で動く実験群（数は [docs/FACTS.ja.md](docs/FACTS.ja.md)）
 
 ## テスト
 

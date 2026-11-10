@@ -1,4 +1,4 @@
-// Verifies the host core 1.7.1 UART activity hook against the H2 request:
+// Verifies the host core UART activity hook against the H2 request:
 // begin/end/config observed, TX reported before write() returns so UART
 // traffic keeps its order among GPIO events, an immediate reply pushed
 // from the TX notification (no wait needed), per-byte RX consumption

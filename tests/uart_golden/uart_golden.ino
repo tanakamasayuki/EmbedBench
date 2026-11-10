@@ -1,4 +1,4 @@
-// Vertical slice for UART using the 1.7.1 activity hook plus the tick
+// Vertical slice for UART using the host core activity hook plus the tick
 // candidate: an AT conversation where one reply is immediate (pushed from
 // the kUartTx notification) and one is delivered a tick later by the
 // director, with every event carrying its virtual timestamp.

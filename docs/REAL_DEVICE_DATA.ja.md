@@ -91,6 +91,6 @@ controller の振る舞い（ESP32-P4 の Wire が stretch を約 6.7 ms で諦�
 | 2 本目以降のチップ（BMP280、BH1750 など） | EmbedBench・OEP | 収集から |
 | どの模型にも被せられる故障（k 回アドレス NACK、n バイト目で NACK、k 回 busy の後に答える） | EmbedBench | 凍結 IF の `Device` を包む層にすれば IF を変えずに作れる。`unit_faulty_model` はその部分集合。言葉は OEP の `oep-spec` の `docs/peripheral-testing.ja.md` §3.2 にそろえる |
 | 進行役が時刻を決めて出す線のパターン（level の列、繰り返し、出来事で始める） | EmbedBench | 模型への `lineIn` を時刻の列で与える形。言葉は同じく §3.2 にそろえる |
-| CH32 の core（ArduinoCore-CH32RV）の API を使うライブラリを host で動かす | host の core | 足りないものは [HOST_CORE.ja.md](HOST_CORE.ja.md) §3。host core に依頼済み |
+| CH32 の core（ArduinoCore-CH32RV）の API を使うライブラリで、ポートのレジスタと Wire のスレーブを使うもの | EmbedBench・host の core | 模型が要る（[HOST_CORE.ja.md](HOST_CORE.ja.md) §3.2）。ほかの面は host core 1.8.0 にある（同 §3.1） |
 | arduino-pico の API（PIO、マルチコア）を使うライブラリを host で動かす | host の core | どこまで要るかを、使う側のライブラリで決めてから。ベンチに pico が無い |
 | CH32 の Wire の `requestFrom(…, false)` の修正（コア ba8dc851）を線で確かめる | OEP・コア | ベンチの X035C8T6 は I2C の errata の個体（ハードウェアの I2C でどの相手も ACK できない）。I2C の使える X035 か V シリーズをプローブにつなぐ配線を利用者が決める |

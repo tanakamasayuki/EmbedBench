@@ -1,4 +1,4 @@
-"""Verify the 1.7.1 interrupt port properties requested as H1."""
+"""Verify the host core interrupt port properties requested as H1."""
 
 
 def test_interrupt_port(dut):

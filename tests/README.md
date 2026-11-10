@@ -33,7 +33,7 @@ build cost falls only on sketches that use them), referenced by
 `common_env/` for native experiments to share.
 
 The current `smoke/` test is the minimal end-to-end check for Arduino library
-resolution, host core 1.7.1, lifecycle hooks, the virtual clock, and pytest
+resolution, host core, lifecycle hooks, the virtual clock, and pytest
 connectivity.
 
 Additional experiments:
@@ -50,9 +50,9 @@ Additional experiments:
 - `event_buffer/`: event record size, fixed-buffer overflow policies, and the byte cost of three line formats.
 - `wire_split/`: splitting Wire into observers plus a single responder per address for unique return values.
 - `device_route/`: comparing all-direct, all-common-interface, and setup/run/inspect-split routing with one device model.
-- `interrupt_port/`: host core 1.7.1 interrupt port (registration observation, synchronous invocation, enter/exit, mode normalization).
-- `uart_activity/`: host core 1.7.1 UART activity hook (synchronous TX, in-hook immediate replies, discard reporting).
-- `analog_mv/`: host core 1.7.1 millivolt read hook and read-width configuration observation.
+- `interrupt_port/`: host core interrupt port (registration observation, synchronous invocation, enter/exit, mode normalization).
+- `uart_activity/`: host core UART activity hook (synchronous TX, in-hook immediate replies, discard reporting).
+- `analog_mv/`: host core millivolt read hook and read-width configuration observation.
 - `interrupt_slice/`: vertical slice from line injection through edge decision, ISR invocation, and ctx=isr tagging.
 - `uart_golden/`: AT conversation golden with immediate and tick-delayed replies on the virtual clock.
 - `i2c_slice/`: the I2C vertical slice (unmodified app, zero event loss, 3x reproducible).

@@ -1,4 +1,4 @@
-// Verifies the host core 1.7.1 interrupt port against the H1 request:
+// Verifies the host core interrupt port against the H1 request:
 // registration observed, no self-firing on pin changes, synchronous
 // invocation with enter/exit bracketing, nesting depth, self-detach, the
 // argument spelling, fire counts across re-arm, and the raw-mode
@@ -112,7 +112,7 @@ void setup() {
   Serial.printf("self_detach trace=<%s> retrig=%d attached=%d\n", trace,
                 retrig ? 1 : 0, interruptAttached(12) ? 1 : 0);
 
-  // The argument spelling, missing entirely before 1.7.1.
+  // The argument spelling.
   static uint32_t argCount = 0;
   attachInterruptArg(14, &handlerWithArg, &argCount, FALLING);
   triggerInterrupt(14);

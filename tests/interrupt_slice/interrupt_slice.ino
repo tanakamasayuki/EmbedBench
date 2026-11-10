@@ -1,4 +1,4 @@
-// Vertical slice for interrupts using the 1.7.1 port: a candidate
+// Vertical slice for interrupts using the host core port: a candidate
 // injection path captures the line change, decides the edge against the
 // normalized trigger, records the event, invokes the registered ISR, and
 // tags the ISR's own bus traffic with ctx=isr via the enter/exit bracket.

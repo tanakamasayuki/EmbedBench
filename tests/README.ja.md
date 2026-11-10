@@ -31,7 +31,7 @@ pytestがg++で直接ビルドする。複数の実験と複数の環境で共�
 sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-I` で参照する。
 環境実装例#2（純粋C++）は `common_env/` に置き、ネイティブ実験が共有する。
 
-現在の `smoke/` は、Arduinoライブラリとしての解決、host core 1.7.1、
+現在の `smoke/` は、Arduinoライブラリとしての解決、host core、
 ライフサイクルフック、仮想時計、pytestとの接続をまとめて検査する最小テストである。
 
 追加の実験:
@@ -48,9 +48,9 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `event_buffer/`: イベント記録のサイズ、固定バッファ満杯方式、1行形式3候補の容量
 - `wire_split/`: Wireの観測者と応答デバイスを分離して戻り値を一意にする構造
 - `device_route/`: 全直接・全共通IF・仕込み/実行/検分分離の3案を同一模型で比較
-- `interrupt_port/`: host core 1.7.1の割り込み口（登録観測・同期呼出し・enter/exit・mode正規化）の検証
-- `uart_activity/`: host core 1.7.1のUART activity hook（TX同期通知・hook内即時応答・破棄報告）の検証
-- `analog_mv/`: host core 1.7.1のmV読取りhookと分解能設定観測の検証
+- `interrupt_port/`: host coreの割り込み口（登録観測・同期呼出し・enter/exit・mode正規化）の検証
+- `uart_activity/`: host coreのUART activity hook（TX同期通知・hook内即時応答・破棄報告）の検証
+- `analog_mv/`: host coreのmV読取りhookと分解能設定観測の検証
 - `interrupt_slice/`: 線注入→edge判定→ISR起動→`ctx=isr`付与の縦切り
 - `uart_golden/`: AT会話（即時応答とtick遅延応答）の仮想時刻つきgolden
 - `i2c_slice/`: I2C縦切り（アプリ無改造・欠落0・3回再現）の先行実証
