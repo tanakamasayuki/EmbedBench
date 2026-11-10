@@ -68,7 +68,8 @@ EmbedBench の行（§3）
    同じケースをホストで `tape_model` 相手に回す。外れたら tape が名指しする。tape は「同じ道を通るか」しか言えない。
    `--busy` が無いと polling を回数で再生し、速く poll するアプリに実物より早く値を返す。
 2. **表＋フック。** `trace2regtable.py` で表と TODO を出し、人がフックを書く。別の設定・別の順序にも答えられる模型になる。
-   チップの knowledge があれば、`EmbedBenchDeviceData` の `tools/knowledge_table.py` が表を書き出す。
+   チップの knowledge があれば、`devices/tools/knowledge_table.py --devicedata <EmbedBenchDeviceData>` が表を書き出す
+   （`tests/knowledge_table/` が、QMP6988 の模型の表と knowledge の一致を見る）。
 3. **照合。** `tracecmp.py` が記録の要求を記録の時刻どおりに模型へ渡し、答えを転送ごとに比べる。
    時刻そのものは比べない。遅い・早い模型は、違う答え（まだ立っている status bit、まだ変わらない値）として出る。
    測定値は世界のもので模型のものではないので、`--mask`（長さだけ）か `--changes`（変わったかだけ）で比べ、

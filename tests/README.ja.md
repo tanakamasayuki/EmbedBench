@@ -107,4 +107,5 @@ sketchからは `sketch.yaml` の `libraries: dir`、ネイティブからは `-
 - `common_env/`: 環境実装例#2（`nenv`）。`native_env/`・`serial_*`・`i2c_badlen/`・`conformance/` が使用
 - `model_replay/`: 実機の記録から作った模型（QMP6988・SHT30）を、`tracecmp.py` で記録そのものと突き合わせる（native）
 - `skein2trace/`: wireskein の run とキャプチャを EmbedBench のトレース行へ変換する `skein2trace.py` の検査（Python のみ）
+- `knowledge_table/`: EmbedBenchDeviceData の knowledge を `RegTableSpec` の表にする `knowledge_table.py` の検査。`EMBEDBENCH_DEVICEDATA` があれば、QMP6988 の模型の表が knowledge と一致することも見る（Python のみ）
 - `facts/`: [docs/FACTS.ja.md](../docs/FACTS.ja.md) の数値をリポジトリから数え直して突き合わせる（Python のみ）

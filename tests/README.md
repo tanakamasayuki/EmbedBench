@@ -109,4 +109,5 @@ Additional experiments:
 - `common_env/`: environment example #2 (`nenv`), used by `native_env/`, the serial experiments, `i2c_badlen/`, and `conformance/`.
 - `model_replay/`: models built from real-device recordings (QMP6988, SHT30) checked against those recordings with `tracecmp.py` (native).
 - `skein2trace/`: `skein2trace.py`, which turns a wireskein run and its capture into EmbedBench trace lines (Python only).
+- `knowledge_table/`: `knowledge_table.py`, which writes EmbedBenchDeviceData's knowledge as a `RegTableSpec` table; with `EMBEDBENCH_DEVICEDATA` set, also that the QMP6988 model's table matches it (Python only).
 - `facts/`: recounts the figures in [docs/FACTS.md](../docs/FACTS.md) from the repository and compares them (Python only).
