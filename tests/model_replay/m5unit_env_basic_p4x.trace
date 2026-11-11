@@ -1,204 +1,203 @@
 # M5Stack U001-C at 100 kHz, an ESP32-P4 controller (OEP P4X, arduino-esp32 3.3.12): EmbedBenchDeviceData run
-# m5unit-env-u001c-basic__i2c-100k__c553167c6f54e3f4 (2026-11-03), through skein2trace.py.
-31003585 mark case=m5unit-env-u001c-basic
-31003594 mark case=m5unit-env-u001c-basic phase=sht30-begin
-31004524 i2c.req addr=44 data= stop=1
-31004524 i2c.resp status=0
-31004762 mark src=dut text=ok%3D1
-31004764 mark case=m5unit-env-u001c-basic phase=sht30-begin end=1
-31004766 mark case=m5unit-env-u001c-basic phase=qmp6988-begin
-31004972 i2c.req addr=70 data= stop=1
-31004972 i2c.resp status=0
-31005222 i2c.req addr=70 data=E0 stop=1
-31005222 i2c.resp status=0
-31005510 i2c.req addr=73 data= stop=1
-31005510 i2c.resp status=2
-31074841 i2c.req addr=70 data=A0 stop=1
-31074841 i2c.resp status=0
-31075112 i2c.rd.req addr=70 req=1 stop=1
-31075112 i2c.rd.resp len=1 data=52
-31075347 i2c.req addr=70 data=A1 stop=1
-31075347 i2c.resp status=0
-31075577 i2c.rd.req addr=70 req=1 stop=1
-31075577 i2c.rd.resp len=1 data=DC
-31075808 i2c.req addr=70 data=A2 stop=1
-31075808 i2c.resp status=0
-31076038 i2c.rd.req addr=70 req=1 stop=1
-31076038 i2c.rd.resp len=1 data=0D
-31076269 i2c.req addr=70 data=A3 stop=1
-31076269 i2c.resp status=0
-31076499 i2c.rd.req addr=70 req=1 stop=1
-31076499 i2c.rd.resp len=1 data=A7
-31076742 i2c.req addr=70 data=A4 stop=1
-31076742 i2c.resp status=0
-31076972 i2c.rd.req addr=70 req=1 stop=1
-31076972 i2c.rd.resp len=1 data=F4
-31077203 i2c.req addr=70 data=A5 stop=1
-31077203 i2c.resp status=0
-31077433 i2c.rd.req addr=70 req=1 stop=1
-31077433 i2c.rd.resp len=1 data=82
-31077664 i2c.req addr=70 data=A6 stop=1
-31077664 i2c.resp status=0
-31077894 i2c.rd.req addr=70 req=1 stop=1
-31077894 i2c.rd.resp len=1 data=0D
-31078124 i2c.req addr=70 data=A7 stop=1
-31078124 i2c.resp status=0
-31078354 i2c.rd.req addr=70 req=1 stop=1
-31078354 i2c.rd.resp len=1 data=DC
-31078585 i2c.req addr=70 data=A8 stop=1
-31078585 i2c.resp status=0
-31078815 i2c.rd.req addr=70 req=1 stop=1
-31078815 i2c.rd.resp len=1 data=0C
-31079046 i2c.req addr=70 data=A9 stop=1
-31079046 i2c.resp status=0
-31079276 i2c.rd.req addr=70 req=1 stop=1
-31079276 i2c.rd.resp len=1 data=D2
-31079506 i2c.req addr=70 data=AA stop=1
-31079506 i2c.resp status=0
-31079742 i2c.rd.req addr=70 req=1 stop=1
-31079742 i2c.rd.resp len=1 data=01
-31079973 i2c.req addr=70 data=AB stop=1
-31079973 i2c.resp status=0
-31080203 i2c.rd.req addr=70 req=1 stop=1
-31080203 i2c.rd.resp len=1 data=E6
-31080436 i2c.req addr=70 data=AC stop=1
-31080436 i2c.resp status=0
-31080666 i2c.rd.req addr=70 req=1 stop=1
-31080666 i2c.rd.resp len=1 data=FC
-31080896 i2c.req addr=70 data=AD stop=1
-31080896 i2c.resp status=0
-31081126 i2c.rd.req addr=70 req=1 stop=1
-31081126 i2c.rd.resp len=1 data=86
-31081357 i2c.req addr=70 data=AE stop=1
-31081357 i2c.resp status=0
-31081587 i2c.rd.req addr=70 req=1 stop=1
-31081587 i2c.rd.resp len=1 data=F9
-31081818 i2c.req addr=70 data=AF stop=1
-31081818 i2c.resp status=0
-31082049 i2c.rd.req addr=70 req=1 stop=1
-31082049 i2c.rd.resp len=1 data=C9
-31082279 i2c.req addr=70 data=B0 stop=1
-31082279 i2c.resp status=0
-31082510 i2c.rd.req addr=70 req=1 stop=1
-31082510 i2c.rd.resp len=1 data=FA
-31082744 i2c.req addr=70 data=B1 stop=1
-31082744 i2c.resp status=0
-31082974 i2c.rd.req addr=70 req=1 stop=1
-31082974 i2c.rd.resp len=1 data=A2
-31083204 i2c.req addr=70 data=B2 stop=1
-31083204 i2c.resp status=0
-31083435 i2c.rd.req addr=70 req=1 stop=1
-31083435 i2c.rd.resp len=1 data=F7
-31083665 i2c.req addr=70 data=B3 stop=1
-31083665 i2c.resp status=0
-31083896 i2c.rd.req addr=70 req=1 stop=1
-31083896 i2c.rd.resp len=1 data=2B
-31084127 i2c.req addr=70 data=B4 stop=1
-31084127 i2c.resp status=0
-31084357 i2c.rd.req addr=70 req=1 stop=1
-31084357 i2c.rd.resp len=1 data=0C
-31084587 i2c.req addr=70 data=B5 stop=1
-31084587 i2c.resp status=0
-31084818 i2c.rd.req addr=70 req=1 stop=1
-31084818 i2c.rd.resp len=1 data=BB
-31085048 i2c.req addr=70 data=B6 stop=1
-31085048 i2c.resp status=0
-31085278 i2c.rd.req addr=70 req=1 stop=1
-31085278 i2c.rd.resp len=1 data=03
-31085508 i2c.req addr=70 data=B7 stop=1
-31085508 i2c.resp status=0
-31085742 i2c.rd.req addr=70 req=1 stop=1
-31085742 i2c.rd.resp len=1 data=D8
-31085973 i2c.req addr=70 data=B8 stop=1
-31085973 i2c.resp status=0
-31086203 i2c.rd.req addr=70 req=1 stop=1
-31086203 i2c.rd.resp len=1 data=BB
-31086455 i2c.req addr=70 data=F4 stop=1
-31086455 i2c.resp status=0
-31086686 i2c.rd.req addr=70 req=1 stop=1
-31086686 i2c.rd.resp len=1 data=00
-31086919 i2c.req addr=70 data=F403 stop=1
-31086919 i2c.resp status=0
-31106734 i2c.req addr=70 data=F102 stop=1
-31106734 i2c.resp status=0
-31126732 i2c.req addr=70 data=F4 stop=1
-31126732 i2c.resp status=0
-31126962 i2c.rd.req addr=70 req=1 stop=1
-31126962 i2c.rd.resp len=1 data=03
-31127196 i2c.req addr=70 data=F413 stop=1
-31127196 i2c.resp status=0
-31146734 i2c.req addr=70 data=F4 stop=1
-31146734 i2c.resp status=0
-31146965 i2c.rd.req addr=70 req=1 stop=1
-31146965 i2c.rd.resp len=1 data=13
-31147196 i2c.req addr=70 data=F433 stop=1
-31147196 i2c.resp status=0
-31166724 mark src=dut text=ok%3D1
-31166728 mark case=m5unit-env-u001c-basic phase=qmp6988-begin end=1
-31166733 mark case=m5unit-env-u001c-basic phase=sht30-update
-31166794 i2c.req addr=44 data=2C06 stop=1
-31166794 i2c.resp status=0
-31366784 i2c.rd.req addr=44 req=6 stop=1
-31366784 i2c.rd.resp len=6 data=61FCDF994103
-31417051 mark src=dut text=ok%3D1%20elapsed_us%3D249998%20temperature_c%3D21.98%20humidity_rh%3D59.87
-31417061 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
-31417065 mark case=m5unit-env-u001c-basic phase=qmp6988-update
-31417150 i2c.req addr=70 data=F7 stop=1
-31417150 i2c.resp status=0
-31417388 i2c.rd.req addr=70 req=6 stop=1
-31417388 i2c.rd.resp len=6 data=A252056CB839
-31418107 i2c.req addr=70 data=F7 stop=1
-31418107 i2c.resp status=0
-31418338 i2c.rd.req addr=70 req=6 stop=1
-31418338 i2c.rd.resp len=6 data=A252056CB839
-31419027 i2c.req addr=70 data=FA stop=1
-31419027 i2c.resp status=0
-31419258 i2c.rd.req addr=70 req=3 stop=1
-31419258 i2c.rd.resp len=3 data=6CB839
-31419988 mark src=dut text=ok%3D1%20elapsed_us%3D2773%20pressure_pa%3D101853.2%20temperature_c%3D21.96
-31419997 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
-31519710 mark case=m5unit-env-u001c-basic phase=sht30-update
-31519770 i2c.req addr=44 data=2C06 stop=1
-31519770 i2c.resp status=0
-31719807 i2c.rd.req addr=44 req=6 stop=1
-31719807 i2c.rd.resp len=6 data=61FCDF9947A5
-31770006 mark src=dut text=ok%3D1%20elapsed_us%3D250018%20temperature_c%3D21.98%20humidity_rh%3D59.87
-31770086 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
-31770089 mark case=m5unit-env-u001c-basic phase=qmp6988-update
-31770184 i2c.req addr=70 data=F7 stop=1
-31770184 i2c.resp status=0
-31770416 i2c.rd.req addr=70 req=6 stop=1
-31770416 i2c.rd.resp len=6 data=A251166CB066
-31771124 i2c.req addr=70 data=F7 stop=1
-31771124 i2c.resp status=0
-31771356 i2c.rd.req addr=70 req=6 stop=1
-31771356 i2c.rd.resp len=6 data=A251166CB066
-31772043 i2c.req addr=70 data=FA stop=1
-31772043 i2c.resp status=0
-31772273 i2c.rd.req addr=70 req=3 stop=1
-31772273 i2c.rd.resp len=3 data=6CB066
-31772945 mark src=dut text=ok%3D1%20elapsed_us%3D2740%20pressure_pa%3D101852.2%20temperature_c%3D22.00
-31772955 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
-31872706 mark case=m5unit-env-u001c-basic phase=sht30-update
-31872777 i2c.req addr=44 data=2C06 stop=1
-31872777 i2c.resp status=0
-32072793 i2c.rd.req addr=44 req=6 stop=1
-32072793 i2c.rd.resp len=6 data=61FCDF995584
-32122986 mark src=dut text=ok%3D1%20elapsed_us%3D250023%20temperature_c%3D21.98%20humidity_rh%3D59.90
-32122995 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
-32122998 mark case=m5unit-env-u001c-basic phase=qmp6988-update
-32123071 i2c.req addr=70 data=F7 stop=1
-32123071 i2c.resp status=0
-32123312 i2c.rd.req addr=70 req=6 stop=1
-32123312 i2c.rd.resp len=6 data=A250CD6CAD21
-32124018 i2c.req addr=70 data=F7 stop=1
-32124018 i2c.resp status=0
-32124249 i2c.rd.req addr=70 req=6 stop=1
-32124249 i2c.rd.resp len=6 data=A250CC6CAD2D
-32124936 i2c.req addr=70 data=FA stop=1
-32124936 i2c.resp status=0
-32125167 i2c.rd.req addr=70 req=3 stop=1
-32125167 i2c.rd.resp len=3 data=6CAD2D
-32125748 mark src=dut text=ok%3D1%20elapsed_us%3D2679%20pressure_pa%3D101853.4%20temperature_c%3D22.03
-32125757 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
-32225710 mark case=m5unit-env-u001c-basic end=1
+# m5unit-env-u001c-basic__i2c-100k__4a80a691f0241878 (2026-11-11), through skein2trace.py --provenance (knowledge from its targets).
+5735738 mark case=m5unit-env-u001c-basic
+5735767 mark case=m5unit-env-u001c-basic phase=sht30-begin
+5736008 i2c.req addr=44 data= stop=1
+5736008 i2c.resp status=0
+5736160 mark src=dut text=ok%3D1
+5736163 mark case=m5unit-env-u001c-basic phase=sht30-begin end=1
+5736165 mark case=m5unit-env-u001c-basic phase=qmp6988-begin
+5736344 i2c.req addr=70 data= stop=1
+5736344 i2c.resp status=0
+5736587 i2c.req addr=70 data=E0E6 stop=1
+5736587 i2c.resp status=0
+5736874 mark folded=reset-byte-as-address addr=73
+5806886 i2c.req addr=70 data=A0 stop=1
+5806886 i2c.resp status=0
+5807175 i2c.rd.req addr=70 req=1 stop=1
+5807175 i2c.rd.resp len=1 data=52
+5807412 i2c.req addr=70 data=A1 stop=1
+5807412 i2c.resp status=0
+5807642 i2c.rd.req addr=70 req=1 stop=1
+5807642 i2c.rd.resp len=1 data=DC
+5807876 i2c.req addr=70 data=A2 stop=1
+5807876 i2c.resp status=0
+5808106 i2c.rd.req addr=70 req=1 stop=1
+5808106 i2c.rd.resp len=1 data=0D
+5808336 i2c.req addr=70 data=A3 stop=1
+5808336 i2c.resp status=0
+5808566 i2c.rd.req addr=70 req=1 stop=1
+5808566 i2c.rd.resp len=1 data=A7
+5808805 i2c.req addr=70 data=A4 stop=1
+5808805 i2c.resp status=0
+5809035 i2c.rd.req addr=70 req=1 stop=1
+5809035 i2c.rd.resp len=1 data=F4
+5809266 i2c.req addr=70 data=A5 stop=1
+5809266 i2c.resp status=0
+5809495 i2c.rd.req addr=70 req=1 stop=1
+5809495 i2c.rd.resp len=1 data=82
+5809725 i2c.req addr=70 data=A6 stop=1
+5809725 i2c.resp status=0
+5809955 i2c.rd.req addr=70 req=1 stop=1
+5809955 i2c.rd.resp len=1 data=0D
+5810186 i2c.req addr=70 data=A7 stop=1
+5810186 i2c.resp status=0
+5810415 i2c.rd.req addr=70 req=1 stop=1
+5810415 i2c.rd.resp len=1 data=DC
+5810645 i2c.req addr=70 data=A8 stop=1
+5810645 i2c.resp status=0
+5810876 i2c.rd.req addr=70 req=1 stop=1
+5810876 i2c.rd.resp len=1 data=0C
+5811106 i2c.req addr=70 data=A9 stop=1
+5811106 i2c.resp status=0
+5811336 i2c.rd.req addr=70 req=1 stop=1
+5811336 i2c.rd.resp len=1 data=D2
+5811566 i2c.req addr=70 data=AA stop=1
+5811566 i2c.resp status=0
+5811797 i2c.rd.req addr=70 req=1 stop=1
+5811797 i2c.rd.resp len=1 data=01
+5812029 i2c.req addr=70 data=AB stop=1
+5812029 i2c.resp status=0
+5812259 i2c.rd.req addr=70 req=1 stop=1
+5812259 i2c.rd.resp len=1 data=E6
+5812490 i2c.req addr=70 data=AC stop=1
+5812490 i2c.resp status=0
+5812719 i2c.rd.req addr=70 req=1 stop=1
+5812719 i2c.rd.resp len=1 data=FC
+5812950 i2c.req addr=70 data=AD stop=1
+5812950 i2c.resp status=0
+5813180 i2c.rd.req addr=70 req=1 stop=1
+5813180 i2c.rd.resp len=1 data=86
+5813410 i2c.req addr=70 data=AE stop=1
+5813410 i2c.resp status=0
+5813639 i2c.rd.req addr=70 req=1 stop=1
+5813639 i2c.rd.resp len=1 data=F9
+5813870 i2c.req addr=70 data=AF stop=1
+5813870 i2c.resp status=0
+5814100 i2c.rd.req addr=70 req=1 stop=1
+5814100 i2c.rd.resp len=1 data=C9
+5814330 i2c.req addr=70 data=B0 stop=1
+5814330 i2c.resp status=0
+5814560 i2c.rd.req addr=70 req=1 stop=1
+5814560 i2c.rd.resp len=1 data=FA
+5814795 i2c.req addr=70 data=B1 stop=1
+5814795 i2c.resp status=0
+5815025 i2c.rd.req addr=70 req=1 stop=1
+5815025 i2c.rd.resp len=1 data=A2
+5815255 i2c.req addr=70 data=B2 stop=1
+5815255 i2c.resp status=0
+5815484 i2c.rd.req addr=70 req=1 stop=1
+5815484 i2c.rd.resp len=1 data=F7
+5815714 i2c.req addr=70 data=B3 stop=1
+5815714 i2c.resp status=0
+5815946 i2c.rd.req addr=70 req=1 stop=1
+5815946 i2c.rd.resp len=1 data=2B
+5816176 i2c.req addr=70 data=B4 stop=1
+5816176 i2c.resp status=0
+5816406 i2c.rd.req addr=70 req=1 stop=1
+5816406 i2c.rd.resp len=1 data=0C
+5816636 i2c.req addr=70 data=B5 stop=1
+5816636 i2c.resp status=0
+5816866 i2c.rd.req addr=70 req=1 stop=1
+5816866 i2c.rd.resp len=1 data=BB
+5817096 i2c.req addr=70 data=B6 stop=1
+5817096 i2c.resp status=0
+5817326 i2c.rd.req addr=70 req=1 stop=1
+5817326 i2c.rd.resp len=1 data=03
+5817555 i2c.req addr=70 data=B7 stop=1
+5817555 i2c.resp status=0
+5817805 i2c.rd.req addr=70 req=1 stop=1
+5817805 i2c.rd.resp len=1 data=D8
+5818036 i2c.req addr=70 data=B8 stop=1
+5818036 i2c.resp status=0
+5818266 i2c.rd.req addr=70 req=1 stop=1
+5818266 i2c.rd.resp len=1 data=BB
+5818518 i2c.req addr=70 data=F4 stop=1
+5818518 i2c.resp status=0
+5818766 i2c.rd.req addr=70 req=1 stop=1
+5818766 i2c.rd.resp len=1 data=00
+5818998 i2c.req addr=70 data=F403 stop=1
+5818998 i2c.resp status=0
+5838790 i2c.req addr=70 data=F102 stop=1
+5838790 i2c.resp status=0
+5858788 i2c.req addr=70 data=F4 stop=1
+5858788 i2c.resp status=0
+5859018 i2c.rd.req addr=70 req=1 stop=1
+5859018 i2c.rd.resp len=1 data=03
+5859251 i2c.req addr=70 data=F413 stop=1
+5859251 i2c.resp status=0
+5878788 i2c.req addr=70 data=F4 stop=1
+5878788 i2c.resp status=0
+5879019 i2c.rd.req addr=70 req=1 stop=1
+5879019 i2c.rd.resp len=1 data=13
+5879250 i2c.req addr=70 data=F433 stop=1
+5879250 i2c.resp status=0
+5898769 mark src=dut text=ok%3D1
+5898772 mark case=m5unit-env-u001c-basic phase=qmp6988-begin end=1
+5898775 mark case=m5unit-env-u001c-basic phase=sht30-update
+5898828 i2c.req addr=44 data=2C06 stop=1
+5898828 i2c.resp status=0
+6098798 i2c.rd.req addr=44 req=6 stop=1
+6098798 i2c.rd.resp len=6 data=5E6DFCA3760D
+6149042 mark src=dut text=ok%3D1%20elapsed_us%3D250014%20temperature_c%3D19.55%20humidity_rh%3D63.85
+6149051 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
+6149053 mark case=m5unit-env-u001c-basic phase=qmp6988-update
+6149102 i2c.req addr=70 data=F7 stop=1
+6149102 i2c.resp status=0
+6149337 i2c.rd.req addr=70 req=6 stop=1
+6149337 i2c.rd.resp len=6 data=A2B3966E4127
+6150054 i2c.req addr=70 data=F7 stop=1
+6150054 i2c.resp status=0
+6150286 i2c.rd.req addr=70 req=6 stop=1
+6150286 i2c.rd.resp len=6 data=A2B3966E4127
+6150972 i2c.req addr=70 data=FA stop=1
+6150972 i2c.resp status=0
+6151202 i2c.rd.req addr=70 req=3 stop=1
+6151202 i2c.rd.resp len=3 data=6E4127
+6151848 mark src=dut text=ok%3D1%20elapsed_us%3D2744%20pressure_pa%3D102343.5%20temperature_c%3D19.51
+6151857 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
+6251767 mark case=m5unit-env-u001c-basic phase=sht30-update
+6251808 i2c.req addr=44 data=2C06 stop=1
+6251808 i2c.resp status=0
+6451801 i2c.rd.req addr=44 req=6 stop=1
+6451801 i2c.rd.resp len=6 data=5E6809A38890
+6501814 mark src=dut text=ok%3D1%20elapsed_us%3D250002%20temperature_c%3D19.54%20humidity_rh%3D63.88
+6501823 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
+6501825 mark case=m5unit-env-u001c-basic phase=qmp6988-update
+6501867 i2c.req addr=70 data=F7 stop=1
+6501867 i2c.resp status=0
+6502102 i2c.rd.req addr=70 req=6 stop=1
+6502102 i2c.rd.resp len=6 data=A2B2CB6E39A3
+6502802 i2c.req addr=70 data=F7 stop=1
+6502802 i2c.resp status=0
+6503033 i2c.rd.req addr=70 req=6 stop=1
+6503033 i2c.rd.resp len=6 data=A2B2CB6E39A3
+6503714 i2c.req addr=70 data=FA stop=1
+6503714 i2c.resp status=0
+6503946 i2c.rd.req addr=70 req=3 stop=1
+6503946 i2c.rd.resp len=3 data=6E39A3
+6504412 mark src=dut text=ok%3D1%20elapsed_us%3D2543%20pressure_pa%3D102343.9%20temperature_c%3D19.56
+6504421 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
+6603756 mark case=m5unit-env-u001c-basic phase=sht30-update
+6603796 i2c.req addr=44 data=2C06 stop=1
+6603796 i2c.resp status=0
+6803799 i2c.rd.req addr=44 req=6 stop=1
+6803799 i2c.rd.resp len=6 data=5E6809A38118
+6853805 mark src=dut text=ok%3D1%20elapsed_us%3D250005%20temperature_c%3D19.54%20humidity_rh%3D63.87
+6853814 mark case=m5unit-env-u001c-basic phase=sht30-update end=1
+6853816 mark case=m5unit-env-u001c-basic phase=qmp6988-update
+6853853 i2c.req addr=70 data=F7 stop=1
+6853853 i2c.resp status=0
+6854088 i2c.rd.req addr=70 req=6 stop=1
+6854088 i2c.rd.resp len=6 data=A2B2616E3694
+6854799 i2c.req addr=70 data=F7 stop=1
+6854799 i2c.resp status=0
+6855030 i2c.rd.req addr=70 req=6 stop=1
+6855030 i2c.rd.resp len=6 data=A2B2616E3694
+6855712 i2c.req addr=70 data=FA stop=1
+6855712 i2c.resp status=0
+6855944 i2c.rd.req addr=70 req=3 stop=1
+6855944 i2c.rd.resp len=3 data=6E3694
+6856407 mark src=dut text=ok%3D1%20elapsed_us%3D2548%20pressure_pa%3D102343.3%20temperature_c%3D19.58
+6856416 mark case=m5unit-env-u001c-basic phase=qmp6988-update end=1
+6955757 mark case=m5unit-env-u001c-basic end=1

@@ -42,11 +42,13 @@ class Sht30Model : public ebdev::Device {
   static const uint8_t kChannelStretchLimit = 1;  // uint32 us, big endian
   static const size_t kMaxSamples = 16;
 
-  // Measurement durations: inside every window the recordings allow (last
-  // refused poll or command, first answered one), over the pilot and the
-  // OEP runs at 100 and 400 kHz: high 12.376-12.416 ms, medium
-  // 4.396-4.661 ms, low 2.392-2.736 ms. The datasheet's typical values are
-  // 12.5, 4.5 and 2.5 ms; high is a little shorter on this part. Physical.
+  // Measurement durations (from the start of the command; last refused
+  // poll or command, first answered one, over the pilot and the OEP runs
+  // at 100 and 400 kHz). High varies from one measurement to the next: a
+  // stretched one let SCL go 12.35 ms after its command, a polled one was
+  // still refused at 12.50 ms; 12.4 ms puts every replayed poll on its
+  // side. Medium 4.166-4.608 ms, low 2.354-2.901 ms. The datasheet's
+  // typical values are 12.5, 4.5 and 2.5 ms. Physical.
   static const uint64_t kHighUs = 12400;
   // Physical.
   static const uint64_t kMediumUs = 4500;

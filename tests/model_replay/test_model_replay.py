@@ -62,22 +62,32 @@ def test_qmp6988_matches_every_recording():
     # (calibration byte by byte after a STOP, F7 then FA). At 400 kHz the
     # forced conversion is still running when normal mode is written, and
     # every sample lands on its schedule. A sweep reads status about 20 us
-    # apart from 183 to 765 us after a forced write: the bit rises between
-    # 209 and 226 us. Other addresses are left out (--only-addr): the
+    # apart from 173 to 762 us after a forced write: the bit rises between
+    # 204 and 224 us. Other addresses are left out (--only-addr): the
     # library run talks to SHT30 too, and the pilot keeps the reset's 0x73
     # (see the last test).
-    for name, count in (("qmp6988_u001c.trace", 57), ("qmp6988_modes_p4x.trace", 64),
-                        ("qmp6988_modes_p4x_400k.trace", 44),
+    for name, count in (("qmp6988_u001c.trace", 57), ("qmp6988_modes_p4x_400k.trace", 44),
                         ("qmp6988_measure_bit_p4x_400k.trace", 94),
                         ("m5unit_env_basic_p4x.trace", 80)):
         compared, diffs = tracecmp(HERE / name, QMP, ["--only-addr"])
         assert (compared, diffs) == (count, []), (name, diffs)
 
+    # At 100 kHz the forced conversion is polled to its end, and normal mode
+    # is written 3 ms later. Its first sample was not there 10.665 ms after
+    # the write, where the model (and the standby runs, from sleep, by
+    # 10.57 ms) has it; it was there at 20.665 ms, and every later sample
+    # is on the model's schedule. One event: the first read is early by the
+    # model, the second sees what the first should have.
+    compared, diffs = tracecmp(HERE / "qmp6988_modes_p4x.trace", QMP, ["--only-addr"])
+    assert compared == 64
+    assert diffs == ["7873002 i2c.rd.req addr=70 req=6 stop=1 rs: recorded len=6 same, model len=6 changed",
+                     "7883002 i2c.rd.req addr=70 req=6 stop=1 rs: recorded len=6 changed, model len=6 same"], diffs
+
 
 def test_qmp6988_standby_is_measured_not_nominal():
     # Normal mode for 2 s at each of three standby settings, read every
-    # 5 ms (401 reads, 124 / 36 / 9 new samples). Period = conversion +
-    # standby, with the standby the part keeps: 5.39, 45.6 and 219.6 ms for
+    # 5 ms (401 reads, 124 / 35 / 9 new samples). Period = conversion +
+    # standby, with the standby the part keeps: 5.51, 46.4 and 224.7 ms for
     # the nominal 5, 50 and 250. Every read lands on the right side of
     # every sample.
     for name in ("qmp6988_standby_5ms_p4x.trace", "qmp6988_standby_50ms_p4x.trace",
@@ -87,13 +97,13 @@ def test_qmp6988_standby_is_measured_not_nominal():
 
 
 def test_sht30_hands_an_unread_result_to_the_next_read():
-    # ESP-IDF's master puts every transfer on the bus. A command 340 us after
+    # ESP-IDF's master puts every transfer on the bus. A command 401 us after
     # a soft reset is refused at its data byte; 2, 10 and 100 ms after, it
-    # measures. A result left unread is handed over 4 us after the next
-    # command, and the new one comes 12.4 ms later. A read with no command
-    # gets nothing.
+    # measures. A result left unread is handed over to the first read after
+    # the next command, and the new one comes 12.4 ms later. A read with no
+    # command gets nothing.
     run = HERE / "sht30_ready_idf_p4x.trace"
-    assert tracecmp(run, sht30(words(run)), ["--only-addr"]) == (260, [])
+    assert tracecmp(run, sht30(words(run)), ["--only-addr"]) == (228, [])
 
 
 def test_sht30_unread_result_survives_a_soft_reset():
@@ -141,9 +151,9 @@ def test_sht30_matches_with_two_known_differences():
     compared, diffs = tracecmp(run, sht30(answers[:8] + "00000000" + answers[8:]),
                                [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 45
-    assert diffs == ["56224070 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=62, "
+    assert diffs == ["7363146 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=5E, "
                      "model len=0 data=",
-                     "56236746 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+                     "7375827 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
                      "model len=6 data=000081000081"], diffs
 
     # The same at 400 kHz: the controller gave up at the same point.
@@ -152,9 +162,9 @@ def test_sht30_matches_with_two_known_differences():
     compared, diffs = tracecmp(run, sht30(answers[:8] + "00000000" + answers[8:]),
                                [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 50
-    assert diffs == ["71743863 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=61, "
+    assert diffs == ["3664888 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=5E, "
                      "model len=0 data=",
-                     "71756293 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+                     "3677300 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
                      "model len=6 data=000081000081"], diffs
 
     # The pilot: its controller gave up without clocking on, and the result
@@ -193,7 +203,8 @@ def test_qmp6988_reset_byte_decodes_as_an_address():
     assert 0xE6 >> 1 == 0x73
     for name, count in (("qmp6988_modes_p4x.trace", 64), ("qmp6988_modes_p4x_400k.trace", 44)):
         oep = (HERE / name).read_text()
-        assert re.search(r"i2c\.req addr=70 data=E0E6 stop=1\n.*\n"
+        assert re.search(r"i2c\.req addr=70 data=E0E6 stop=1\n\d+ i2c\.resp status=0\n(?:\d+ mark src=dut .*\n)?"
                          r"\d+ mark folded=reset-byte-as-address addr=73\n", oep), name
         assert "addr=73" not in oep.replace("addr=73\n", "", 1)
-        assert tracecmp(HERE / name, QMP) == (count, []), name
+        compared, diffs = tracecmp(HERE / name, QMP)
+        assert compared == count and len(diffs) == (2 if name == "qmp6988_modes_p4x.trace" else 0), name

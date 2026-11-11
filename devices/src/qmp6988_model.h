@@ -9,7 +9,7 @@
 //     next sample. CTRL_MEAS reads back what was written, forced mode bits
 //     and all, after the conversion (seen on the part).
 //   - Normal mode converts once per conversion time + standby (IO_SETUP,
-//     as measured: 0.97, 5.39, 45.6 and 219.6 ms for the nominal 1, 5,
+//     as measured: 0.97, 5.51, 46.4 and 224.7 ms for the nominal 1, 5,
 //     50, 250); F3 bit 3 is set during each conversion.
 //   - Reads are byte-addressed: a pointer inside a register (A1, the
 //     calibration's second byte) answers from there, and a read longer than
@@ -40,22 +40,22 @@ class Qmp6988Model : public RegTableModel {
   static const uint8_t kChannelSamples = 0;  // n x 6 raw bytes
   static const uint8_t kChannelCalibration = 1;  // the 25 bytes at A0
 
-  // Conversion time, linear in the number of samples averaged, with the
-  // datasheet's slope (5.5 ms at P x2, T x1 to 33.7 ms at P x32, T x4).
-  // The OEP runs put P x8, T x1 at 10.655-10.685 ms (a forced read 10.645
-  // ms after the write found no data; the first normal sample of the 5 ms
-  // standby run): 10.665 ms. It gives 4.68 ms for P x1, T x1, inside the
-  // 4.13-4.84 ms the pilot measured. Physical.
-  static const uint64_t kConversionBaseUs = 2970;
-  // Physical (the datasheet's slope).
-  static const uint64_t kConversionPerSampleUs = 855;
+  // Conversion time, linear in the number of samples averaged, through two
+  // points: P x1, T x1 at 4.68 ms (inside the 4.13-4.84 ms the pilot
+  // measured) and P x8, T x1 at 10.609 ms (the OEP runs: every normal
+  // sample of the three 2 s standby runs lands where it was read). The
+  // slope is near the datasheet's (5.5 ms at P x2, T x1 to 33.7 ms at
+  // P x32, T x4: 855 us a sample). Physical.
+  static const uint64_t kConversionBaseUs = 2986;
+  // Physical.
+  static const uint64_t kConversionPerSampleUs = 847;
 
   // From the start of a conversion to DEVICE_STAT bit 3 reading set,
   // measured as a model sees it: from the start of the CTRL_MEAS write to
   // the start of the status read. A 400 kHz sweep in about 20 us steps
-  // read 00 up to 209 us and 08 from 226 us; at 100 kHz the earliest read
-  // (550 us) already had it. Physical.
-  static const uint64_t kStatusDelayUs = 225;
+  // read 00 up to 204 us and 08 from 224 us; at 100 kHz the earliest read
+  // (537 us) already had it. Physical.
+  static const uint64_t kStatusDelayUs = 215;
 
   Qmp6988Model();
 

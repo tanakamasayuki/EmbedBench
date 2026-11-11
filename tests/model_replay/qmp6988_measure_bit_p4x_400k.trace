@@ -1,285 +1,285 @@
 # M5Stack U001-C at 400 kHz, an ESP32-P4 controller (OEP P4X, arduino-esp32 3.3.12): EmbedBenchDeviceData run
-# qmp6988-measure-bit__i2c-400k__012a3215e73278a3 (2026-11-03), through skein2trace.py.
-65235614 mark case=qmp6988-measure-bit
-65235816 i2c.req addr=70 data=F400 stop=1
-65235816 i2c.resp status=0
-65240826 mark case=qmp6988-measure-bit phase=delay-0us
-65240854 i2c.req addr=70 data=F431 stop=1
-65240854 i2c.resp status=0
-65241030 i2c.req addr=70 data=F3 stop=0
-65241030 i2c.resp status=0
-65241080 i2c.rd.req addr=70 req=1 stop=1 rs
-65241080 i2c.rd.resp len=1 data=08
-65241191 mark src=dut text=after_us%3D205%20status%3D0x08
-65255719 mark case=qmp6988-measure-bit phase=delay-0us end=1
-65255741 mark case=qmp6988-measure-bit phase=delay-20us
-65255779 i2c.req addr=70 data=F431 stop=1
-65255779 i2c.resp status=0
-65255913 i2c.req addr=70 data=F3 stop=0
-65255913 i2c.resp status=0
-65255962 i2c.rd.req addr=70 req=1 stop=1 rs
-65255962 i2c.rd.resp len=1 data=00
-65256039 mark src=dut text=after_us%3D163%20status%3D0x00
-65270716 mark case=qmp6988-measure-bit phase=delay-20us end=1
-65270727 mark case=qmp6988-measure-bit phase=delay-40us
-65270777 i2c.req addr=70 data=F431 stop=1
-65270777 i2c.resp status=0
-65270936 i2c.req addr=70 data=F3 stop=0
-65270936 i2c.resp status=0
-65270986 i2c.rd.req addr=70 req=1 stop=1 rs
-65270986 i2c.rd.resp len=1 data=00
-65271057 mark src=dut text=after_us%3D185%20status%3D0x00
-65285745 mark case=qmp6988-measure-bit phase=delay-40us end=1
-65285758 mark case=qmp6988-measure-bit phase=delay-60us
-65285821 i2c.req addr=70 data=F431 stop=1
-65285821 i2c.resp status=0
-65286001 i2c.req addr=70 data=F3 stop=0
-65286001 i2c.resp status=0
-65286050 i2c.rd.req addr=70 req=1 stop=1 rs
-65286050 i2c.rd.resp len=1 data=08
-65286127 mark src=dut text=after_us%3D205%20status%3D0x08
-65300719 mark case=qmp6988-measure-bit phase=delay-60us end=1
-65300732 mark case=qmp6988-measure-bit phase=delay-80us
-65300780 i2c.req addr=70 data=F431 stop=1
-65300780 i2c.resp status=0
-65300980 i2c.req addr=70 data=F3 stop=0
-65300980 i2c.resp status=0
-65301030 i2c.rd.req addr=70 req=1 stop=1 rs
-65301030 i2c.rd.resp len=1 data=08
-65301103 mark src=dut text=after_us%3D230%20status%3D0x08
-65315720 mark case=qmp6988-measure-bit phase=delay-80us end=1
-65315740 mark case=qmp6988-measure-bit phase=delay-100us
-65315790 i2c.req addr=70 data=F431 stop=1
-65315790 i2c.resp status=0
-65316012 i2c.req addr=70 data=F3 stop=0
-65316012 i2c.resp status=0
-65316061 i2c.rd.req addr=70 req=1 stop=1 rs
-65316061 i2c.rd.resp len=1 data=08
-65316134 mark src=dut text=after_us%3D247%20status%3D0x08
-65330721 mark case=qmp6988-measure-bit phase=delay-100us end=1
-65330740 mark case=qmp6988-measure-bit phase=delay-120us
-65330780 i2c.req addr=70 data=F431 stop=1
-65330780 i2c.resp status=0
-65331021 i2c.req addr=70 data=F3 stop=0
-65331021 i2c.resp status=0
-65331070 i2c.rd.req addr=70 req=1 stop=1 rs
-65331070 i2c.rd.resp len=1 data=08
-65331152 mark src=dut text=after_us%3D265%20status%3D0x08
-65345718 mark case=qmp6988-measure-bit phase=delay-120us end=1
-65345725 mark case=qmp6988-measure-bit phase=delay-140us
-65345771 i2c.req addr=70 data=F431 stop=1
-65345771 i2c.resp status=0
-65346060 i2c.req addr=70 data=F3 stop=0
-65346060 i2c.resp status=0
-65346110 i2c.rd.req addr=70 req=1 stop=1 rs
-65346110 i2c.rd.resp len=1 data=08
-65346183 mark src=dut text=after_us%3D284%20status%3D0x08
-65360718 mark case=qmp6988-measure-bit phase=delay-140us end=1
-65360732 mark case=qmp6988-measure-bit phase=delay-160us
-65360782 i2c.req addr=70 data=F431 stop=1
-65360782 i2c.resp status=0
-65361062 i2c.req addr=70 data=F3 stop=0
-65361062 i2c.resp status=0
-65361111 i2c.rd.req addr=70 req=1 stop=1 rs
-65361111 i2c.rd.resp len=1 data=08
-65361256 mark src=dut text=after_us%3D364%20status%3D0x08
-65375719 mark case=qmp6988-measure-bit phase=delay-160us end=1
-65375732 mark case=qmp6988-measure-bit phase=delay-180us
-65375782 i2c.req addr=70 data=F431 stop=1
-65375782 i2c.resp status=0
-65376085 i2c.req addr=70 data=F3 stop=0
-65376085 i2c.resp status=0
-65376134 i2c.rd.req addr=70 req=1 stop=1 rs
-65376134 i2c.rd.resp len=1 data=08
-65376206 mark src=dut text=after_us%3D329%20status%3D0x08
-65390719 mark case=qmp6988-measure-bit phase=delay-180us end=1
-65390733 mark case=qmp6988-measure-bit phase=delay-200us
-65390783 i2c.req addr=70 data=F431 stop=1
-65390783 i2c.resp status=0
-65391100 i2c.req addr=70 data=F3 stop=0
-65391100 i2c.resp status=0
-65391150 i2c.rd.req addr=70 req=1 stop=1 rs
-65391150 i2c.rd.resp len=1 data=08
-65391224 mark src=dut text=after_us%3D346%20status%3D0x08
-65405718 mark case=qmp6988-measure-bit phase=delay-200us end=1
-65405731 mark case=qmp6988-measure-bit phase=delay-220us
-65405775 i2c.req addr=70 data=F431 stop=1
-65405775 i2c.resp status=0
-65406117 i2c.req addr=70 data=F3 stop=0
-65406117 i2c.resp status=0
-65406166 i2c.rd.req addr=70 req=1 stop=1 rs
-65406166 i2c.rd.resp len=1 data=08
-65406238 mark src=dut text=after_us%3D368%20status%3D0x08
-65420719 mark case=qmp6988-measure-bit phase=delay-220us end=1
-65420733 mark case=qmp6988-measure-bit phase=delay-240us
-65420784 i2c.req addr=70 data=F431 stop=1
-65420784 i2c.resp status=0
-65421140 i2c.req addr=70 data=F3 stop=0
-65421140 i2c.resp status=0
-65421189 i2c.rd.req addr=70 req=1 stop=1 rs
-65421189 i2c.rd.resp len=1 data=08
-65421264 mark src=dut text=after_us%3D383%20status%3D0x08
-65435718 mark case=qmp6988-measure-bit phase=delay-240us end=1
-65435735 mark case=qmp6988-measure-bit phase=delay-260us
-65435774 i2c.req addr=70 data=F431 stop=1
-65435774 i2c.resp status=0
-65436160 i2c.req addr=70 data=F3 stop=0
-65436160 i2c.resp status=0
-65436210 i2c.rd.req addr=70 req=1 stop=1 rs
-65436210 i2c.rd.resp len=1 data=08
-65436285 mark src=dut text=after_us%3D413%20status%3D0x08
-65450718 mark case=qmp6988-measure-bit phase=delay-260us end=1
-65450736 mark case=qmp6988-measure-bit phase=delay-280us
-65450803 i2c.req addr=70 data=F431 stop=1
-65450803 i2c.resp status=0
-65451204 i2c.req addr=70 data=F3 stop=0
-65451204 i2c.resp status=0
-65451253 i2c.rd.req addr=70 req=1 stop=1 rs
-65451253 i2c.rd.resp len=1 data=08
-65451327 mark src=dut text=after_us%3D428%20status%3D0x08
-65465719 mark case=qmp6988-measure-bit phase=delay-280us end=1
-65465737 mark case=qmp6988-measure-bit phase=delay-300us
-65465791 i2c.req addr=70 data=F431 stop=1
-65465791 i2c.resp status=0
-65466216 i2c.req addr=70 data=F3 stop=0
-65466216 i2c.resp status=0
-65466265 i2c.rd.req addr=70 req=1 stop=1 rs
-65466265 i2c.rd.resp len=1 data=08
-65466343 mark src=dut text=after_us%3D453%20status%3D0x08
-65480719 mark case=qmp6988-measure-bit phase=delay-300us end=1
-65480734 mark case=qmp6988-measure-bit phase=delay-320us
-65480788 i2c.req addr=70 data=F431 stop=1
-65480788 i2c.resp status=0
-65481222 i2c.req addr=70 data=F3 stop=0
-65481222 i2c.resp status=0
-65481272 i2c.rd.req addr=70 req=1 stop=1 rs
-65481272 i2c.rd.resp len=1 data=08
-65481345 mark src=dut text=after_us%3D461%20status%3D0x08
-65495718 mark case=qmp6988-measure-bit phase=delay-320us end=1
-65495727 mark case=qmp6988-measure-bit phase=delay-340us
-65495761 i2c.req addr=70 data=F431 stop=1
-65495761 i2c.resp status=0
-65496225 i2c.req addr=70 data=F3 stop=0
-65496225 i2c.resp status=0
-65496274 i2c.rd.req addr=70 req=1 stop=1 rs
-65496274 i2c.rd.resp len=1 data=08
-65496348 mark src=dut text=after_us%3D490%20status%3D0x08
-65510719 mark case=qmp6988-measure-bit phase=delay-340us end=1
-65510730 mark case=qmp6988-measure-bit phase=delay-360us
-65510774 i2c.req addr=70 data=F431 stop=1
-65510774 i2c.resp status=0
-65511252 i2c.req addr=70 data=F3 stop=0
-65511252 i2c.resp status=0
-65511302 i2c.rd.req addr=70 req=1 stop=1 rs
-65511302 i2c.rd.resp len=1 data=08
-65511374 mark src=dut text=after_us%3D504%20status%3D0x08
-65525718 mark case=qmp6988-measure-bit phase=delay-360us end=1
-65525732 mark case=qmp6988-measure-bit phase=delay-380us
-65525774 i2c.req addr=70 data=F431 stop=1
-65525774 i2c.resp status=0
-65526272 i2c.req addr=70 data=F3 stop=0
-65526272 i2c.resp status=0
-65526321 i2c.rd.req addr=70 req=1 stop=1 rs
-65526321 i2c.rd.resp len=1 data=08
-65526392 mark src=dut text=after_us%3D523%20status%3D0x08
-65540718 mark case=qmp6988-measure-bit phase=delay-380us end=1
-65540729 mark case=qmp6988-measure-bit phase=delay-400us
-65540779 i2c.req addr=70 data=F431 stop=1
-65540779 i2c.resp status=0
-65541315 i2c.req addr=70 data=F3 stop=0
-65541315 i2c.resp status=0
-65541364 i2c.rd.req addr=70 req=1 stop=1 rs
-65541364 i2c.rd.resp len=1 data=08
-65541438 mark src=dut text=after_us%3D546%20status%3D0x08
-65555719 mark case=qmp6988-measure-bit phase=delay-400us end=1
-65555732 mark case=qmp6988-measure-bit phase=delay-420us
-65555776 i2c.req addr=70 data=F431 stop=1
-65555776 i2c.resp status=0
-65556314 i2c.req addr=70 data=F3 stop=0
-65556314 i2c.resp status=0
-65556363 i2c.rd.req addr=70 req=1 stop=1 rs
-65556363 i2c.rd.resp len=1 data=08
-65556436 mark src=dut text=after_us%3D565%20status%3D0x08
-65570718 mark case=qmp6988-measure-bit phase=delay-420us end=1
-65570729 mark case=qmp6988-measure-bit phase=delay-440us
-65570770 i2c.req addr=70 data=F431 stop=1
-65570770 i2c.resp status=0
-65571327 i2c.req addr=70 data=F3 stop=0
-65571327 i2c.resp status=0
-65571376 i2c.rd.req addr=70 req=1 stop=1 rs
-65571376 i2c.rd.resp len=1 data=08
-65571449 mark src=dut text=after_us%3D583%20status%3D0x08
-65585718 mark case=qmp6988-measure-bit phase=delay-440us end=1
-65585725 mark case=qmp6988-measure-bit phase=delay-460us
-65585772 i2c.req addr=70 data=F431 stop=1
-65585772 i2c.resp status=0
-65586361 i2c.req addr=70 data=F3 stop=0
-65586361 i2c.resp status=0
-65586411 i2c.rd.req addr=70 req=1 stop=1 rs
-65586411 i2c.rd.resp len=1 data=08
-65586482 mark src=dut text=after_us%3D614%20status%3D0x08
-65600719 mark case=qmp6988-measure-bit phase=delay-460us end=1
-65600736 mark case=qmp6988-measure-bit phase=delay-480us
-65600780 i2c.req addr=70 data=F431 stop=1
-65600780 i2c.resp status=0
-65601377 i2c.req addr=70 data=F3 stop=0
-65601377 i2c.resp status=0
-65601426 i2c.rd.req addr=70 req=1 stop=1 rs
-65601426 i2c.rd.resp len=1 data=08
-65601500 mark src=dut text=after_us%3D623%20status%3D0x08
-65615719 mark case=qmp6988-measure-bit phase=delay-480us end=1
-65615734 mark case=qmp6988-measure-bit phase=delay-500us
-65615778 i2c.req addr=70 data=F431 stop=1
-65615778 i2c.resp status=0
-65616398 i2c.req addr=70 data=F3 stop=0
-65616398 i2c.resp status=0
-65616447 i2c.rd.req addr=70 req=1 stop=1 rs
-65616447 i2c.rd.resp len=1 data=08
-65616521 mark src=dut text=after_us%3D648%20status%3D0x08
-65630718 mark case=qmp6988-measure-bit phase=delay-500us end=1
-65630729 mark case=qmp6988-measure-bit phase=delay-520us
-65630772 i2c.req addr=70 data=F431 stop=1
-65630772 i2c.resp status=0
-65631470 i2c.req addr=70 data=F3 stop=0
-65631470 i2c.resp status=0
-65631520 i2c.rd.req addr=70 req=1 stop=1 rs
-65631520 i2c.rd.resp len=1 data=08
-65631600 mark src=dut text=after_us%3D664%20status%3D0x08
-65645719 mark case=qmp6988-measure-bit phase=delay-520us end=1
-65645739 mark case=qmp6988-measure-bit phase=delay-540us
-65645792 i2c.req addr=70 data=F431 stop=1
-65645792 i2c.resp status=0
-65646455 i2c.req addr=70 data=F3 stop=0
-65646455 i2c.resp status=0
-65646504 i2c.rd.req addr=70 req=1 stop=1 rs
-65646504 i2c.rd.resp len=1 data=08
-65646578 mark src=dut text=after_us%3D692%20status%3D0x08
-65660718 mark case=qmp6988-measure-bit phase=delay-540us end=1
-65660736 mark case=qmp6988-measure-bit phase=delay-560us
-65660792 i2c.req addr=70 data=F431 stop=1
-65660792 i2c.resp status=0
-65661467 i2c.req addr=70 data=F3 stop=0
-65661467 i2c.resp status=0
-65661516 i2c.rd.req addr=70 req=1 stop=1 rs
-65661516 i2c.rd.resp len=1 data=08
-65661626 mark src=dut text=after_us%3D737%20status%3D0x08
-65675718 mark case=qmp6988-measure-bit phase=delay-560us end=1
-65675736 mark case=qmp6988-measure-bit phase=delay-580us
-65675776 i2c.req addr=70 data=F431 stop=1
-65675776 i2c.resp status=0
-65676476 i2c.req addr=70 data=F3 stop=0
-65676476 i2c.resp status=0
-65676525 i2c.rd.req addr=70 req=1 stop=1 rs
-65676525 i2c.rd.resp len=1 data=08
-65676598 mark src=dut text=after_us%3D728%20status%3D0x08
-65690721 mark case=qmp6988-measure-bit phase=delay-580us end=1
-65690734 mark case=qmp6988-measure-bit phase=delay-600us
-65690776 i2c.req addr=70 data=F431 stop=1
-65690776 i2c.resp status=0
-65691492 i2c.req addr=70 data=F3 stop=0
-65691492 i2c.resp status=0
-65691541 i2c.rd.req addr=70 req=1 stop=1 rs
-65691541 i2c.rd.resp len=1 data=08
-65691616 mark src=dut text=after_us%3D743%20status%3D0x08
-65705719 mark case=qmp6988-measure-bit phase=delay-600us end=1
-65705727 mark case=qmp6988-measure-bit end=1
+# qmp6988-measure-bit__i2c-400k__0c09be5b47d601d3 (2026-11-10), through skein2trace.py --provenance (knowledge from its targets).
+6148202 mark case=qmp6988-measure-bit
+6148790 i2c.req addr=70 data=F400 stop=1
+6148790 i2c.resp status=0
+6153795 mark case=qmp6988-measure-bit phase=delay-0us
+6153823 i2c.req addr=70 data=F431 stop=1
+6153823 i2c.resp status=0
+6153947 i2c.req addr=70 data=F3 stop=0
+6153947 i2c.resp status=0
+6153996 i2c.rd.req addr=70 req=1 stop=1 rs
+6153996 i2c.rd.resp len=1 data=00
+6154079 mark src=dut text=after_us%3D153%20status%3D0x00
+6168753 mark case=qmp6988-measure-bit phase=delay-0us end=1
+6168763 mark case=qmp6988-measure-bit phase=delay-20us
+6168789 i2c.req addr=70 data=F431 stop=1
+6168789 i2c.resp status=0
+6168926 i2c.req addr=70 data=F3 stop=0
+6168926 i2c.resp status=0
+6168975 i2c.rd.req addr=70 req=1 stop=1 rs
+6168975 i2c.rd.resp len=1 data=00
+6169044 mark src=dut text=after_us%3D163%20status%3D0x00
+6183762 mark case=qmp6988-measure-bit phase=delay-20us end=1
+6183769 mark case=qmp6988-measure-bit phase=delay-40us
+6183796 i2c.req addr=70 data=F431 stop=1
+6183796 i2c.resp status=0
+6183952 i2c.req addr=70 data=F3 stop=0
+6183952 i2c.resp status=0
+6184000 i2c.rd.req addr=70 req=1 stop=1 rs
+6184000 i2c.rd.resp len=1 data=00
+6184074 mark src=dut text=after_us%3D181%20status%3D0x00
+6198753 mark case=qmp6988-measure-bit phase=delay-40us end=1
+6198760 mark case=qmp6988-measure-bit phase=delay-60us
+6198790 i2c.req addr=70 data=F431 stop=1
+6198790 i2c.resp status=0
+6198964 i2c.req addr=70 data=F3 stop=0
+6198964 i2c.resp status=0
+6199014 i2c.rd.req addr=70 req=1 stop=1 rs
+6199014 i2c.rd.resp len=1 data=08
+6199085 mark src=dut text=after_us%3D201%20status%3D0x08
+6213762 mark case=qmp6988-measure-bit phase=delay-60us end=1
+6213770 mark case=qmp6988-measure-bit phase=delay-80us
+6213796 i2c.req addr=70 data=F431 stop=1
+6213796 i2c.resp status=0
+6213990 i2c.req addr=70 data=F3 stop=0
+6213990 i2c.resp status=0
+6214040 i2c.rd.req addr=70 req=1 stop=1 rs
+6214040 i2c.rd.resp len=1 data=08
+6214108 mark src=dut text=after_us%3D221%20status%3D0x08
+6228752 mark case=qmp6988-measure-bit phase=delay-80us end=1
+6228760 mark case=qmp6988-measure-bit phase=delay-100us
+6228790 i2c.req addr=70 data=F431 stop=1
+6228790 i2c.resp status=0
+6229004 i2c.req addr=70 data=F3 stop=0
+6229004 i2c.resp status=0
+6229054 i2c.rd.req addr=70 req=1 stop=1 rs
+6229054 i2c.rd.resp len=1 data=08
+6229124 mark src=dut text=after_us%3D241%20status%3D0x08
+6243762 mark case=qmp6988-measure-bit phase=delay-100us end=1
+6243769 mark case=qmp6988-measure-bit phase=delay-120us
+6243798 i2c.req addr=70 data=F431 stop=1
+6243798 i2c.resp status=0
+6244034 i2c.req addr=70 data=F3 stop=0
+6244034 i2c.resp status=0
+6244083 i2c.rd.req addr=70 req=1 stop=1 rs
+6244083 i2c.rd.resp len=1 data=08
+6244156 mark src=dut text=after_us%3D261%20status%3D0x08
+6258752 mark case=qmp6988-measure-bit phase=delay-120us end=1
+6258760 mark case=qmp6988-measure-bit phase=delay-140us
+6258788 i2c.req addr=70 data=F431 stop=1
+6258788 i2c.resp status=0
+6259042 i2c.req addr=70 data=F3 stop=0
+6259042 i2c.resp status=0
+6259092 i2c.rd.req addr=70 req=1 stop=1 rs
+6259092 i2c.rd.resp len=1 data=08
+6259162 mark src=dut text=after_us%3D281%20status%3D0x08
+6273753 mark case=qmp6988-measure-bit phase=delay-140us end=1
+6273760 mark case=qmp6988-measure-bit phase=delay-160us
+6273788 i2c.req addr=70 data=F431 stop=1
+6273788 i2c.resp status=0
+6274064 i2c.req addr=70 data=F3 stop=0
+6274064 i2c.resp status=0
+6274114 i2c.rd.req addr=70 req=1 stop=1 rs
+6274114 i2c.rd.resp len=1 data=08
+6274186 mark src=dut text=after_us%3D303%20status%3D0x08
+6288762 mark case=qmp6988-measure-bit phase=delay-160us end=1
+6288768 mark case=qmp6988-measure-bit phase=delay-180us
+6288795 i2c.req addr=70 data=F431 stop=1
+6288795 i2c.resp status=0
+6289090 i2c.req addr=70 data=F3 stop=0
+6289090 i2c.resp status=0
+6289139 i2c.rd.req addr=70 req=1 stop=1 rs
+6289139 i2c.rd.resp len=1 data=08
+6289208 mark src=dut text=after_us%3D322%20status%3D0x08
+6303752 mark case=qmp6988-measure-bit phase=delay-180us end=1
+6303759 mark case=qmp6988-measure-bit phase=delay-200us
+6303787 i2c.req addr=70 data=F431 stop=1
+6303787 i2c.resp status=0
+6304101 i2c.req addr=70 data=F3 stop=0
+6304101 i2c.resp status=0
+6304150 i2c.rd.req addr=70 req=1 stop=1 rs
+6304150 i2c.rd.resp len=1 data=08
+6304224 mark src=dut text=after_us%3D341%20status%3D0x08
+6318759 mark case=qmp6988-measure-bit phase=delay-200us end=1
+6318767 mark case=qmp6988-measure-bit phase=delay-220us
+6318798 i2c.req addr=70 data=F431 stop=1
+6318798 i2c.resp status=0
+6319132 i2c.req addr=70 data=F3 stop=0
+6319132 i2c.resp status=0
+6319182 i2c.rd.req addr=70 req=1 stop=1 rs
+6319182 i2c.rd.resp len=1 data=08
+6319255 mark src=dut text=after_us%3D362%20status%3D0x08
+6333752 mark case=qmp6988-measure-bit phase=delay-220us end=1
+6333759 mark case=qmp6988-measure-bit phase=delay-240us
+6333788 i2c.req addr=70 data=F431 stop=1
+6333788 i2c.resp status=0
+6334142 i2c.req addr=70 data=F3 stop=0
+6334142 i2c.resp status=0
+6334192 i2c.rd.req addr=70 req=1 stop=1 rs
+6334192 i2c.rd.resp len=1 data=08
+6334261 mark src=dut text=after_us%3D381%20status%3D0x08
+6348762 mark case=qmp6988-measure-bit phase=delay-240us end=1
+6348769 mark case=qmp6988-measure-bit phase=delay-260us
+6348800 i2c.req addr=70 data=F431 stop=1
+6348800 i2c.resp status=0
+6349174 i2c.req addr=70 data=F3 stop=0
+6349174 i2c.resp status=0
+6349224 i2c.rd.req addr=70 req=1 stop=1 rs
+6349224 i2c.rd.resp len=1 data=08
+6349293 mark src=dut text=after_us%3D401%20status%3D0x08
+6363753 mark case=qmp6988-measure-bit phase=delay-260us end=1
+6363760 mark case=qmp6988-measure-bit phase=delay-280us
+6363785 i2c.req addr=70 data=F431 stop=1
+6363785 i2c.resp status=0
+6364179 i2c.req addr=70 data=F3 stop=0
+6364179 i2c.resp status=0
+6364228 i2c.rd.req addr=70 req=1 stop=1 rs
+6364228 i2c.rd.resp len=1 data=08
+6364298 mark src=dut text=after_us%3D421%20status%3D0x08
+6378761 mark case=qmp6988-measure-bit phase=delay-280us end=1
+6378769 mark case=qmp6988-measure-bit phase=delay-300us
+6378799 i2c.req addr=70 data=F431 stop=1
+6378799 i2c.resp status=0
+6379213 i2c.req addr=70 data=F3 stop=0
+6379213 i2c.resp status=0
+6379262 i2c.rd.req addr=70 req=1 stop=1 rs
+6379262 i2c.rd.resp len=1 data=08
+6379331 mark src=dut text=after_us%3D441%20status%3D0x08
+6393752 mark case=qmp6988-measure-bit phase=delay-300us end=1
+6393760 mark case=qmp6988-measure-bit phase=delay-320us
+6393790 i2c.req addr=70 data=F431 stop=1
+6393790 i2c.resp status=0
+6394224 i2c.req addr=70 data=F3 stop=0
+6394224 i2c.resp status=0
+6394274 i2c.rd.req addr=70 req=1 stop=1 rs
+6394274 i2c.rd.resp len=1 data=08
+6394343 mark src=dut text=after_us%3D461%20status%3D0x08
+6408762 mark case=qmp6988-measure-bit phase=delay-320us end=1
+6408768 mark case=qmp6988-measure-bit phase=delay-340us
+6408794 i2c.req addr=70 data=F431 stop=1
+6408794 i2c.resp status=0
+6409249 i2c.req addr=70 data=F3 stop=0
+6409249 i2c.resp status=0
+6409298 i2c.rd.req addr=70 req=1 stop=1 rs
+6409298 i2c.rd.resp len=1 data=08
+6409367 mark src=dut text=after_us%3D481%20status%3D0x08
+6423752 mark case=qmp6988-measure-bit phase=delay-340us end=1
+6423759 mark case=qmp6988-measure-bit phase=delay-360us
+6423790 i2c.req addr=70 data=F431 stop=1
+6423790 i2c.resp status=0
+6424265 i2c.req addr=70 data=F3 stop=0
+6424265 i2c.resp status=0
+6424314 i2c.rd.req addr=70 req=1 stop=1 rs
+6424314 i2c.rd.resp len=1 data=08
+6424384 mark src=dut text=after_us%3D501%20status%3D0x08
+6438752 mark case=qmp6988-measure-bit phase=delay-360us end=1
+6438759 mark case=qmp6988-measure-bit phase=delay-380us
+6438785 i2c.req addr=70 data=F431 stop=1
+6438785 i2c.resp status=0
+6439279 i2c.req addr=70 data=F3 stop=0
+6439279 i2c.resp status=0
+6439328 i2c.rd.req addr=70 req=1 stop=1 rs
+6439328 i2c.rd.resp len=1 data=08
+6439397 mark src=dut text=after_us%3D521%20status%3D0x08
+6453762 mark case=qmp6988-measure-bit phase=delay-380us end=1
+6453770 mark case=qmp6988-measure-bit phase=delay-400us
+6453800 i2c.req addr=70 data=F431 stop=1
+6453800 i2c.resp status=0
+6454316 i2c.req addr=70 data=F3 stop=0
+6454316 i2c.resp status=0
+6454364 i2c.rd.req addr=70 req=1 stop=1 rs
+6454364 i2c.rd.resp len=1 data=08
+6454434 mark src=dut text=after_us%3D541%20status%3D0x08
+6468753 mark case=qmp6988-measure-bit phase=delay-400us end=1
+6468760 mark case=qmp6988-measure-bit phase=delay-420us
+6468790 i2c.req addr=70 data=F431 stop=1
+6468790 i2c.resp status=0
+6469325 i2c.req addr=70 data=F3 stop=0
+6469325 i2c.resp status=0
+6469374 i2c.rd.req addr=70 req=1 stop=1 rs
+6469374 i2c.rd.resp len=1 data=08
+6469445 mark src=dut text=after_us%3D560%20status%3D0x08
+6483752 mark case=qmp6988-measure-bit phase=delay-420us end=1
+6483759 mark case=qmp6988-measure-bit phase=delay-440us
+6483785 i2c.req addr=70 data=F431 stop=1
+6483785 i2c.resp status=0
+6484339 i2c.req addr=70 data=F3 stop=0
+6484339 i2c.resp status=0
+6484388 i2c.rd.req addr=70 req=1 stop=1 rs
+6484388 i2c.rd.resp len=1 data=08
+6484457 mark src=dut text=after_us%3D581%20status%3D0x08
+6498752 mark case=qmp6988-measure-bit phase=delay-440us end=1
+6498760 mark case=qmp6988-measure-bit phase=delay-460us
+6498788 i2c.req addr=70 data=F431 stop=1
+6498788 i2c.resp status=0
+6499361 i2c.req addr=70 data=F3 stop=0
+6499361 i2c.resp status=0
+6499410 i2c.rd.req addr=70 req=1 stop=1 rs
+6499410 i2c.rd.resp len=1 data=08
+6499482 mark src=dut text=after_us%3D601%20status%3D0x08
+6513762 mark case=qmp6988-measure-bit phase=delay-460us end=1
+6513769 mark case=qmp6988-measure-bit phase=delay-480us
+6513795 i2c.req addr=70 data=F431 stop=1
+6513795 i2c.resp status=0
+6514389 i2c.req addr=70 data=F3 stop=0
+6514389 i2c.resp status=0
+6514438 i2c.rd.req addr=70 req=1 stop=1 rs
+6514438 i2c.rd.resp len=1 data=08
+6514509 mark src=dut text=after_us%3D621%20status%3D0x08
+6528752 mark case=qmp6988-measure-bit phase=delay-480us end=1
+6528759 mark case=qmp6988-measure-bit phase=delay-500us
+6528786 i2c.req addr=70 data=F431 stop=1
+6528786 i2c.resp status=0
+6529400 i2c.req addr=70 data=F3 stop=0
+6529400 i2c.resp status=0
+6529448 i2c.rd.req addr=70 req=1 stop=1 rs
+6529448 i2c.rd.resp len=1 data=08
+6529517 mark src=dut text=after_us%3D641%20status%3D0x08
+6543762 mark case=qmp6988-measure-bit phase=delay-500us end=1
+6543769 mark case=qmp6988-measure-bit phase=delay-520us
+6543796 i2c.req addr=70 data=F431 stop=1
+6543796 i2c.resp status=0
+6544431 i2c.req addr=70 data=F3 stop=0
+6544431 i2c.resp status=0
+6544480 i2c.rd.req addr=70 req=1 stop=1 rs
+6544480 i2c.rd.resp len=1 data=08
+6544551 mark src=dut text=after_us%3D661%20status%3D0x08
+6558753 mark case=qmp6988-measure-bit phase=delay-520us end=1
+6558760 mark case=qmp6988-measure-bit phase=delay-540us
+6558786 i2c.req addr=70 data=F431 stop=1
+6558786 i2c.resp status=0
+6559440 i2c.req addr=70 data=F3 stop=0
+6559440 i2c.resp status=0
+6559490 i2c.rd.req addr=70 req=1 stop=1 rs
+6559490 i2c.rd.resp len=1 data=08
+6559558 mark src=dut text=after_us%3D681%20status%3D0x08
+6573762 mark case=qmp6988-measure-bit phase=delay-540us end=1
+6573769 mark case=qmp6988-measure-bit phase=delay-560us
+6573799 i2c.req addr=70 data=F431 stop=1
+6573799 i2c.resp status=0
+6574473 i2c.req addr=70 data=F3 stop=0
+6574473 i2c.resp status=0
+6574522 i2c.rd.req addr=70 req=1 stop=1 rs
+6574522 i2c.rd.resp len=1 data=08
+6574592 mark src=dut text=after_us%3D701%20status%3D0x08
+6588760 mark case=qmp6988-measure-bit phase=delay-560us end=1
+6588767 mark case=qmp6988-measure-bit phase=delay-580us
+6588798 i2c.req addr=70 data=F431 stop=1
+6588798 i2c.resp status=0
+6589492 i2c.req addr=70 data=F3 stop=0
+6589492 i2c.resp status=0
+6589542 i2c.rd.req addr=70 req=1 stop=1 rs
+6589542 i2c.rd.resp len=1 data=08
+6589612 mark src=dut text=after_us%3D721%20status%3D0x08
+6603753 mark case=qmp6988-measure-bit phase=delay-580us end=1
+6603760 mark case=qmp6988-measure-bit phase=delay-600us
+6603786 i2c.req addr=70 data=F431 stop=1
+6603786 i2c.resp status=0
+6604500 i2c.req addr=70 data=F3 stop=0
+6604500 i2c.resp status=0
+6604548 i2c.rd.req addr=70 req=1 stop=1 rs
+6604548 i2c.rd.resp len=1 data=08
+6604617 mark src=dut text=after_us%3D741%20status%3D0x08
+6618762 mark case=qmp6988-measure-bit phase=delay-600us end=1
+6618764 mark case=qmp6988-measure-bit end=1
