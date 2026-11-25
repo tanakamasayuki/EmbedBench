@@ -130,7 +130,7 @@ def test_qmp6988_timing_is_what_is_checked(tmp_path):
                      "model len=1 data=08"], diffs
 
 
-def test_sht30_matches_with_two_known_differences():
+def test_sht30_matches_with_known_differences():
     # The library run: three high-repeatability stretched measurements read
     # 200 ms later. Nothing differs.
     run = HERE / "m5unit_env_basic_p4x.trace"
@@ -139,21 +139,19 @@ def test_sht30_matches_with_two_known_differences():
 
     # The OEP characterization: soft reset, status, three repeatabilities by
     # polling and by stretching. Every poll is refused or answered when the
-    # part did. The differences are one event: the controller gave up on the
-    # high stretch, then clocked the bus clear through the part, which sent
-    # its result out (one byte reaches the decode; the library got 0). The
-    # interface has neither a partly-answered read nor a way to say the
-    # master clocked on after giving up, so the model still holds the result
-    # and hands it to the first poll of the next measurement. The failed
-    # measurement takes a sample of its own.
+    # part did. The one difference: the controller gave up on the high
+    # stretch (a read with no byte, as the model has it), then clocked the
+    # bus clear through the part, which sent its result out on clocks the
+    # decode cannot place. The interface has no way to say the master clocked
+    # on after giving up, so the model still holds the result and hands it to
+    # the first poll of the next measurement. The failed measurement takes a
+    # sample of its own.
     run = HERE / "sht30_modes_p4x.trace"
     answers = words(run)
     compared, diffs = tracecmp(run, sht30(answers[:8] + "00000000" + answers[8:]),
                                [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 45
-    assert diffs == ["7363146 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=5E, "
-                     "model len=0 data=",
-                     "7375827 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+    assert diffs == ["7375827 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
                      "model len=6 data=000081000081"], diffs
 
     # The same at 400 kHz: the controller gave up at the same point.
@@ -162,9 +160,7 @@ def test_sht30_matches_with_two_known_differences():
     compared, diffs = tracecmp(run, sht30(answers[:8] + "00000000" + answers[8:]),
                                [*STRETCH_LIMIT, "--only-addr"])
     assert compared == 50
-    assert diffs == ["3664888 i2c.rd.req addr=44 req=1 stop=0: recorded len=1 data=5E, "
-                     "model len=0 data=",
-                     "3677300 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
+    assert diffs == ["3677300 i2c.rd.req addr=44 req=0 stop=1: recorded len=0 data=, "
                      "model len=6 data=000081000081"], diffs
 
     # The pilot: its controller gave up without clocking on, and the result

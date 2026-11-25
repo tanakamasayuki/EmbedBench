@@ -1,5 +1,5 @@
 # M5Stack U001-C at 100 kHz, an ESP32-P4 controller (OEP P4X, arduino-esp32 3.3.12): EmbedBenchDeviceData run
-# sht30-modes__i2c-100k__85b6b552756235f2 (2026-11-11), through skein2trace.py --provenance (knowledge from its targets).
+# sht30-modes__i2c-100k__67ed272b0bdc35a6 (2026-11-11), through skein2trace.py --provenance (knowledge from its targets).
 7341454 mark case=sht30-modes
 7341462 mark case=sht30-modes phase=soft-reset
 7341553 i2c.req addr=44 data=30A2 stop=1
@@ -61,8 +61,8 @@
 7362790 mark case=sht30-modes phase=stretch-high
 7362824 i2c.req addr=44 data=2C06 stop=1
 7362824 i2c.resp status=0
-7363146 i2c.rd.req addr=44 req=1 stop=0
-7363146 i2c.rd.resp len=1 data=5E scl_wait=12166
+7363146 i2c.rd.req addr=44 req=0 stop=0
+7363146 i2c.rd.resp len=0 data= scl_wait=12166
 7369837 mark src=dut text=end%3D0%20elapsed_us%3D6705%20got%3D0%20bytes%3D%20crc%3D0
 7369844 mark case=sht30-modes phase=stretch-high end=1
 7374769 mark case=sht30-modes phase=polling-medium

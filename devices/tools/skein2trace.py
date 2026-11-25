@@ -41,6 +41,11 @@ pull-ups) for a transfer the bus shows as an address NACK. `rs` marks a
 transfer that a repeated start continued to the same address; stop=0 is
 a transfer that ended in one. A transfer still open when the window
 closed (end_cond null) is written with stop=1 and reported on stderr.
+A transfer the decode leaves incomplete (complete: false: the controller
+gave up during a long SCL low and its next clock never reached the line)
+is written with the bytes that completed, and reported on stderr; a read
+cut that way before its first byte is req=0 len=0 without status=2. The
+bits seen after the cut (pending_bits) are not written.
 `scl_wait=<us>` on a device line totals the transfer's long SCL lows
 (wireskein's scl_waits); the line level cannot tell who held SCL low, so
 it is a wait, not a stretch.
@@ -163,6 +168,10 @@ def transfer_lines(transactions, hz, start_ns, tick0, rules=()):
         if x.get("end_cond") is None:
             print("warning: transfer at %d us still open at the window's "
                   "end" % time, file=sys.stderr)
+        if x.get("complete") is False:
+            print("note: transfer at %d us cut short (clock lost at tick %s); "
+                  "written with its complete bytes" % (time, x.get("clock_lost")),
+                  file=sys.stderr)
         stop = 0 if x.get("end_cond") == "Sr" else 1
         rs = (x.get("start_cond") == "Sr" and last is not None and
               last["addr"] == x["addr"])
